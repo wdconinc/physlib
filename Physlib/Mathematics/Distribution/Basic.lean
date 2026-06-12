@@ -123,7 +123,7 @@ on the size of `u` applied to `η`.
 
 /-- The construction of a distribution from the following data:
 1. We take a finite set `s` of pairs `(k, n) ∈ ℕ × ℕ` that will be explained later.
-2. We take a linear map `u` that evaluates the given Schwartz function `η`. At this stage we don't
+2. We take a linear map `u` that evaluates the given Schwartz function `η`. At this point we don't
   need `u` to be continuous.
 3. Recall that a Schwartz function `η` satisfies a bound
   `‖x‖ᵏ * ‖(dⁿ/dxⁿ) η‖ < Mₙₖ` where `Mₙₖ : ℝ` only depends on `(k, n) : ℕ × ℕ`.
