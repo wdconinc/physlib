@@ -210,6 +210,7 @@ public import Physlib.Particles.FlavorPhysics.CKMMatrix.Rows
 public import Physlib.Particles.FlavorPhysics.CKMMatrix.StandardParameterization.Basic
 public import Physlib.Particles.FlavorPhysics.CKMMatrix.StandardParameterization.StandardParameters
 public import Physlib.Particles.NeutrinoPhysics.Basic
+public import Physlib.Particles.Parton.Basic
 public import Physlib.Particles.StandardModel.AnomalyCancellation.Basic
 public import Physlib.Particles.StandardModel.AnomalyCancellation.FamilyMaps
 public import Physlib.Particles.StandardModel.AnomalyCancellation.NoGrav.Basic
@@ -324,6 +325,7 @@ public import Physlib.QFT.QED.AnomalyCancellation.Odd.Parameterization
 public import Physlib.QFT.QED.AnomalyCancellation.Permutations
 public import Physlib.QFT.QED.AnomalyCancellation.Sorts
 public import Physlib.QFT.QED.AnomalyCancellation.VectorLike
+public import Physlib.QFT.Scattering.DIS.Basic
 public import Physlib.QuantumMechanics.FiniteTarget
 public import Physlib.QuantumMechanics.FreeParticle.Basic
 public import Physlib.QuantumMechanics.HarmonicOscillator.Basic
