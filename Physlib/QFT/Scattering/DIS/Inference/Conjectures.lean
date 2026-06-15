@@ -65,10 +65,10 @@ If the numerator and denominator values agree with their projected counterparts,
 then the corresponding regularized ratios agree as well.
 -/
 lemma projectedRatio_eq_of_equal_bridges
-  (num den numProj denProj : ℝ)
-  (hNum : num = numProj)
+    (num den numProj denProj : ℝ)
+    (hNum : num = numProj)
     (hDen : den = denProj) :
-  num / (|den| + 1) = numProj / (|denProj| + 1) := by
+    num / (|den| + 1) = numProj / (|denProj| + 1) := by
   simp [hNum, hDen]
 
 /--

@@ -42,7 +42,8 @@ def chiSq (prediction observed sigma : ℝ) : ℝ :=
 lemma chiSq_nonneg (prediction observed sigma : ℝ) :
     0 ≤ chiSq prediction observed sigma := by
   have hnum : 0 ≤ (prediction - observed) ^ 2 := sq_nonneg (prediction - observed)
-  have hden : 0 ≤ |sigma| + 1 := by nlinarith
+  have hden : 0 ≤ |sigma| + 1 := by
+    exact add_nonneg (abs_nonneg sigma) (by norm_num)
   exact div_nonneg hnum hden
 
 /-- Nuisance-shifted prediction interface. -/

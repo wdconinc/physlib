@@ -81,14 +81,14 @@ structure SiversProjectionAssumptions
 
 /-- Derive the Sivers projection assumptions from explicit projected equalities. -/
 lemma siversProjectionAssumptions_of_equalities
-  (P : Harmonics.Projector)
-  (F : SpinStructureFunctions)
-  (x zHad Q2 pT : ℝ)
-  (hDen : Harmonics.projectedMoment P Harmonics.oneWeight
-    (fun _phiH _phiS => F.FUU x zHad Q2 pT) = F.FUU x zHad Q2 pT)
-  (hNum : Harmonics.projectedMoment P Harmonics.sinPhiDiff
-    (fun _phiH _phiS => F.FUT_sivers x zHad Q2 pT) = F.FUT_sivers x zHad Q2 pT) :
-  SiversProjectionAssumptions P F x zHad Q2 pT := by
+    (P : Harmonics.Projector)
+    (F : SpinStructureFunctions)
+    (x zHad Q2 pT : ℝ)
+    (hDen : Harmonics.projectedMoment P Harmonics.oneWeight
+      (fun _phiH _phiS => F.FUU x zHad Q2 pT) = F.FUU x zHad Q2 pT)
+    (hNum : Harmonics.projectedMoment P Harmonics.sinPhiDiff
+      (fun _phiH _phiS => F.FUT_sivers x zHad Q2 pT) = F.FUT_sivers x zHad Q2 pT) :
+    SiversProjectionAssumptions P F x zHad Q2 pT := by
   exact ⟨hDen, hNum⟩
 
 /--

@@ -94,8 +94,7 @@ lemma tff_convolution_bridge
     (T : TFF)
     (Q2 : ℝ)
     (hConv : IsTFFConvolutionAtScale M i T Q2) :
-    ∀ xi t, T.longitudinal xi t = ∫ x in Set.Icc (0 : ℝ) 1, M.H i x xi t :=
-by
+    ∀ xi t, T.longitudinal xi t = ∫ x in Set.Icc (0 : ℝ) 1, M.H i x xi t := by
   intro xi t
   simpa [IsTFFConvolutionAtScale] using
     (tff_kernel_representation_bridge Exclusive.Convolution.unitKernel M i T Q2 hConv xi t).trans
