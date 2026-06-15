@@ -78,8 +78,7 @@ lemma cff_convolution_bridge
     (C : CFF)
     (Q2 : ℝ)
     (hConv : IsCFFConvolutionAtScale M i C Q2) :
-    ∀ xi t, C.H xi t = ∫ x in Set.Icc (0 : ℝ) 1, M.H i x xi t :=
-by
+    ∀ xi t, C.H xi t = ∫ x in Set.Icc (0 : ℝ) 1, M.H i x xi t := by
   intro xi t
   simpa [IsCFFConvolutionAtScale] using
     (cff_kernel_representation_bridge Exclusive.Convolution.unitKernel M i C Q2 hConv xi t).trans

@@ -105,7 +105,8 @@ lemma projectedMoment_oneWeight_const
     projectedMoment normalizedAngularProjector oneWeight (fun _phiH _phiS => c) = c := by
   simpa [projectedMoment, oneWeight] using normalizedAngularProjector_const c
 
-/-- Normalization and orthogonality assumptions for the harmonic basis used in projection theorems. -/
+/-- Normalization and orthogonality assumptions for the harmonic basis
+used in projection theorems. -/
 structure HarmonicOrthogonalityAssumptions (P : Projector) : Prop where
   oneWeight_const : ∀ c, projectedMoment P oneWeight (fun _phiH _phiS => c) = c
   sinPhiDiff_self : projectedMoment P sinPhiDiff sinPhiDiff = 1 / 2

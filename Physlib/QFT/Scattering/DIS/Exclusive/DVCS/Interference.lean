@@ -60,7 +60,8 @@ def projectedInterference
     SIDIS.Asymmetries.Harmonics.sinPhiDiff
     (fun _phiH _phiS => D.inter xi t Q2)
 
-/-- Angle-resolved interference observable whose coefficient is extracted by `sin(phi_h - phi_S)`. -/
+/-- Angle-resolved interference observable whose coefficient is extracted by
+`sin(phi_h - phi_S)`. -/
 def interferenceAngularObservable
     (D : Decomposition)
     (xi t Q2 : ℝ) : ℝ → ℝ → ℝ :=
