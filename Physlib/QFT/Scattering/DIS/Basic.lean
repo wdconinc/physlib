@@ -29,6 +29,7 @@ public import Physlib.QFT.QCD.OneLoopNumeratorContractions
 public import Physlib.QFT.QCD.OneLoopDiagrammaticBridge
 public import Physlib.QFT.Scattering.DIS.Examples.Basic
 public import Physlib.QFT.Scattering.DIS.Polarized.Basic
+public import Physlib.QFT.Scattering.DIS.Polarized.SumRules
 public import Physlib.QFT.Scattering.DIS.Corrections.Basic
 public import Physlib.QFT.Scattering.DIS.SIDIS.Basic
 public import Physlib.QFT.Scattering.DIS.Inference.Basic
