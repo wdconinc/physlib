@@ -177,25 +177,19 @@ lemma allowsTermForm_allowsTerm {a b c : 𝓩} {T : PotentialTerm} :
   cases T
   all_goals
     simp [PotentialTerm.toFieldLabel, ofFieldLabel]
-  case Λ =>
-    use a, b
-    simp
+  case Λ => exact ⟨a, b, by simp⟩
+  case K1 => exact ⟨b, - a - b, by simp⟩
+  case topYukawa => exact ⟨b, - a - b, by simp⟩
   case W3 =>
-    use b, -b - 2 • a
+    refine ⟨b, -b - 2 • a, ?_⟩
     simp only [true_or, or_true, and_self, true_and]
     abel
-  case K1 =>
-    use b, - a - b
-    simp
-  case topYukawa =>
-    use b, - a - b
-    simp
   case W1 =>
-    use a, b, c
+    refine ⟨a, b, c, ?_⟩
     simp only [true_or, or_true, and_self, true_and]
     abel
   case W2 =>
-    use a, b, c
+    refine ⟨a, b, c, ?_⟩
     simp only [true_or, or_true, and_self, true_and]
     abel
   all_goals abel
@@ -335,9 +329,7 @@ lemma allowsTermForm_subset_allowsTerm_of_allowsTerm {T : PotentialTerm} {x : Ch
     subst hf2
     simp_all
   case β =>
-    have hf2 : f4 = - f2 := by
-      rw [← sub_zero f2, ← f1_add_f2_eq_zero]
-      abel
+    have hf2 : f4 = - f2 := eq_neg_of_add_eq_zero_left f1_add_f2_eq_zero
     subst hf2
     simp_all
   case K2 =>
@@ -456,7 +448,7 @@ to `AllowsTerm` and its decidability.
 
 /-- The proposition for which says, given a charge `x` adding a charge `q5` permits the
   existence of a potential term `T` due to the addition of that charge. -/
-def AllowsTermQ5 [DecidableEq 𝓩] (x : ChargeSpectrum 𝓩) (q5 : 𝓩) (T : PotentialTerm) : Prop :=
+def AllowsTermQ5 (x : ChargeSpectrum 𝓩) (q5 : 𝓩) (T : PotentialTerm) : Prop :=
   match T with
   | .μ => false
   | .β =>
@@ -493,7 +485,7 @@ We show that if the type `𝓩` has decidable equality, then the proposition
 potential term `T`.
 
 -/
-instance [DecidableEq 𝓩] (x : ChargeSpectrum 𝓩) (q5 : 𝓩) (T : PotentialTerm) :
+instance (x : ChargeSpectrum 𝓩) (q5 : 𝓩) (T : PotentialTerm) :
     Decidable (AllowsTermQ5 x q5 T) :=
   match T with
   | .μ => isFalse fun h => by simp [AllowsTermQ5] at h
@@ -561,20 +553,13 @@ lemma allowsTermQ5_or_allowsTerm_of_allowsTerm_insertQ5 {qHd qHu : Option 𝓩}
   · obtain ⟨a1, a2, a3, ⟨h1, h2, h3⟩, hsum⟩ := h
     rcases h1 with h1 | h1
     · subst h1
-      left
-      rcases h2 with h2 | h2
-      · use a2, a3
-        simp_all
-      · use a2, a3
-        simp_all
-        rw [← hsum]
-        abel
+      refine .inl ⟨a2, a3, ⟨h2, h3⟩, ?_⟩
+      rw [← hsum]
+      abel
     · rcases h2 with h2 | h2
-      · left
-        use a1, a3
-        simp_all
-      · right
-        use a1, a2, a3
+      · subst h2
+        exact .inl ⟨a1, a3, ⟨.inr h1, h3⟩, hsum⟩
+      · exact .inr ⟨a1, a2, a3, ⟨h1, h2, h3⟩, hsum⟩
   · obtain ⟨a1, a2, a3, a4, ⟨h1, h2, h3, h4⟩, hsum⟩ := h
     rcases h1 with h1 | h1
     · left
@@ -759,7 +744,7 @@ to `AllowsTerm` and its decidability.
 
 /-- The proposition for which says, given a charge `x` adding a charge `q5` permits the
   existence of a potential term `T` due to the addition of that charge. -/
-def AllowsTermQ10 [DecidableEq 𝓩] (x : ChargeSpectrum 𝓩) (q10 : 𝓩) (T : PotentialTerm) : Prop :=
+def AllowsTermQ10 (x : ChargeSpectrum 𝓩) (q10 : 𝓩) (T : PotentialTerm) : Prop :=
   match T with
   | .μ => false
   | .β => false
@@ -798,7 +783,7 @@ potential term `T`.
 
 -/
 
-instance [DecidableEq 𝓩] (x : ChargeSpectrum 𝓩) (q10 : 𝓩) (T : PotentialTerm) :
+instance (x : ChargeSpectrum 𝓩) (q10 : 𝓩) (T : PotentialTerm) :
     Decidable (AllowsTermQ10 x q10 T) :=
   match T with
   | .μ => isFalse fun h => by simp [AllowsTermQ10] at h

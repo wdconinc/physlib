@@ -94,6 +94,15 @@ instance {d} : CoeFun (ElectromagneticPotential d)
     (fun _ => SpaceTime d → Lorentz.Vector d) where
   coe A := A.val
 
+instance {d} : Zero (ElectromagneticPotential d) where
+  zero := ⟨fun _ => 0⟩
+
+@[simp]
+lemma zero_val {d} : (0 : ElectromagneticPotential d).val = 0 := rfl
+
+@[simp]
+lemma zero_apply {d} (x : SpaceTime d) : (0 : ElectromagneticPotential d) x = 0 := rfl
+
 instance {d} : Add (ElectromagneticPotential d) where
   add A B := ⟨fun x => A x + B x⟩
 
@@ -101,8 +110,50 @@ instance {d} : Add (ElectromagneticPotential d) where
 lemma add_val {d} (A B : ElectromagneticPotential d) :
     (A + B).val = A.val + B.val := rfl
 
+@[simp]
 lemma add_apply {d} (A B : ElectromagneticPotential d) (x : SpaceTime d) :
     (A + B) x = A x + B x := by simp
+
+instance {d} : Neg (ElectromagneticPotential d) where
+  neg A := ⟨fun x => - A x⟩
+
+@[simp]
+lemma neg_val {d} (A : ElectromagneticPotential d) :
+    (- A).val = - A.val := rfl
+
+@[simp]
+lemma neg_apply {d} (A : ElectromagneticPotential d) (x : SpaceTime d) :
+    (- A) x = - A x := rfl
+
+instance {d} : Sub (ElectromagneticPotential d) where
+  sub A B := ⟨fun x => A x - B x⟩
+
+@[simp]
+lemma sub_val {d} (A B : ElectromagneticPotential d) :
+    (A - B).val = A.val - B.val := rfl
+
+@[simp]
+lemma sub_apply {d} (A B : ElectromagneticPotential d) (x : SpaceTime d) :
+    (A - B) x = A x - B x := rfl
+
+instance {d} : AddCommGroup (ElectromagneticPotential d) where
+  add_assoc A B C := by
+    ext x μ
+    simp [add_assoc]
+  zero_add A := by
+    ext x μ
+    simp
+  add_zero A := by
+    ext x μ
+    simp
+  neg_add_cancel A := by
+    ext x μ
+    simp
+  add_comm A B := by
+    ext x μ
+    simp [add_comm]
+  nsmul := nsmulRec
+  zsmul := zsmulRec
 
 noncomputable instance {d} : SMul ℝ (ElectromagneticPotential d) where
   smul r A := ⟨fun x => r • A x⟩
@@ -111,6 +162,7 @@ noncomputable instance {d} : SMul ℝ (ElectromagneticPotential d) where
 lemma smul_val {d} (r : ℝ) (A : ElectromagneticPotential d) :
     (r • A).val = r • A.val := rfl
 
+@[simp]
 lemma smul_apply {d} (r : ℝ) (A : ElectromagneticPotential d) (x : SpaceTime d) :
     (r • A) x = r • A x := by simp
 
@@ -161,7 +213,8 @@ noncomputable def ofPotentials {d} (c : SpeedOfLight) (ϕ : Time → Space d →
 lemma ofPotentials_eq_add {d} (c : SpeedOfLight) (ϕ : Time → Space d → ℝ)
     (A : Time → Space d → EuclideanSpace ℝ (Fin d)) :
     ofPotentials c ϕ A = ofScalarPotential c ϕ + ofVectorPotential c A := by
-  ext x
+  ext1
+  ext1 x
   refine Lorentz.Vector.ext_of_apply (fun i => ?_)
   match i with
   | Sum.inl 0 =>
@@ -196,9 +249,6 @@ noncomputable def ofElectromagneticField (c : SpeedOfLight)
 TODO "Write lemmas for the various properties (e.g. the electric field) of
   the electromagnetic potential from the various constructors."
 
-TODO "Define constructors for the distributional electromagnetic potential, similar
-  to e.g. `ofScalarPotential` and `ofVectorPotential` for `ElectromagneticPotential`."
-
 /-!
 
 ## A.3. The group action on the ElectromagneticPotential
@@ -211,15 +261,27 @@ noncomputable instance {d} : SMul (LorentzGroup d) (ElectromagneticPotential d) 
 lemma action_val {d} (Λ : LorentzGroup d) (A : ElectromagneticPotential d) :
     (Λ • A).val = fun x => Λ • A (Λ⁻¹ • x) := rfl
 
+@[simp]
+lemma action_apply {d} (Λ : LorentzGroup d) (A : ElectromagneticPotential d)
+    (x : SpaceTime d) :
+    (Λ • A) x = Λ • A (Λ⁻¹ • x) := rfl
+
 noncomputable instance {d} : MulAction (LorentzGroup d) (ElectromagneticPotential d) where
   mul_smul Λ₁ Λ₂ A := by
     ext i
-    simp [action_val, mul_smul]
+    simp [mul_smul]
   one_smul A := by
     ext i
-    simp [action_val, one_smul]
+    simp [one_smul]
 
-TODO "Lift the action on `ElectromagneticPotential d` to a `DistribMulAction`."
+noncomputable instance {d} :
+    DistribMulAction (LorentzGroup d) (ElectromagneticPotential d) where
+  smul_zero Λ := by
+    ext x μ
+    simp
+  smul_add Λ A B := by
+    ext x μ
+    simp [Lorentz.Vector.smul_add]
 
 /-!
 
@@ -371,7 +433,6 @@ lemma contDiff_ofElectromagneticField {n : ℕ} (c : SpeedOfLight)
     all_goals
     · simp [C, crossProduct]
       fun_prop
-  have hn : ContDiff ℝ n ↿A := h1.of_le (by simp)
   rw [← SpaceTime.contDiff_vector]
   intro μ
   match μ with
@@ -402,54 +463,11 @@ Under a Lorentz transformation `Λ`, this transforms as
 lemma spaceTime_deriv_action_eq_sum {d} {μ ν : Fin 1 ⊕ Fin d} {x : SpaceTime d}
     (Λ : LorentzGroup d) (A : ElectromagneticPotential d) (hA : Differentiable ℝ A) :
     ∂_ μ (Λ • A) x ν = ∑ κ, ∑ ρ, (Λ.1 ν κ * Λ⁻¹.1 ρ μ) * ∂_ ρ A (Λ⁻¹ • x) κ := by
-  calc _
-    _ = ((Λ • (∂_ μ (fun x => A (Λ⁻¹ • x)) x)) ν) := by
-      have hdif : ∀ i, DifferentiableAt ℝ (fun x => A (Λ⁻¹ • x) i) x := by
-          intro i
-          apply Differentiable.differentiableAt
-          revert i
-          rw [SpaceTime.differentiable_vector]
-          conv =>
-            enter [2, x]; rw [← Lorentz.Vector.actionCLM_apply]
-          apply Differentiable.fun_comp hA
-          exact ContinuousLinearMap.differentiable (Lorentz.Vector.actionCLM Λ⁻¹)
-      trans ∂_ μ (fun x => (Λ • A (Λ⁻¹ • x)) ν) x
-      · rw [SpaceTime.deriv_eq, SpaceTime.deriv_eq, SpaceTime.fderiv_vector]
-        simp only [action_val]
-        fun_prop
-      conv_lhs =>
-        enter [2, x]
-        rw [Lorentz.Vector.smul_eq_sum]
-      rw [SpaceTime.deriv_eq]
-      rw [fderiv_fun_sum (𝕜 := ℝ)]
-      conv_lhs =>
-        enter [1, 2, i]
-        rw [fderiv_const_mul (hdif i)]
-      simp only [ContinuousLinearMap.coe_sum', ContinuousLinearMap.coe_smul',
-        Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
-      rw [Lorentz.Vector.smul_eq_sum]
-      congr
-      funext κ
-      congr
-      rw [SpaceTime.deriv_eq, SpaceTime.fderiv_vector]
-      · exact hA.comp (Lorentz.Vector.actionCLM Λ⁻¹).differentiable
-      · intro i _
-        apply DifferentiableAt.const_mul
-        exact hdif i
-    _ = (((Λ • (∑ ρ, Λ⁻¹.1 ρ μ • ∂_ ρ A (Λ⁻¹ • x)))) ν) := by
-      rw [SpaceTime.deriv_comp_lorentz_action]
-      · exact hA
-    _ = (∑ κ, Λ.1 ν κ * (∑ ρ, Λ⁻¹.1 ρ μ • ∂_ ρ A (Λ⁻¹ • x) κ)) := by
-      rw [Lorentz.Vector.smul_eq_sum]
-      congr
-      funext j
-      congr
-      rw [Lorentz.Vector.apply_sum]
-      rfl
-  apply Finset.sum_congr rfl (fun κ _ => ?_)
-  rw [Finset.mul_sum]
-  apply Finset.sum_congr rfl (fun ρ _ => ?_)
-  simp only [smul_eq_mul]
+  rw [action_val, SpaceTime.deriv_equivariant A.val Λ x hA μ, Lorentz.Vector.apply_sum,
+    Finset.sum_comm]
+  refine Finset.sum_congr rfl (fun ρ _ => ?_)
+  rw [Lorentz.Vector.apply_smul, Lorentz.Vector.smul_eq_sum, Finset.mul_sum]
+  refine Finset.sum_congr rfl (fun κ _ => ?_)
   ring
 
 /-!
@@ -479,8 +497,7 @@ lemma hasVarAdjDerivAt_component {d : ℕ} (μ : Fin 1 ⊕ Fin d) (A : SpaceTime
   · fun_prop
   refine { adjoint_inner_left := ?_ }
   intro u v
-  simp [f,f']
-  simp [inner_smul_left, Lorentz.Vector.basis_inner]
+  simp [f, f', inner_smul_left, Lorentz.Vector.basis_inner]
   ring_nf
   rfl
 
@@ -504,7 +521,6 @@ lemma deriv_hasVarAdjDerivAt {d} (μ ν : Fin 1 ⊕ Fin d) (A : SpaceTime d → 
     Lorentz.Vector d) x => ∂_ μ A x ν)) h0' ?_
   intro φ hφ
   funext x
-  simp only
   rw [deriv_apply_eq μ ν φ]
   exact hφ.differentiable (by simp)
 
@@ -629,9 +645,7 @@ lemma toTensor_deriv_basis_repr_apply {d} (A : ElectromagneticPotential d)
       (Lorentz.Vector.basis.reindex Lorentz.Vector.indexEquiv.symm)) =
       ((Lorentz.CoVector.basis (d := d)).tensorProduct (Lorentz.Vector.basis (d := d))).reindex
       (Lorentz.CoVector.indexEquiv.symm.prodCongr Lorentz.Vector.indexEquiv.symm) := by
-    ext b
-    match b with
-    | ⟨i, j⟩ =>
+    ext ⟨i, j⟩
     simp
   rw [hb]
   rw [Module.Basis.repr_reindex_apply, deriv_basis_repr_apply]

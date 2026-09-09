@@ -69,7 +69,7 @@ lemma Pure.prodP_dropPair {n n1 : ℕ} {c : Fin (n + 1 + 1) → C}
     {c1 : Fin n1 → C}
     (i j : Fin (n + 1 + 1)) (hij : i ≠ j ∧ S.τ (c i) = c j)
     (p : Pure S c) (p1 : Pure S c1) :
-    p1.prodP (dropPair i j hij.1 p) = permP id (PermCond.append_right_succSuccAbove i j)
+    p1.prodP (dropPair i j hij.1 p) = permP _ (IsReindexing.append_succSuccAbove_natAdd i j)
     (dropPair (Fin.natAdd n1 i) (Fin.natAdd n1 j)
     (by simp_all [Fin.ext_iff]) (p1.prodP p)) := by
   ext x
@@ -95,10 +95,10 @@ lemma Pure.prodP_contrP_snd {n n1 : ℕ} {c : Fin (n + 1 + 1) → C}
     (i j : Fin (n + 1 + 1)) (hij : i ≠ j ∧ S.τ (c i) = c j)
     (p : Pure S c) (p1 : Pure S c1) :
     prodT p1.toTensor (contrP i j hij p) =
-    ((permT id (PermCond.append_right_succSuccAbove i j)) <|
+    ((permT id (IsReindexing.append_succSuccAbove_natAdd i j)) <|
     contrP (Fin.natAdd n1 i) (Fin.natAdd n1 j) (by simpa using hij) <|
     prodP p1 p) := by
-  simp only [contrP, map_smul, Nat.add_eq, finSumFinEquiv_apply_right]
+  simp only [contrP, map_smul, Nat.add_eq]
   rw [contrPCoeff_natAdd i j hij]
   rw [prodT_pure]
   rw [prodP_dropPair _ _ hij]
@@ -113,53 +113,42 @@ lemma prodT_contrT_snd {n n1 : ℕ} {c : Fin (n + 1 + 1) → C}
     (i j : Fin (n + 1 + 1)) (hij : i ≠ j ∧ S.τ (c i) = c j)
     (t : Tensor S c) (t1 : Tensor S c1) :
     prodT t1 (contrT n i j hij t) =
-    ((permT id (PermCond.append_right_succSuccAbove i j)) <|
-    contrT _
-
-      (finSumFinEquiv (m := n1) (Sum.inr i))
-      (finSumFinEquiv (m := n1) (Sum.inr j))
-      (by simpa using hij) <|
-    prodT t1 t) := by
+    ((permT id (IsReindexing.append_succSuccAbove_natAdd i j)) <|
+    contrT _ (Fin.natAdd n1 i) (Fin.natAdd n1 j)
+      (by simpa using hij) <| prodT t1 t) := by
   generalize_proofs ha hb hc hd
   let P (t : Tensor S c) (t1 : Tensor S c1) : Prop :=
     prodT t1 (contrT _ i j hij t) =
-    ((permT id (PermCond.append_right_succSuccAbove i j)) <|
+    ((permT id (IsReindexing.append_succSuccAbove_natAdd i j)) <|
     contrT _
       (finSumFinEquiv (m := n1) (Sum.inr i))
       (finSumFinEquiv (m := n1) (Sum.inr j)) hc <|
     prodT t1 t)
   let P1 (t : Tensor S c) := P t t1
   change P1 t
-  refine induction_on_pure ?_
-    (fun r t h1 => by
-      dsimp only [P1, P] at h1
-      simp only [h1, map_smul, P1, P])
-    (fun t1 t2 h1 h2 => by
-      dsimp only [P1, P] at h1 h2
-      simp only [h1, h2, map_add, P1, P]) t
-  intro p
-  let P2 (t1 : Tensor S c1) := P p.toTensor t1
-  change P2 t1
-  refine induction_on_pure ?_
-    (fun r t h1 => by
-      dsimp only [P1, P, P2] at h1
-      simp only [h1, map_smul, LinearMap.smul_apply, P, P2])
-    (fun t1 t2 h1 h2 => by
-      dsimp only [P1, P, P2] at h1 h2
-      simp only [map_add, LinearMap.add_apply, h1, h2, P2, P]) t1
-  intro p1
-  simp only [Nat.add_eq, finSumFinEquiv_apply_right, contrT_pure, P2, P]
-  rw [Pure.prodP_contrP_snd, prodT_pure, contrT_pure]
-  rfl
+  apply induction_on_pure
+  · intro p
+    let P2 (t1 : Tensor S c1) := P p.toTensor t1
+    change P2 t1
+    apply induction_on_pure
+    · intro p1
+      simp only [Nat.add_eq, finSumFinEquiv_apply_right, contrT_pure, P2, P]
+      rw [Pure.prodP_contrP_snd, prodT_pure, contrT_pure]
+      rfl
+    · intro r t h1
+      simp_all only [map_smul, LinearMap.smul_apply, P2, P]
+    · intro t1 t2 h1 h2
+      simp_all only [map_add, LinearMap.add_apply, P2, P]
+  · intro r t h1
+    simp_all only [map_smul, P1, P]
+  · intro t1 t2 h1 h2
+    simp_all only [map_add, P1, P]
 
-set_option backward.isDefEq.respectTransparency false in
 lemma contrT_prodT_snd {n n1 : ℕ} {c : Fin (n + 1 + 1) → C}
-    {c1 : Fin n1 → C}
-    (i j : Fin (n + 1 + 1)) (hij : i ≠ j ∧ S.τ (c i) = c j)
+    {c1 : Fin n1 → C} (i j : Fin (n + 1 + 1)) (hij : i ≠ j ∧ S.τ (c i) = c j)
     (t : Tensor S c) (t1 : Tensor S c1) :
-    (contrT _ (finSumFinEquiv (m := n1) (Sum.inr i)) (finSumFinEquiv (m := n1) (Sum.inr j))
-      (by simpa using hij) <| prodT t1 t) =
-    ((permT id (PermCond.on_id_symm (PermCond.append_right_succSuccAbove i j))) <|
+    (contrT _ (i.natAdd n1) (j.natAdd n1) (by simpa using hij) <| prodT t1 t) =
+    ((permT id (IsReindexing.on_id_symm (IsReindexing.append_succSuccAbove_natAdd i j))) <|
       (prodT t1 (contrT n i j hij t))) := by
   rw [prodT_contrT_snd]
   simp

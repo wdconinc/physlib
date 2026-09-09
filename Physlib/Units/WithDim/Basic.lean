@@ -73,6 +73,81 @@ instance (d : Dimension) (M : Type) [Sub M] : Sub (WithDim d M) where
 lemma val_sub {d : Dimension} {M : Type} [Sub M] (m1 m2 : WithDim d M) :
     (m1 - m2).val = m1.val - m2.val := rfl
 
+instance (d : Dimension) (M : Type) [AddSemigroup M] :
+    AddSemigroup (WithDim d M) where
+  add_assoc m1 m2 m3 := by
+    ext
+    simp [add_assoc]
+
+instance (d : Dimension) (M : Type) [AddCommSemigroup M] :
+    AddCommSemigroup (WithDim d M) where
+  add_comm m1 m2 := by
+    ext
+    simp [add_comm]
+
+instance (d : Dimension) (M : Type) [AddMonoid M] :
+    AddMonoid (WithDim d M) where
+  zero_add m := by
+    ext
+    simp [zero_add]
+  add_zero m := by
+    ext
+    simp [add_zero]
+  nsmul := nsmulRec
+
+instance (d : Dimension) (M : Type) [AddCommMonoid M] :
+    AddCommMonoid (WithDim d M) where
+  add_comm m1 m2 := by
+    ext
+    simp [add_comm]
+
+instance (d : Dimension) (M : Type) [AddGroup M] :
+    AddGroup (WithDim d M) where
+  sub_eq_add_neg m1 m2 := by
+    ext
+    simp [sub_eq_add_neg]
+  neg_add_cancel m := by
+    ext
+    simp [neg_add_cancel]
+  zsmul := zsmulRec
+
+instance (d : Dimension) (M : Type) [AddCommGroup M] :
+    AddCommGroup (WithDim d M) where
+  add_comm m1 m2 := by
+    ext
+    simp [add_comm]
+
+instance (d : Dimension) (M : Type) [LE M] : LE (WithDim d M) where
+  le m1 m2 := m1.val ≤ m2.val
+
+@[simp]
+lemma le_def {d : Dimension} {M : Type} [LE M] (m1 m2 : WithDim d M) :
+    m1 ≤ m2 ↔ m1.val ≤ m2.val := Iff.rfl
+
+instance (d : Dimension) (M : Type) [LT M] : LT (WithDim d M) where
+  lt m1 m2 := m1.val < m2.val
+
+@[simp]
+lemma lt_def {d : Dimension} {M : Type} [LT M] (m1 m2 : WithDim d M) :
+    m1 < m2 ↔ m1.val < m2.val := Iff.rfl
+
+instance (d : Dimension) (M : Type) [Preorder M] :
+    Preorder (WithDim d M) where
+  le_refl m := by
+    exact le_refl m.val
+  le_trans m1 m2 m3 h12 h23 := by
+    change m1.val ≤ m3.val
+    exact le_trans h12 h23
+  lt_iff_le_not_ge m1 m2 := by
+    change m1.val < m2.val ↔ m1.val ≤ m2.val ∧ ¬ m2.val ≤ m1.val
+    exact lt_iff_le_not_ge
+
+instance (d : Dimension) (M : Type) [PartialOrder M] :
+    PartialOrder (WithDim d M) where
+  le_antisymm m1 m2 h12 h21 := by
+    ext
+    exact le_antisymm h12 h21
+
 instance (d : Dimension) (M : Type) [MulAction ℝ≥0 M] : MulAction ℝ≥0 (WithDim d M) where
   smul a m := ⟨a • m.val⟩
   one_smul m := ext _ _ (one_smul ℝ≥0 m.val)
@@ -192,7 +267,7 @@ lemma cast_scaleUnit {d d2 : Dimension} {M : Type} [MulAction ℝ≥0 M] (m : Wi
   subst h
   simp
 
-TODO "Induce further algebraic, order and topological instances on `WithDim d M`
-  from instances on `M`."
+TODO "Induce further non-additive algebraic, additional order, and topological instances
+  on `WithDim d M` from instances on `M`."
 
 end WithDim

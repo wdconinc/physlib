@@ -203,23 +203,16 @@ lemma harmonicWaveX_vectorPotential_space_deriv_succ {d} (𝓕 : FreeSpace) (k :
   match i with
   | 0 => simp
   | ⟨Nat.succ i, hi⟩ =>
-    simp [harmonicWaveX_vectorPotential_succ']
-    rw [Space.deriv_eq]
-    rw [fderiv_const_mul (by fun_prop)]
-    simp only [ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul, mul_eq_zero,
-      div_eq_zero_iff, neg_eq_zero, SpeedOfLight.val_ne_zero, false_or]
-    rw [fderiv_sin (by fun_prop)]
-    simp only [fderiv_add_const, ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul,
-      mul_eq_zero]
-    right
-    right
-    rw [fderiv_const_mul (by fun_prop)]
-    rw [fderiv_const_sub]
-    simp only [smul_neg, ContinuousLinearMap.neg_apply, ContinuousLinearMap.coe_smul',
-      Pi.smul_apply, smul_eq_mul, neg_eq_zero, mul_eq_zero]
-    rw [← Space.deriv_eq]
-    rw [Space.deriv_component]
-    simp
+    have transverse_deriv_eq_zero : ∀ (g : ℝ → ℝ), Differentiable ℝ g →
+        Space.deriv j.succ (fun y => g (y 0)) x = 0 := by
+      intro g hg
+      rw [Space.deriv_eq, show (fun y : Space d.succ => g (y 0)) = g ∘ (fun y => y 0) from rfl,
+        fderiv_comp _ hg.differentiableAt (by fun_prop)]
+      simp [← Space.deriv_eq, Space.deriv_component, Fin.succ_ne_zero]
+    simp only [harmonicWaveX_vectorPotential_succ', mul_one]
+    exact transverse_deriv_eq_zero
+      (fun u => -E₀ ⟨i, by grind⟩ / (𝓕.c.val * k) *
+        sin (k * (t.val * 𝓕.c.val - u) + φ ⟨i, by grind⟩)) (by fun_prop)
 
 open Space
 @[simp]
@@ -230,12 +223,12 @@ lemma harmonicWaveX_vectorPotential_succ_space_deriv_zero {d} (𝓕 : FreeSpace)
   simp [harmonicWaveX_vectorPotential_succ]
   rw [Space.deriv_eq_fderiv_basis]
   rw [fderiv_const_mul (by fun_prop)]
-  simp only [ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul]
+  simp only [FunLike.coe_smul, Pi.smul_apply, smul_eq_mul]
   rw [fderiv_sin (by fun_prop)]
-  simp only [fderiv_add_const, ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul]
+  simp only [fderiv_add_const, FunLike.coe_smul, Pi.smul_apply, smul_eq_mul]
   rw [fderiv_const_mul (by fun_prop)]
   rw [fderiv_const_sub]
-  simp only [smul_neg, ContinuousLinearMap.neg_apply, ContinuousLinearMap.coe_smul', Pi.smul_apply,
+  simp only [smul_neg, _root_.neg_apply, FunLike.coe_smul, Pi.smul_apply,
     smul_eq_mul, mul_neg]
   rw [← Space.deriv_eq_fderiv_basis]
   rw [Space.deriv_component]
@@ -259,8 +252,7 @@ lemma harmonicWaveX_electricField_zero {d} (𝓕 : FreeSpace) (k : ℝ)
   simp [ElectromagneticPotential.electricField]
   rw [← Time.deriv_euclid]
   simp only [harmonicWaveX_vectorPotential_zero_eq_zero, Time.deriv_const]
-  refine vectorPotential_differentiable_time (harmonicWaveX 𝓕 k E₀ φ) ?_ x
-  exact harmonicWaveX_differentiable 𝓕 k E₀ φ
+  exact vectorPotential_differentiable_time _ (harmonicWaveX_differentiable 𝓕 k E₀ φ) x
 
 lemma harmonicWaveX_electricField_succ {d} (𝓕 : FreeSpace) (k : ℝ) (hk : k ≠ 0)
     (E₀ : Fin d → ℝ) (φ : Fin d → ℝ) (t : Time) (x : Space d.succ) (i : Fin d) :
@@ -271,18 +263,17 @@ lemma harmonicWaveX_electricField_succ {d} (𝓕 : FreeSpace) (k : ℝ) (hk : k 
   simp [harmonicWaveX_vectorPotential_succ]
   rw [Time.deriv_eq]
   rw [fderiv_const_mul]
-  simp only [ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul]
+  simp only [FunLike.coe_smul, Pi.smul_apply, smul_eq_mul]
   rw [fderiv_sin (by fun_prop)]
   rw [fderiv_add_const]
   rw [fderiv_const_mul (by fun_prop)]
-  simp only [ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul]
+  simp only [FunLike.coe_smul, Pi.smul_apply, smul_eq_mul]
   rw [fderiv_sub_const]
   rw [fderiv_mul_const (by fun_prop)]
-  simp only [ContinuousLinearMap.coe_smul', Pi.smul_apply, Time.fderiv_val, smul_eq_mul, mul_one]
+  simp only [FunLike.coe_smul, Pi.smul_apply, Time.fderiv_val, smul_eq_mul, mul_one]
   field_simp
   · fun_prop
-  · refine vectorPotential_differentiable_time (harmonicWaveX 𝓕 k E₀ φ) ?_ x
-    exact harmonicWaveX_differentiable 𝓕 k E₀ φ
+  · exact vectorPotential_differentiable_time _ (harmonicWaveX_differentiable 𝓕 k E₀ φ) x
 
 /-!
 
@@ -297,26 +288,18 @@ lemma harmonicWaveX_electricField_space_deriv_same {d} (𝓕 : FreeSpace) (k : �
   match i with
   | 0 => simp [harmonicWaveX_electricField_zero]
   | ⟨Nat.succ i, hi⟩ =>
+    have transverse_deriv_cos_eq_zero : ∀ (C a k b : ℝ) (l : Fin d) (y : Space d.succ),
+        Space.deriv l.succ (fun x => C * Real.cos (a - k * x 0 + b)) y = 0 := by
+      intro C a k b l y
+      rw [Space.deriv_eq, show (fun x : Space d.succ => C * Real.cos (a - k * x 0 + b))
+          = (fun u => C * Real.cos (a - k * u + b)) ∘ (fun x => x 0) from rfl,
+        fderiv_comp _ (by fun_prop) (by fun_prop)]
+      simp [← Space.deriv_eq, Space.deriv_component, Fin.succ_ne_zero]
     rw [← Fin.succ_mk _ _ (by grind)]
     conv_lhs =>
       enter [2, x]
       rw [harmonicWaveX_electricField_succ _ _ hk]
-    rw [Space.deriv_eq]
-    rw [fderiv_const_mul (by fun_prop)]
-    simp only [Nat.succ_eq_add_one, Fin.succ_mk, ContinuousLinearMap.coe_smul', Pi.smul_apply,
-      smul_eq_mul, mul_eq_zero]
-    rw [fderiv_cos (by fun_prop)]
-    simp only [fderiv_add_const, neg_smul, ContinuousLinearMap.neg_apply,
-      ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul, neg_eq_zero, mul_eq_zero]
-    right
-    right
-    rw [fderiv_const_sub]
-    simp only [ContinuousLinearMap.neg_apply, neg_eq_zero]
-    rw [fderiv_const_mul (by fun_prop)]
-    simp only [ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul, mul_eq_zero]
-    rw [← Space.deriv_eq]
-    rw [Space.deriv_component]
-    simp
+    apply transverse_deriv_cos_eq_zero
 
 /-!
 
@@ -333,14 +316,14 @@ lemma harmonicWaveX_electricField_succ_time_deriv {d} (𝓕 : FreeSpace) (k : �
     rw [harmonicWaveX_electricField_succ _ _ hk]
   rw [Time.deriv_eq]
   rw [fderiv_const_mul (by fun_prop)]
-  simp only [Nat.succ_eq_add_one, ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul,
+  simp only [Nat.succ_eq_add_one, FunLike.coe_smul, Pi.smul_apply, smul_eq_mul,
     neg_mul]
   rw [fderiv_cos (by fun_prop)]
-  simp only [fderiv_add_const, neg_smul, ContinuousLinearMap.neg_apply,
-    ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul, mul_neg, neg_inj]
+  simp only [fderiv_add_const, neg_smul, _root_.neg_apply,
+    FunLike.coe_smul, Pi.smul_apply, smul_eq_mul, mul_neg, neg_inj]
   rw [fderiv_sub_const]
   rw [fderiv_const_mul (by fun_prop)]
-  simp only [ContinuousLinearMap.coe_smul', Pi.smul_apply, Time.fderiv_val, smul_eq_mul, mul_one]
+  simp only [FunLike.coe_smul, Pi.smul_apply, Time.fderiv_val, smul_eq_mul, mul_one]
   ring
 
 /-!
@@ -427,58 +410,32 @@ lemma harmonicWaveX_magneticFieldMatrix_space_deriv_succ {d} (𝓕 : FreeSpace) 
       rw [harmonicWaveX_magneticFieldMatrix_succ_succ _ _]
     simp
   | 0, ⟨Nat.succ j, hj⟩ =>
+    have transverse_deriv_cos_eq_zero : ∀ (C a k b : ℝ) (l : Fin d) (y : Space d.succ),
+        Space.deriv l.succ (fun x => C * Real.cos (a - k * x 0 + b)) y = 0 := by
+      intro C a k b l y
+      rw [Space.deriv_eq, show (fun x : Space d.succ => C * Real.cos (a - k * x 0 + b))
+          = (fun u => C * Real.cos (a - k * u + b)) ∘ (fun x => x 0) from rfl,
+        fderiv_comp _ (by fun_prop) (by fun_prop)]
+      simp [← Space.deriv_eq, Space.deriv_component, Fin.succ_ne_zero]
     conv_lhs =>
       enter [2, x]
       rw [← Fin.succ_mk _ _ (by grind)]
       rw [harmonicWaveX_magneticFieldMatrix_zero_succ _ k hk]
-    have h1 (i : Fin d) : Space.deriv l.succ
-        (fun x => - E₀ i / 𝓕.c.val * cos (𝓕.c.val * k * t.val - k * x 0 + φ i)) x
-        = 0 := by
-      rw [Space.deriv_eq]
-      rw [fderiv_const_mul]
-      simp only [ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul, mul_eq_zero,
-        div_eq_zero_iff, neg_eq_zero, SpeedOfLight.val_ne_zero, or_false]
-      rw [fderiv_cos (by fun_prop)]
-      simp only [fderiv_add_const, neg_smul, ContinuousLinearMap.neg_apply,
-        ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul, neg_eq_zero, mul_eq_zero]
-      right
-      right
-      rw [fderiv_const_sub]
-      simp only [ContinuousLinearMap.neg_apply, neg_eq_zero]
-      rw [fderiv_const_mul (by fun_prop)]
-      simp only [ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul, mul_eq_zero]
-      rw [← Space.deriv_eq]
-      rw [Space.deriv_component]
-      simp only [Fin.succ_ne_zero, ↓reduceIte, or_true]
-      fun_prop
-    rw [← h1 ⟨j, by grind⟩]
+    apply transverse_deriv_cos_eq_zero
 
   | ⟨Nat.succ j, hj⟩, 0 =>
+    have transverse_deriv_cos_eq_zero : ∀ (C a k b : ℝ) (l : Fin d) (y : Space d.succ),
+        Space.deriv l.succ (fun x => C * Real.cos (a - k * x 0 + b)) y = 0 := by
+      intro C a k b l y
+      rw [Space.deriv_eq, show (fun x : Space d.succ => C * Real.cos (a - k * x 0 + b))
+          = (fun u => C * Real.cos (a - k * u + b)) ∘ (fun x => x 0) from rfl,
+        fderiv_comp _ (by fun_prop) (by fun_prop)]
+      simp [← Space.deriv_eq, Space.deriv_component, Fin.succ_ne_zero]
     conv_lhs =>
       enter [2, x]
       rw [← Fin.succ_mk _ _ (by grind)]
       rw [harmonicWaveX_magneticFieldMatrix_succ_zero _ k hk]
-    have h1 (i : Fin d) : Space.deriv l.succ
-        (fun x => E₀ i / 𝓕.c.val * cos (𝓕.c.val * k * t.val - k * x 0 + φ i)) x
-        = 0 := by
-      rw [Space.deriv_eq]
-      rw [fderiv_const_mul]
-      simp only [ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul, mul_eq_zero,
-        div_eq_zero_iff, SpeedOfLight.val_ne_zero, or_false]
-      rw [fderiv_cos (by fun_prop)]
-      simp only [fderiv_add_const, neg_smul, ContinuousLinearMap.neg_apply,
-        ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul, neg_eq_zero, mul_eq_zero]
-      right
-      right
-      rw [fderiv_const_sub]
-      simp only [ContinuousLinearMap.neg_apply, neg_eq_zero]
-      rw [fderiv_const_mul (by fun_prop)]
-      simp only [ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul, mul_eq_zero]
-      rw [← Space.deriv_eq]
-      rw [Space.deriv_component]
-      simp only [Fin.succ_ne_zero, ↓reduceIte, or_true]
-      fun_prop
-    rw [← h1 ⟨j, by grind⟩]
+    apply transverse_deriv_cos_eq_zero
 
 lemma harmonicWaveX_magneticFieldMatrix_zero_succ_space_deriv_zero {d} (𝓕 : FreeSpace) (k : ℝ)
     (hk : k ≠ 0)
@@ -491,15 +448,15 @@ lemma harmonicWaveX_magneticFieldMatrix_zero_succ_space_deriv_zero {d} (𝓕 : F
     rw [harmonicWaveX_magneticFieldMatrix_zero_succ _ k hk]
   rw [Space.deriv_eq]
   rw [fderiv_const_mul]
-  simp only [Nat.succ_eq_add_one, ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul,
+  simp only [Nat.succ_eq_add_one, FunLike.coe_smul, Pi.smul_apply, smul_eq_mul,
     neg_mul]
   rw [fderiv_cos (by fun_prop)]
-  simp only [fderiv_add_const, neg_smul, ContinuousLinearMap.neg_apply,
-    ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul, mul_neg]
+  simp only [fderiv_add_const, neg_smul, _root_.neg_apply,
+    FunLike.coe_smul, Pi.smul_apply, smul_eq_mul, mul_neg]
   rw [fderiv_const_sub]
-  simp only [ContinuousLinearMap.neg_apply, mul_neg, neg_neg]
+  simp only [_root_.neg_apply, mul_neg, neg_neg]
   rw [fderiv_const_mul (by fun_prop)]
-  simp only [ContinuousLinearMap.coe_smul', Pi.smul_apply, smul_eq_mul]
+  simp only [FunLike.coe_smul, Pi.smul_apply, smul_eq_mul]
   rw [← Space.deriv_eq]
   rw [Space.deriv_component]
   simp only [↓reduceIte, mul_one]
@@ -535,19 +492,15 @@ lemma harmonicWaveX_isExtrema {d} (𝓕 : FreeSpace) (k : ℝ) (hk : k ≠ 0)
         enter [1, t]
         rw [harmonicWaveX_electricField_zero 𝓕 k E₀]
       simp only [Time.deriv_const]
-      refine electricField_differentiable_time ?_ x
-      exact harmonicWaveX_contDiff 2 𝓕 k E₀ φ
+      exact electricField_differentiable_time (harmonicWaveX_contDiff 2 𝓕 k E₀ φ) x
     rw [harmonicWaveX_magneticFieldMatrix_zero_succ_space_deriv_zero _ k hk]
     rw [← Time.deriv_euclid]
     rw [harmonicWaveX_electricField_succ_time_deriv _ _ hk]
     field_simp
     simp [𝓕.c_sq]
     field_simp
-    ring_nf
-    left
-    trivial
-    apply electricField_differentiable_time
-    exact harmonicWaveX_contDiff 2 𝓕 k E₀ φ
+    tauto
+    exact electricField_differentiable_time (harmonicWaveX_contDiff 2 𝓕 k E₀ φ) x
   · apply harmonicWaveX_contDiff
   · change ContDiff ℝ _ (fun _ => 0)
     fun_prop
@@ -646,29 +599,8 @@ lemma harmonicWaveX_polarization_ellipse {d} (𝓕 : FreeSpace) (k : ℝ) (hk : 
   have hij (i j : Fin d) :
       cos (τ + φ i) ^ 2 + cos (τ + φ j) ^ 2
       - 2 * cos (τ + φ i) * cos (τ + φ j) * cos (φ j - φ i) = sin (φ j - φ i) ^ 2 := by
-    calc _
-      _ = cos (τ + φ i) ^ 2 * (sin (φ j) ^ 2 + cos (φ j) ^ 2) + cos (τ + φ j) ^ 2
-        * (sin (φ i) ^ 2 + cos (φ i) ^ 2)
-        - 2 * cos (τ + φ i) * cos (τ + φ j) * cos (φ j - φ i) := by simp
-      _ = (cos (τ) * sin (φ j - φ i)) ^ 2 + (sin (τ) * sin (φ j - φ i)) ^ 2 := by
-        have h1 : cos (τ + φ i) * sin (φ j) - cos (τ + φ j) * sin (φ i) =
-            cos τ * sin (φ j - φ i) := by
-          field_simp
-          symm
-          rw [cos_add, cos_add, sin_sub]
-          ring
-        have h2 : cos (τ + φ i) * cos (φ j) - cos (τ + φ j) * cos (φ i) =
-            sin τ * sin (φ j - φ i) := by
-          field_simp
-          conv_lhs => enter [1]; rw [cos_add]
-          conv_lhs => enter [2]; rw [cos_add]
-          conv_rhs => enter [2]; rw [sin_sub]
-          ring
-        rw [← h1, ← h2]
-        rw [cos_sub]
-        ring
-      _ = sin (φ j - φ i) ^ 2 * (cos (τ) ^ 2 + sin (τ) ^ 2) := by ring
-      _ = sin (φ j - φ i) ^ 2 := by simp
+    simp only [cos_add, sin_sub, cos_sub]
+    nlinarith [sin_sq_add_cos_sq τ, sin_sq_add_cos_sq (φ i), sin_sq_add_cos_sq (φ j)]
   symm
   calc _
     _ = ∑ (i : Fin d), ∑ (j : Fin d), (cos (τ + φ i) ^ 2 + cos (τ + φ j) ^ 2

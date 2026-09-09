@@ -38,6 +38,8 @@ In this module we define the Higgs field and prove some basic properties.
     - A.6.1. The rotation matrix to ofReal
     - A.6.2. Members of orbits
   - A.7. The stability group of a Higgs vector
+  - A.8. Gauge action removing phase from second component
+  - A.9. To real scalars
 - B. The Higgs bundle
   - B.1. Definition of the Higgs bundle
   - B.2. Instance of a vector bundle
@@ -146,12 +148,7 @@ def ofReal (a : ℝ) : HiggsVec :=
 
 @[simp]
 lemma ofReal_normSq {a : ℝ} (ha : 0 ≤ a) : ‖ofReal a‖ ^ 2 = a := by
-  simp only [ofReal]
-  rw [PiLp.norm_sq_eq_of_L2]
-  rw [@Fin.sum_univ_two]
-  simp only [Fin.isValue, cons_val_zero, norm_real, Real.norm_eq_abs, _root_.sq_abs, cons_val_one,
-    norm_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, add_zero]
-  exact Real.sq_sqrt ha
+  simp [ofReal, PiLp.norm_sq_eq_of_L2, Fin.sum_univ_two, Real.sq_sqrt ha]
 
 /-!
 
@@ -198,6 +195,17 @@ instance : DistribMulAction StandardModel.GaugeGroupI HiggsVec where
     rw [gaugeGroupI_smul_eq_U1_smul_SU2]
     simp [mulVec_add]
     simp [← gaugeGroupI_smul_eq_U1_smul_SU2]
+
+instance : SMulCommClass ℂ GaugeGroupI HiggsVec where
+  smul_comm r g φ := by
+    simp [gaugeGroupI_smul_eq, mulVec_smul]
+    rw [smul_comm]
+
+instance : SMulCommClass ℝ GaugeGroupI HiggsVec where
+  smul_comm r g φ := by
+    simp [gaugeGroupI_smul_eq, mulVec_smul]
+    rw [smul_comm]
+
 /-!
 
 #### A.5.2. Unitary nature of the action
@@ -238,8 +246,7 @@ lemma gaugeGroupI_smul_inner (g : StandardModel.GaugeGroupI) (φ ψ : HiggsVec) 
 @[simp]
 lemma gaugeGroupI_smul_norm (g : StandardModel.GaugeGroupI) (φ : HiggsVec) :
     ‖g • φ‖ = ‖φ‖ := by
-  rw [norm_eq_sqrt_re_inner (𝕜 := ℂ), norm_eq_sqrt_re_inner (𝕜 := ℂ)]
-  rw [gaugeGroupI_smul_inner]
+  rw [norm_eq_sqrt_re_inner (𝕜 := ℂ), norm_eq_sqrt_re_inner (𝕜 := ℂ), gaugeGroupI_smul_inner]
 
 /-!
 
@@ -262,13 +269,10 @@ corresponding `ofReal` Higgs vector.
   vector to zero, and the first component to a real -/
 def toRealGroupElem (φ : HiggsVec) : GaugeGroupI :=
   if hφ : φ = 0 then 1 else by
-  have h0 : (‖φ‖^2 : ℝ) = φ 0 * (starRingEnd ℂ) (φ 0) + φ 1 * (starRingEnd ℂ) (φ 1) := by
-    rw [← @real_inner_self_eq_norm_sq]
+  have h0' : (‖φ‖ ^ 2 : ℂ) = φ 0 * (starRingEnd ℂ) (φ 0) + φ 1 * (starRingEnd ℂ) (φ 1) := by
+    rw [← ofReal_pow, ← @real_inner_self_eq_norm_sq]
     simp only [Fin.isValue, mul_conj, PiLp.inner_apply, Complex.inner, ofReal_re,
       Fin.sum_univ_two, ofReal_add]
-  have h0' : (‖φ‖^2 : ℂ) = φ 0 * (starRingEnd ℂ) (φ 0) + φ 1 * (starRingEnd ℂ) (φ 1) := by
-    rw [← h0]
-    simp
   refine ⟨1, ⟨!![conj (φ 0) / ‖φ‖, conj (φ 1) / ‖φ‖; -φ 1 /‖φ‖, φ 0 /‖φ‖;], ?_, ?_⟩, 1⟩
   /- Member of the unitary group. -/
   · simp only [Fin.isValue, SetLike.mem_coe]
@@ -301,13 +305,10 @@ lemma toRealGroupElem_smul_self (φ : HiggsVec) :
     ext i
     fin_cases i <;> simp [ofReal]
   rw [gaugeGroupI_smul_eq]
-  have h0 : (‖φ‖^2 : ℝ) = φ 0 * (starRingEnd ℂ) (φ 0) + φ 1 * (starRingEnd ℂ) (φ 1) := by
-    rw [← @real_inner_self_eq_norm_sq]
+  have h0' : (‖φ‖ ^ 2 : ℂ) = φ 0 * (starRingEnd ℂ) (φ 0) + φ 1 * (starRingEnd ℂ) (φ 1) := by
+    rw [← ofReal_pow, ← @real_inner_self_eq_norm_sq]
     simp only [Fin.isValue, mul_conj, PiLp.inner_apply, Complex.inner, ofReal_re,
       Fin.sum_univ_two, ofReal_add]
-  have h0' : (‖φ‖^2 : ℂ) = φ 0 * (starRingEnd ℂ) (φ 0) + φ 1 * (starRingEnd ℂ) (φ 1) := by
-    rw [← h0]
-    simp
   simp [toRealGroupElem, hφ]
   · simp [GaugeGroupI.toU1, GaugeGroupI.toSU2]
     ext i
@@ -335,8 +336,7 @@ Higgs vectors with the same norm.
 lemma mem_orbit_gaugeGroupI_iff (φ : HiggsVec) (ψ : HiggsVec) :
     ψ ∈ MulAction.orbit GaugeGroupI φ ↔ ‖ψ‖ = ‖φ‖ := by
   constructor
-  · intro h
-    obtain ⟨g, rfl⟩ := h
+  · rintro ⟨g, rfl⟩
     simp
   · intro h
     use (toRealGroupElem ψ)⁻¹ * toRealGroupElem (φ)
@@ -408,34 +408,62 @@ lemma gaugeGroupI_smul_phase_snd (φ : HiggsVec) :
       (∀ a : ℝ, g • (!₂[a, 0] : HiggsVec) = (!₂[a, 0] : HiggsVec)) := by
   let θ := arg (φ 1)
   use StandardModel.GaugeGroupI.ofU1Subgroup ⟨Complex.exp (-I * θ / 6), by
-    rw [Unitary.mem_iff]
-    simp [← Complex.exp_conj, ← Complex.exp_add, Complex.conj_ofNat]
+    simp [Unitary.mem_iff, ← Complex.exp_conj, ← Complex.exp_add, Complex.conj_ofNat]
     ring_nf
     simp⟩
   apply And.intro
   · rw [ofU1Subgroup_smul_eq_smul]
     simp only [Fin.isValue, neg_mul, cons_mulVec, cons_dotProduct, one_mul, zero_mul,
       dotProduct_of_isEmpty, add_zero, zero_add, empty_mulVec, cons_val_one, cons_val_fin_one]
-    trans Complex.exp (-I * θ / 6) ^ 6 * φ.ofLp 1
-    · congr
-      simp
-    have habs : φ.ofLp 1 = cexp (I * arg (φ.ofLp 1)) * ‖φ.ofLp 1‖ := by
-      conv_lhs => rw [← Complex.norm_mul_exp_arg_mul_I (φ.ofLp 1)]
-      ring_nf
-    conv_lhs => rw [habs]
-    rw [← mul_assoc, ← Complex.exp_nat_mul, ← Complex.exp_add]
+    rw [show vecHead (vecTail φ.ofLp) = φ.ofLp 1 from rfl]
+    nth_rewrite 1 [← Complex.norm_mul_exp_arg_mul_I (φ.ofLp 1)]
+    rw [← Complex.exp_nat_mul, mul_left_comm, ← Complex.exp_add]
     simp [θ]
     ring_nf
     simp
   apply And.intro
   · intro φ
-    rw [ofU1Subgroup_smul_eq_smul]
-    simp
-    rfl
+    simp [ofU1Subgroup_smul_eq_smul, vecHead]
   · intro a
-    simp [ofU1Subgroup_smul_eq_smul]
+    ext i
+    fin_cases i <;> simp [ofU1Subgroup_smul_eq_smul]
+
+
+/-!
+
+### A.9 To real scalars
+
+-/
+
+/-- The underlying real values of the Higgs vector. -/
+def toRealScalars : HiggsVec →ₗ[ℝ] (Fin 4 → ℝ) where
+  toFun x := fun
+    | 0 => (x 0).re
+    | 1 => (x 0).im
+    | 2 => (x 1).re
+    | 3 => (x 1).im
+  map_add' x y := by
     ext i
     fin_cases i <;> simp
+  map_smul' a x := by
+    ext i
+    fin_cases i <;> simp
+
+lemma toRealScalars_smul_real (a : ℝ) (φ : HiggsVec) :
+    toRealScalars (a • φ) = a • toRealScalars φ := by
+  simp [toRealScalars]
+
+lemma ofReal_toRealScalars (a : ℝ) :
+    toRealScalars (ofReal a) = !₄[Real.sqrt a, 0, 0, 0] := by
+  simp [ofReal, toRealScalars]
+  funext i
+  fin_cases i <;> simp
+
+lemma ofReal_toRealScalars_norm (φ : HiggsVec) :
+    toRealScalars (ofReal (‖φ‖ ^ 2)) = !₄[‖φ‖, 0, 0, 0] := by
+  simp [ofReal, toRealScalars]
+  funext i
+  fin_cases i <;> simp
 
 end HiggsVec
 
@@ -561,7 +589,9 @@ We prove some smoothness properties of the components of a Higgs field.
 @[fun_prop]
 lemma contDiff (φ : HiggsField) :
     ContDiff ℝ ⊤ φ := by
-  simpa [contMDiff_iff_contDiff] using φ.toHiggsVec_smooth
+  have h1 := φ.toHiggsVec_smooth
+  simp_all only [contMDiff_iff_contDiff]
+  exact h1
 
 lemma toVec_smooth (φ : HiggsField) :
     ContMDiff 𝓘(ℝ, SpaceTime) 𝓘(ℝ, EuclideanSpace ℂ (Fin 2)) ⊤ φ :=
@@ -649,14 +679,12 @@ lemma inner_symm (φ1 φ2 : HiggsField) :
 lemma inner_add_left (φ1 φ2 φ3 : HiggsField) :
     ⟪φ1 + φ2, φ3⟫_(SpaceTime → ℂ) = ⟪φ1, φ3⟫_(SpaceTime → ℂ) + ⟪φ2, φ3⟫_(SpaceTime → ℂ) := by
   funext x
-  simp [inner_apply]
-  rw [_root_.inner_add_left]
+  simp [inner_apply, _root_.inner_add_left]
 
 lemma inner_add_right (φ1 φ2 φ3 : HiggsField) :
     ⟪φ1, φ2 + φ3⟫_(SpaceTime → ℂ) = ⟪φ1, φ2⟫_(SpaceTime → ℂ) + ⟪φ1, φ3⟫_(SpaceTime → ℂ) := by
   funext x
-  simp [inner_apply]
-  rw [_root_.inner_add_right]
+  simp [inner_apply, _root_.inner_add_right]
 
 @[simp]
 lemma inner_zero_left (φ : HiggsField) :

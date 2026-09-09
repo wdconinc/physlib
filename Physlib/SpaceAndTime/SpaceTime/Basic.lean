@@ -6,7 +6,7 @@ Authors: Joseph Tooby-Smith
 module
 
 public import Physlib.Relativity.SpeedOfLight
-public import Physlib.Relativity.Tensors.RealTensor.Vector.Basic
+public import Physlib.Relativity.Tensors.RealTensor.Vector.Tensorial
 public import Physlib.SpaceAndTime.Space.Integrals.Basic
 public import Physlib.SpaceAndTime.Time.Basic
 public import Physlib.Meta.Informal.Basic
@@ -531,7 +531,7 @@ lemma det_timeSpaceBasisEquiv {d : ℕ} (c : SpeedOfLight) :
 lemma timeSpaceBasis_eq_map_basis {d : ℕ} (c : SpeedOfLight) :
     timeSpaceBasis (d := d) c =
     Module.Basis.map (Lorentz.Vector.basis (d := d)) (timeSpaceBasisEquiv c).toLinearEquiv := by
-  ext μ
+  ext1 μ
   match μ with
   | Sum.inl 0 =>
     simp [timeSpaceBasisEquiv]

@@ -274,23 +274,9 @@ lemma orthogonal_exp_of_mem_orthogonal (f : ℝ → ℂ) (hf : MemHS f)
         (Complex.I * ↑c * ↑y) ^ r / r ! * (f y * Real.exp (- y^2 / (2 * Q.ξ^2))))
       Filter.atTop (nhds (Complex.exp (Complex.I * c * y) *
       (f y * Real.exp (- y^2 / (2 * Q.ξ^2))))) := by
-    have h11 : (fun n => ∑ r ∈ range n,
-        (Complex.I * ↑c * ↑y) ^ r / r !
-        * (f y * Real.exp (- y^2 / (2 * Q.ξ^2)))) =
-        fun n => (∑ r ∈ range n,
-        (Complex.I * ↑c * ↑y) ^ r / r !)
-        * ((f y * Real.exp (- y^2 / (2 * Q.ξ^2)))) := by
-      funext s
-      simp [Finset.sum_mul]
-    rw [h11]
-    have h12 : (Complex.exp (Complex.I * c * y) * (f y * Real.exp (- y^2 / (2 * Q.ξ^2))))
-      = (Complex.exp (Complex.I * c * y)) * (f y * Real.exp (- y^2 / (2 * Q.ξ^2))) := by
-      simp
-    rw [h12]
+    simp_rw [← Finset.sum_mul]
     apply Filter.Tendsto.mul_const
     simp only [Complex.exp, Complex.exp']
-    haveI hi : CauSeq.IsComplete ℂ norm :=
-      inferInstanceAs (CauSeq.IsComplete ℂ norm)
     exact CauSeq.tendsto_limit (Complex.exp' (Complex.I * c * y))
   /- End of rewriting the integrand as a limit. -/
   /- Rewriting the integral as a limit using dominated_convergence -/
@@ -302,34 +288,9 @@ lemma orthogonal_exp_of_mem_orthogonal (f : ℝ → ℂ) (hf : MemHS f)
       (Real.exp (- x ^ 2 / (2 * Q.ξ^2)))
     apply MeasureTheory.tendsto_integral_of_dominated_convergence bound
     · intro n
-      refine aestronglyMeasurable_fun_sum (range n) ?_
-      intro r hr
-      have h1 : (fun a => (Complex.I * ↑c * ↑a) ^ r / ↑r ! *
-        (f a * ↑(Real.exp (- a ^ 2 / (2 * Q.ξ^2)))))
-        = fun a => (Complex.I * ↑c) ^ r / ↑r ! *
-        (f a * Complex.ofReal (a ^ r * (Real.exp (- a ^ 2 / (2 * Q.ξ^2))))) := by
-        funext a
-        simp only [Complex.ofReal_exp, Complex.ofReal_div, Complex.ofReal_neg,
-          Complex.ofReal_mul, Complex.ofReal_pow, Complex.ofReal_ofNat]
-        ring
-      rw [h1]
-      apply MeasureTheory.AEStronglyMeasurable.const_mul
-      apply MeasureTheory.AEStronglyMeasurable.mul
-      · exact aeStronglyMeasurable_of_memHS hf
-      · apply MeasureTheory.Integrable.aestronglyMeasurable
-        apply MeasureTheory.Integrable.ofReal
-        change Integrable (fun x => (x ^ r) * (Real.exp (- x ^ 2 / (2 * Q.ξ^2))))
-        have h1 : (fun x => (x ^ r)*(Real.exp (- x ^ 2 / (2 * Q.ξ^2)))) =
-            (fun x => (Polynomial.X ^ r : Polynomial ℤ).aeval x *
-            (Real.exp (- (1/ (2* Q.ξ^2)) * x ^ 2))) := by
-          funext x
-          simp only [neg_mul, map_pow, Polynomial.aeval_X, mul_eq_mul_left_iff, Real.exp_eq_exp,
-            pow_eq_zero_iff', ne_eq]
-          left
-          field_simp
-        rw [h1]
-        apply guassian_integrable_polynomial
-        simp
+      refine aestronglyMeasurable_fun_sum (range n) fun r _ => ?_
+      exact (Continuous.aestronglyMeasurable (by fun_prop)).mul
+        ((aeStronglyMeasurable_of_memHS hf).mul (Continuous.aestronglyMeasurable (by fun_prop)))
     · /- Prove the bound is integrable. -/
       have hbound : bound = (fun x => Real.exp |c * x| * norm (f x) *
           Real.exp (-(1/ (2 * Q.ξ^2)) * x ^ 2)) := by
@@ -353,69 +314,44 @@ lemma orthogonal_exp_of_mem_orthogonal (f : ℝ → ℂ) (hf : MemHS f)
         rw [mul_assoc]
       have h1 : (norm (f y) * norm (Complex.exp (-(↑y ^ 2) / (2 * Q.ξ^2))))
         = norm (f y) * Real.exp (-(y ^ 2) / (2 * Q.ξ^2)) := by
-        simp only [mul_eq_mul_left_iff]
-        left
-        rw [Complex.norm_exp]
-        congr
-        trans (Complex.ofReal (- y ^ 2 / (2 * Q.ξ^2))).re
-        · congr
-          simp
-        · rw [Complex.ofReal_re]
+        rw [Complex.norm_exp, show (-(↑y ^ 2) / (2 * (Q.ξ : ℂ)^2)) =
+          ((-y ^ 2 / (2 * Q.ξ^2) : ℝ) : ℂ) by push_cast; ring, Complex.ofReal_re]
       rw [h1]
       by_cases hf : norm (f y) = 0
       · simp [hf]
       rw [mul_le_mul_iff_left₀]
-      · have h1 := Real.sum_le_exp_of_nonneg (x := |c * y|) (abs_nonneg (c * y)) n
-        refine le_trans ?_ h1
-        have h2 : norm (∑ i ∈ range n, (Complex.I * (↑c * ↑y)) ^ i / ↑i !) ≤
-          ∑ i ∈ range n, norm ((Complex.I * (↑c * ↑y)) ^ i / ↑i !) := by
-          exact norm_sum_le _ _
-        refine le_trans h2 ?_
-        apply le_of_eq
-        congr
-        funext i
-        simp only [Complex.norm_div, norm_pow, Complex.norm_mul, Complex.norm_I, Complex.norm_real,
-          Real.norm_eq_abs, one_mul, RCLike.norm_natCast]
-        congr
-        rw [abs_mul]
-      · refine mul_pos ?_ ?_
-        have h1 : 0 ≤ norm (f y) := norm_nonneg (f y)
-        apply lt_of_le_of_ne h1 (fun a => hf (id (Eq.symm a)))
-        exact Real.exp_pos (- y ^ 2 / (2 * Q.ξ^2))
+      · have hnorm : ‖∑ i ∈ range n, (Complex.I * (↑c * ↑y)) ^ i / (i ! : ℂ)‖ ≤
+          Real.exp ‖Complex.I * (↑c * ↑y)‖ := by
+          refine (norm_sum_le_of_le _ fun i _ => le_of_eq ?_).trans
+            (Real.sum_le_exp_of_nonneg (norm_nonneg _) n)
+          rw [norm_div, norm_pow, RCLike.norm_natCast]
+        refine hnorm.trans_eq ?_
+        rw [Complex.norm_mul, Complex.norm_I, one_mul, Complex.norm_mul, Complex.norm_real,
+          Complex.norm_real, Real.norm_eq_abs, Real.norm_eq_abs, abs_mul]
+      · exact mul_pos ((norm_nonneg (f y)).lt_of_ne' hf) (Real.exp_pos _)
     · apply Filter.Eventually.of_forall
       intro y
       exact h1 y
   have h3b : (fun n => ∫ y : ℝ, ∑ r ∈ range n,
       (Complex.I * ↑c * ↑y) ^ r / r ! *
       (f y * Real.exp (- y^2 / (2 * Q.ξ^2)))) = fun (n : ℕ) => 0 := by
-    funext n
-    rw [MeasureTheory.integral_finsetSum]
-    · apply Finset.sum_eq_zero
-      intro r hr
-      have hf' : (fun a => (Complex.I * ↑c * ↑a) ^ r / ↑r ! *
+    have key (r : ℕ) : (fun a => (Complex.I * ↑c * ↑a) ^ r / ↑r ! *
         (f a * ↑(Real.exp (- a ^ 2 / (2 * Q.ξ^2)))))
         = fun a => ((Complex.I * ↑c) ^ r / ↑r !) *
-        (a^ r * (f a * ↑(Real.exp (- a ^ 2 / (2 * Q.ξ^2))))) := by
-        funext a
-        simp only [Complex.ofReal_exp, Complex.ofReal_div, Complex.ofReal_neg,
-          Complex.ofReal_mul, Complex.ofReal_pow, Complex.ofReal_ofNat]
-        ring
-      rw [hf']
-      rw [MeasureTheory.integral_const_mul]
-      rw [Q.orthogonal_power_of_mem_orthogonal f hf hOrth r]
+        (a ^ r * (f a * ↑(Real.exp (- a ^ 2 / (2 * Q.ξ^2))))) := by
+      funext a
+      simp only [Complex.ofReal_exp, Complex.ofReal_div, Complex.ofReal_neg,
+        Complex.ofReal_mul, Complex.ofReal_pow, Complex.ofReal_ofNat]
+      ring
+    funext n
+    rw [MeasureTheory.integral_finsetSum]
+    · refine Finset.sum_eq_zero fun r _ => ?_
+      rw [key r, MeasureTheory.integral_const_mul,
+        Q.orthogonal_power_of_mem_orthogonal f hf hOrth r]
       simp
-    · intro r hr
-      have hf' : (fun a => (Complex.I * ↑c * ↑a) ^ r / ↑r ! *
-        (f a * ↑(Real.exp (- a ^ 2 / (2 * Q.ξ^2)))))
-        = ((Complex.I * ↑c) ^ r / ↑r !) •
-        fun a => (a^ r * (f a * ↑(Real.exp (- a ^ 2 / (2 * Q.ξ^2))))) := by
-        funext a
-        simp only [Complex.ofReal_exp, Complex.ofReal_div, Complex.ofReal_neg,
-          Complex.ofReal_mul, Complex.ofReal_pow, Complex.ofReal_ofNat, Pi.smul_apply, smul_eq_mul]
-        ring
-      rw [hf']
-      apply MeasureTheory.Integrable.smul
-      exact Q.mul_power_integrable f hf r
+    · intro r _
+      rw [key r]
+      exact (Q.mul_power_integrable f hf r).const_mul _
   rw [h3b] at h1'
   apply tendsto_nhds_unique h1'
   rw [tendsto_const_nhds_iff]
@@ -462,15 +398,14 @@ lemma zero_of_orthogonal_mk (f : ℝ → ℂ) (hf : MemHS f)
     congr
     field_simp
     simp
+  have hInt : MemLp (fun x => f x * Real.exp (- x^2 / (2 * Q.ξ^2))) 1 volume := by
+    rw [hf']
+    exact HilbertSpace.mul_gaussian_mem_Lp_one f hf (1/ (2 * Q.ξ^2)) 0 (by simp)
   have h1 : eLpNorm (fun x => f x * Real.exp (- x^2 / (2 * Q.ξ^2))) 2 volume = 0 := by
     rw [← plancherel_theorem]
     rw [Q.fourierIntegral_zero_of_mem_orthogonal f hf hOrth]
     simp only [eLpNorm_zero]
-    · /- f x * Real.exp (- x^2 / (2 * ξ^2)) is integrable -/
-      rw [hf']
-      rw [← memLp_one_iff_integrable]
-      apply HilbertSpace.mul_gaussian_mem_Lp_one f hf (1/ (2 * Q.ξ^2)) 0
-      simp
+    · exact memLp_one_iff_integrable.mp hInt
     · /- f x * Real.exp (- x^2 / (2 * ξ^2)) is square-integrable -/
       rw [hf']
       refine HilbertSpace.mul_gaussian_mem_Lp_two f hf (1 / (2 * Q.ξ^2)) 0 ?_
@@ -485,12 +420,7 @@ lemma zero_of_orthogonal_mk (f : ℝ → ℂ) (hf : MemHS f)
     exact h1
     exact aeStronglyMeasurable_of_memHS hf
     simp only [ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true]
-    · /- f x * Real.exp (- x^2 / (2 * ξ^2)) is strongly measurable -/
-      rw [hf']
-      apply Integrable.aestronglyMeasurable
-      rw [← memLp_one_iff_integrable]
-      apply HilbertSpace.mul_gaussian_mem_Lp_one f hf (1/ (2 * Q.ξ^2)) 0
-      simp
+    · exact hInt.aestronglyMeasurable
     · simp
   rw [h2]
   simp

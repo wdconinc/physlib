@@ -156,30 +156,7 @@ lemma toTensor_eq_asConsTensor :
   rw [show complexContrBasis (Sum.inr 0) = complexContrBasisFin4 1 by {simp}]
   rw [show complexContrBasis (Sum.inr 1) = complexContrBasisFin4 2 by {simp}]
   rw [show complexContrBasis (Sum.inr 2) = complexContrBasisFin4 3 by {simp}]
-  conv_lhs =>
-    enter [1, 1, 1, 1, 1, 1, 1]
-    rw [fromTripleT_apply_basis]
-  conv_lhs =>
-    enter [1, 1, 1, 1, 1, 1, 2]
-    rw [fromTripleT_apply_basis]
-  conv_lhs =>
-    enter [1, 1, 1, 1, 1, 2]
-    rw [fromTripleT_apply_basis]
-  conv_lhs =>
-    enter [1, 1, 1, 1, 2]
-    rw [fromTripleT_apply_basis]
-  conv_lhs =>
-    enter [1, 1, 1, 2]
-    rw [fromTripleT_apply_basis]
-  conv_lhs =>
-    enter [1, 1, 2]
-    rw [fromTripleT_apply_basis]
-  conv_lhs =>
-    enter [1, 2]
-    rw [fromTripleT_apply_basis]
-  conv_lhs =>
-    enter [2]
-    rw [fromTripleT_apply_basis]
+  simp only [fromTripleT_apply_basis]
   rfl
 
 lemma toTensor_eq_ofRat : σ^^^ = ofRat (fun b =>
@@ -227,21 +204,21 @@ lemma toTensor_smul_eq_self (Λ : SL(2,ℂ)) : Λ • σ^^^ = σ^^^ := by
 
 /-- The Pauli matrices as the complex Lorentz tensor `σ_μ^α^{dot β}`. -/
 abbrev pauliCo : ℂT[.down, .upL, .upR] :=
-  permT id (PermCond.auto) {η' | μ ν ⊗ σ^^^ | ν α β}ᵀ
+  permT id (IsReindexing.auto) {η' | μ ν ⊗ σ^^^ | ν α β}ᵀ
 
 @[inherit_doc pauliCo]
 scoped[PauliMatrix] notation "σ_^^" => PauliMatrix.pauliCo
 
 /-- The Pauli matrices as the complex Lorentz tensor `σ_μ_{dot β}_α`. -/
 abbrev pauliCoDown : ℂT[.down, .downR, .downL] :=
-  permT id (PermCond.auto) {σ_^^ | μ α β ⊗ εR' | β β' ⊗ εL' | α α' }ᵀ
+  permT id (IsReindexing.auto) {σ_^^ | μ α β ⊗ εR' | β β' ⊗ εL' | α α' }ᵀ
 
 @[inherit_doc pauliCoDown]
 scoped[PauliMatrix] notation "σ___" => PauliMatrix.pauliCoDown
 
 /-- The Pauli matrices as the complex Lorentz tensor `σ^μ_{dot β}_α`. -/
 abbrev pauliContrDown : ℂT[.up, .downR, .downL] :=
-    permT id (PermCond.auto) {σ^^^ | μ α β ⊗ εR' | β β' ⊗ εL' | α α'}ᵀ
+    permT id (IsReindexing.auto) {σ^^^ | μ α β ⊗ εR' | β β' ⊗ εL' | α α'}ᵀ
 
 @[inherit_doc pauliContrDown]
 scoped[PauliMatrix] notation "σ^__" => PauliMatrix.pauliContrDown
@@ -305,12 +282,12 @@ lemma pauliCoDown_eq_ofRat : pauliCoDown = ofRat (fun b =>
     rw [prodT_basis_repr_apply]
     rw [contrT_basis_repr_apply]
     simp only [coMetric_eq_ofRat, ofRat_basis_repr_apply,
-      altLeftMetric_eq_ofRat]
+      dualLeftMetric_eq_ofRat]
     enter [1, 1, 2, y]
     rw [contr_basis_ratComplexNum]
     rw [prodT_basis_repr_apply]
     simp only [coMetric_eq_ofRat, ofRat_basis_repr_apply, pauliCo_eq_ofRat,
-      altRightMetric_eq_ofRat]
+      dualRightMetric_eq_ofRat]
     rw [← Physlib.RatComplexNum.toComplexNum.map_mul]
     rw [← Physlib.RatComplexNum.toComplexNum.map_mul]
   conv_lhs =>
@@ -347,12 +324,12 @@ lemma pauliContrDown_ofRat : pauliContrDown = ofRat (fun b =>
     rw [prodT_basis_repr_apply]
     rw [contrT_basis_repr_apply]
     simp only [coMetric_eq_ofRat, ofRat_basis_repr_apply,
-      altLeftMetric_eq_ofRat]
+      dualLeftMetric_eq_ofRat]
     enter [1, 1, 2, y]
     rw [contr_basis_ratComplexNum]
     rw [prodT_basis_repr_apply]
     simp only [coMetric_eq_ofRat,ofRat_basis_repr_apply, toTensor_eq_ofRat,
-      altRightMetric_eq_ofRat]
+      dualRightMetric_eq_ofRat]
     rw [← Physlib.RatComplexNum.toComplexNum.map_mul]
     rw [← Physlib.RatComplexNum.toComplexNum.map_mul]
   conv_lhs =>
@@ -387,7 +364,7 @@ lemma smul_pauliCoDown (g : SL(2,ℂ)) : g • pauliCoDown = pauliCoDown := by
   rw [← permT_equivariant, ← contrT_equivariant, ← prodT_equivariant,
     ← contrT_equivariant, ← prodT_equivariant]
   simp only [Tensorial.self_toTensor_apply]
-  rw [smul_pauliCo, actionT_altLeftMetric, actionT_altRightMetric]
+  rw [smul_pauliCo, actionT_dualLeftMetric, actionT_dualRightMetric]
   rfl
 
 set_option backward.isDefEq.respectTransparency false in
@@ -396,7 +373,7 @@ lemma smul_pauliContrDown (g : SL(2,ℂ)) : g • pauliContrDown = pauliContrDow
   rw [← permT_equivariant, ← contrT_equivariant, ← prodT_equivariant,
     ← contrT_equivariant, ← prodT_equivariant]
   simp only [Tensorial.self_toTensor_apply]
-  rw [toTensor_smul_eq_self, actionT_altLeftMetric, actionT_altRightMetric]
+  rw [toTensor_smul_eq_self, actionT_dualLeftMetric, actionT_dualRightMetric]
   rfl
 
 end PauliMatrix

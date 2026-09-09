@@ -1,5 +1,32 @@
 module
 
 public import PhyslibAlpha.Basic
+public import PhyslibAlpha.ClassicalFieldTheory.Local.FirstVariation
+public import PhyslibAlpha.ClassicalFieldTheory.Local.Action
+public import PhyslibAlpha.ClassicalFieldTheory.Local.EulerLagrange
+public import PhyslibAlpha.ClassicalFieldTheory.Local.FirstOrder
+public import PhyslibAlpha.ClassicalFieldTheory.Local.FirstVariation.Basic
+public import PhyslibAlpha.ClassicalFieldTheory.Local.FirstVariation.Criterion
+public import PhyslibAlpha.ClassicalFieldTheory.Local.FirstVariation.Density
+public import PhyslibAlpha.ClassicalFieldTheory.Local.FirstVariation.IntegrationByParts
+public import PhyslibAlpha.ClassicalFieldTheory.Local.FirstVariation.Regularity
+public import PhyslibAlpha.ClassicalFieldTheory.Local.FirstVariation.Support
+public import PhyslibAlpha.ClassicalFieldTheory.Local.JetPoint
+public import PhyslibAlpha.ClassicalFieldTheory.Local.JetPointFiber
+public import PhyslibAlpha.ClassicalFieldTheory.Local.JetPointRegularity
+public import PhyslibAlpha.ClassicalFieldTheory.Local.Lagrangian
+public import PhyslibAlpha.ClassicalFieldTheory.Local.TotalDerivative
+public import PhyslibAlpha.ClassicalFieldTheory.Local.TotalDivergence
+public import PhyslibAlpha.ClassicalFieldTheory.Local.TotalDivergenceEquivalence
+public import PhyslibAlpha.ClassicalFieldTheory.Local.Variation
+public import PhyslibAlpha.SpaceAndTime.Space.Surfaces.HalfPlane
+public import PhyslibAlpha.SpaceAndTime.Space.Surfaces.Line
 public import PhyslibAlpha.SpaceAndTime.Space.Surfaces.Ring
+public import PhyslibAlpha.SpaceAndTime.Space.Surfaces.SphericalCylinder
+public import PhyslibAlpha.SpaceAndTime.Space.Surfaces.SolidCylinder
+public import PhyslibAlpha.SpaceAndTime.Space.Surfaces.SolidSphere
 public import PhyslibAlpha.SpaceAndTime.Space.Surfaces.SphericalShell
+public import PhyslibAlpha.QuantumMechanics.QuantumHarmonicOscillator
+public import PhyslibAlpha.QuantumMechanics.StinespringDilation
+public import PhyslibAlpha.Mathematics.PartialDerivativeTest
+public import PhyslibAlpha.ClassicalMechanics.CoupledSpringPotential

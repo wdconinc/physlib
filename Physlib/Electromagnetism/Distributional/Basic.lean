@@ -7,6 +7,7 @@ module
 
 public import Physlib.SpaceAndTime.TimeAndSpace.ConstantTimeDist
 public import Physlib.Mathematics.VariationalCalculus.HasVarAdjDeriv
+public import Physlib.SpaceAndTime.Space.DistOfFunction
 public import Physlib.SpaceAndTime.SpaceTime.TimeSlice
 
 /-!
@@ -82,7 +83,7 @@ noncomputable def ofScalarPotential {d} (c : SpeedOfLight) :
   map_smul' r φ := by
     ext ε
     simp only [one_div, map_smul, ContinuousLinearMap.comp_smulₛₗ, map_inv₀, RingHom.id_apply,
-      ContinuousLinearMap.coe_smul', ContinuousLinearMap.coe_comp', Pi.smul_apply,
+      FunLike.coe_smul, ContinuousLinearMap.coe_comp, Pi.smul_apply,
       Function.comp_apply]
     rw [smul_comm]
 
@@ -91,8 +92,30 @@ noncomputable def ofStaticScalarPotential {d} (c : SpeedOfLight) :
     ((Space d) →d[ℝ] ℝ) →ₗ[ℝ] DistElectromagneticPotential d :=
   ofScalarPotential c ∘ₗ Space.constantTime
 
-TODO "Add a constructor for DistElectromagneticPotential from a scalar
-  potential which is a function using an if...then...else... based on IsDistBounded."
+/-- The creation of an electromagnetic potential from a static scalar-potential function.
+
+If the function is distribution-bounded, it is first promoted to a distribution using
+`Space.distOfFunction`. Otherwise the constructor returns zero. -/
+noncomputable def ofStaticScalarPotentialFunction {d} (c : SpeedOfLight)
+    (φ : Space d → ℝ) : DistElectromagneticPotential d := by
+  classical
+  exact if hφ : Space.IsDistBounded φ then
+    ofStaticScalarPotential c (Space.distOfFunction φ hφ) else 0
+
+@[simp]
+lemma ofStaticScalarPotentialFunction_of_isDistBounded {d} (c : SpeedOfLight)
+    (φ : Space d → ℝ) (hφ : Space.IsDistBounded φ) :
+    ofStaticScalarPotentialFunction c φ =
+      ofStaticScalarPotential c (Space.distOfFunction φ hφ) := by
+  classical
+  simp [ofStaticScalarPotentialFunction, hφ]
+
+@[simp]
+lemma ofStaticScalarPotentialFunction_eq_zero_of_not_isDistBounded {d}
+    (c : SpeedOfLight) (φ : Space d → ℝ) (hφ : ¬ Space.IsDistBounded φ) :
+    ofStaticScalarPotentialFunction c φ = 0 := by
+  classical
+  simp [ofStaticScalarPotentialFunction, hφ]
 
 /-- The creation of an electromagnetic potential from a vector potential. -/
 noncomputable def ofVectorPotential {d} (c : SpeedOfLight) :

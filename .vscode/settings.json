@@ -7,6 +7,10 @@
     "files.insertFinalNewline": true,
     "files.trimFinalNewlines": true,
     "files.trimTrailingWhitespace": true,
+    "lean4.serverArgs": ["-j", "4", "-M", "4096"],
+    "lean4.serverEnv": {
+      "LEAN_CC": "gcc-16"
+    },
     /**
      The below setting requires the `TODO Highlight` vscode extension.
      */

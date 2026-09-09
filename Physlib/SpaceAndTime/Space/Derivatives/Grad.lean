@@ -48,7 +48,8 @@ of the input function with respect to each spatial coordinate.
   - B.3. The gradient as a sum over basis vectors
   - B.4. The underlying function of the gradient distribution
   - B.5. The gradient applied to a Schwartz function
-  - B.6. The gradident of a Schwartz map
+  - B.6. Gradient of constant distributions
+  - B.7. The gradient of a Schwartz map
 
 ## iv. References
 
@@ -82,7 +83,7 @@ scoped[Space] notation "∇" => grad
 @[simp]
 lemma grad_zero : ∇ (0 : Space d → ℝ) = 0 := by
   unfold grad Space.deriv
-  simp only [fderiv_zero, Pi.zero_apply, ContinuousLinearMap.zero_apply]
+  simp only [fderiv_zero, Pi.zero_apply, _root_.zero_apply]
   rfl
 
 /-!
@@ -118,7 +119,7 @@ lemma grad_fun_add_const (f : Space d → ℝ) (c : ℝ) :
 @[simp]
 lemma grad_const : ∇ (fun _ : Space d => c) = 0 := by
   unfold grad Space.deriv
-  simp only [fderiv_fun_const, Pi.ofNat_apply, ContinuousLinearMap.zero_apply]
+  simp only [fderiv_fun_const, Pi.ofNat_apply, _root_.zero_apply]
   rfl
 
 /-!
@@ -406,7 +407,7 @@ lemma grad_inner {d : ℕ} :
   ext z i
   simp [Space.grad]
   rw [deriv]
-  simp only [fderiv_norm_sq_apply, ContinuousLinearMap.coe_smul', coe_innerSL_apply, Pi.smul_apply,
+  simp only [fderiv_norm_sq_apply, FunLike.coe_smul, coe_innerSL_apply, Pi.smul_apply,
     nsmul_eq_mul, Nat.cast_ofNat, mul_eq_mul_left_iff, OfNat.ofNat_ne_zero, or_false]
   simp
 
@@ -432,9 +433,9 @@ open InnerProductSpace Distribution SchwartzMap MeasureTheory
 
 /- The quantity `⟪f x, Space.grad η x⟫_ℝ` is integrable for `f` bounded
   and `η` a Schwartz map. -/
-lemma integrable_isDistBounded_inner_grad_schwartzMap {dm1 : ℕ}
-    {f : Space dm1.succ → EuclideanSpace ℝ (Fin dm1.succ)}
-    (hf : IsDistBounded f) (η : 𝓢(Space dm1.succ, ℝ)) :
+lemma integrable_isDistBounded_inner_grad_schwartzMap {d : ℕ}
+    {f : Space d → EuclideanSpace ℝ (Fin d)}
+    (hf : IsDistBounded f) (η : 𝓢(Space d, ℝ)) :
     Integrable (fun x => ⟪f x, Space.grad η x⟫_ℝ) volume := by
   conv =>
     enter [1, x]
@@ -442,26 +443,25 @@ lemma integrable_isDistBounded_inner_grad_schwartzMap {dm1 : ℕ}
   apply MeasureTheory.integrable_finsetSum
   intro i _
   simp [inner_smul_right]
-  have integrable_lemma (i j : Fin (dm1 + 1)) :
-      Integrable (fun x => (((SchwartzMap.evalCLM ℝ (Space dm1.succ) ℝ (basis i))
-        ((fderivCLM ℝ (Space dm1.succ) ℝ) η)) x • f x) j) volume := by
+  have integrable_lemma (i j : Fin d) :
+      Integrable (fun x => (((SchwartzMap.evalCLM ℝ (Space d) ℝ (basis i))
+        ((fderivCLM ℝ (Space d) ℝ) η)) x • f x) j) volume := by
     simp only [PiLp.smul_apply]
     exact (hf.pi_comp j).integrable_space _
-  convert integrable_lemma i i using 2
+  convert! integrable_lemma i i using 2
   rename_i x
-  simp only [EuclideanSpace.inner_single_right, Nat.succ_eq_add_one, conj_trivial, one_mul,
-    PiLp.smul_apply, smul_eq_mul, mul_eq_mul_right_iff]
+  simp only [EuclideanSpace.inner_single_right, conj_trivial, one_mul, evalCLM_apply_apply,
+    fderivCLM_apply, PiLp.smul_apply, smul_eq_mul, mul_eq_mul_right_iff]
   left
   rw [deriv_eq_fderiv_basis]
-  rfl
 
-lemma integrable_isDistBounded_inner_grad_schwartzMap_spherical{dm1 : ℕ}
-    {f : Space dm1.succ → EuclideanSpace ℝ (Fin dm1.succ)}
-    (hf : IsDistBounded f) (η : 𝓢(Space dm1.succ, ℝ)) :
+lemma integrable_isDistBounded_inner_grad_schwartzMap_spherical {d : ℕ}
+    {f : Space d → EuclideanSpace ℝ (Fin d)}
+    (hf : IsDistBounded f) (η : 𝓢(Space d, ℝ)) :
     Integrable ((fun x => ⟪f x.1, Space.grad η x.1⟫_ℝ)
-      ∘ (homeomorphUnitSphereProd (Space dm1.succ)).symm)
-      ((volume (α := Space dm1.succ)).toSphere.prod
-      (Measure.volumeIoiPow (Module.finrank ℝ (Space dm1.succ) - 1))) := by
+      ∘ (homeomorphUnitSphereProd (Space d)).symm)
+      ((volume (α := Space d)).toSphere.prod
+      (Measure.volumeIoiPow (Module.finrank ℝ (Space d) - 1))) := by
   have h1 : Integrable ((fun x => ⟪f x.1, Space.grad η x.1⟫_ℝ))
       (.comap (Subtype.val (p := fun x => x ∈ ({0}ᶜ : Set _))) volume) := by
     change Integrable ((fun x => ⟪f x, Space.grad η x⟫_ℝ) ∘ Subtype.val)
@@ -471,11 +471,11 @@ lemma integrable_isDistBounded_inner_grad_schwartzMap_spherical{dm1 : ℕ}
     exact integrable_isDistBounded_inner_grad_schwartzMap hf η
     simp
   have he := (MeasureTheory.Measure.measurePreserving_homeomorphUnitSphereProd
-    (volume (α := Space dm1.succ)))
+    (volume (α := Space d)))
   rw [← he.integrable_comp_emb]
   convert h1
-  simp only [Nat.succ_eq_add_one, Function.comp_apply, Homeomorph.symm_apply_apply]
-  exact Homeomorph.measurableEmbedding (homeomorphUnitSphereProd (Space dm1.succ))
+  simp only [Function.comp_apply, Homeomorph.symm_apply_apply]
+  exact Homeomorph.measurableEmbedding (homeomorphUnitSphereProd (Space d))
 
 /-!
 
@@ -532,7 +532,7 @@ lemma distGrad_inner_eq {d} (f : (Space d) →d[ℝ] ℝ) (η : 𝓢(Space d, �
     (y : EuclideanSpace ℝ (Fin d)) : ⟪∇ᵈ f η, y⟫_ℝ = fderivD ℝ f η (basis.repr.symm y) := by
   rw [distGrad]
   simp only [LinearIsometryEquiv.toLinearEquiv_symm, LinearMap.coe_mk, AddHom.coe_mk,
-    ContinuousLinearMap.coe_comp', LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe,
+    ContinuousLinearMap.coe_comp, LinearMap.coe_toContinuousLinearMap', LinearEquiv.coe_coe,
     LinearIsometryEquiv.coe_toLinearEquiv, LinearIsometryEquiv.coe_symm_toLinearEquiv,
     Function.comp_apply, basis_repr_inner_eq, toDual_symm_apply]
 
@@ -609,7 +609,20 @@ lemma distGrad_apply {d} (f : (Space d) →d[ℝ] ℝ) (ε : 𝓢(Space d, ℝ))
 
 /-!
 
-### B.6. The gradident of a Schwartz map
+### B.6. Gradient of constant distributions
+
+-/
+
+@[simp]
+lemma distGrad_const {d} (c : ℝ) :
+    ∇ᵈ (Distribution.const ℝ (Space d) c) = 0 := by
+  ext ε i
+  simp only [distGrad_apply, distDeriv_apply]
+  simp [Distribution.fderivD_const]
+
+/-!
+
+### B.7. The gradient of a Schwartz map
 
 -/
 
