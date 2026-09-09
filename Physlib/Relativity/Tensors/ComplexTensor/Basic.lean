@@ -7,6 +7,7 @@ module
 
 public import Physlib.Relativity.Tensors.ComplexTensor.Metrics.Pre
 public import Physlib.Relativity.Tensors.ComplexTensor.Weyl.Metric
+public import Physlib.Relativity.Tensors.ComplexTensor.Dirac.Metric
 /-!
 
 ## Complex Lorentz tensors
