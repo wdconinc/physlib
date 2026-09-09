@@ -6,6 +6,7 @@ Authors: Joseph Tooby-Smith
 module
 
 public import Physlib.QFT.PerturbationTheory.DimensionalRegularization.Basic
+public import Physlib.Relativity.Tensors.RealTensor.Vector.Basic
 /-!
 
 # One-Loop Scalar Master Integrals
@@ -33,11 +34,10 @@ namespace OneLoopScalars
 abbrev LorentzIndex := Fin 4
 
 /-- A symbolic loop or external four-momentum. -/
-abbrev LoopMomentum := LorentzIndex → ℝ
+abbrev LoopMomentum := Lorentz.Vector 3
 
 /-- The zero four-momentum. -/
-def zeroLoopMomentum : LoopMomentum :=
-  fun _ => 0
+def zeroLoopMomentum : LoopMomentum := 0
 
 /-- A monomial numerator term in loop and external momentum components. -/
 structure ScalarNumeratorTerm : Type where
