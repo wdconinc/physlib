@@ -8,6 +8,7 @@ module
 public import Physlib.QFT.QCD.Basic
 public import Physlib.QFT.PerturbationTheory.FeynmanDiagrams.YangMillsGaugeData
 public import Physlib.QFT.PerturbationTheory.DimensionalRegularization.OneLoopScalars
+public import Physlib.Relativity.Tensors.RealTensor.Vector.MinkowskiProduct
 public import Mathlib.Data.Complex.Basic
 public import Mathlib.Topology.Instances.Complex
 
@@ -65,11 +66,18 @@ instance : DecidableEq LorentzIndex := by
   infer_instance
 
 /-- Spacetime 4-momentum (in units of energy). -/
-structure Momentum : Type where
-  /-- Temporal component (energy). -/
-  E : ℝ
-  /-- Spatial 3-momentum. -/
-  p : ℝ × ℝ × ℝ
+abbrev Momentum : Type := Lorentz.Vector 3
+
+namespace Momentum
+
+/-- Construct a momentum from its four components. -/
+def mk (E p₁ p₂ p₃ : ℝ) : Momentum := fun
+  | Sum.inl 0 => E
+  | Sum.inr 0 => p₁
+  | Sum.inr 1 => p₂
+  | Sum.inr 2 => p₃
+
+end Momentum
 
 /-- Color index in fundamental or adjoint representation. -/
 structure ColorIndex (ColorDim : ℕ) : Type where
@@ -89,11 +97,11 @@ variable {NumColors NumFlavors : ℕ} [Fact (1 < NumColors)] [Fact (0 < NumFlavo
 
 /-- Euclidean spatial norm-squared of the spatial momentum components. -/
 def spatialNormSq (k : Momentum) : ℝ :=
-  k.p.1 ^ 2 + k.p.2.1 ^ 2 + k.p.2.2 ^ 2
+  ⟪Lorentz.Vector.spatialPart k, Lorentz.Vector.spatialPart k⟫_ℝ
 
 /-- Minkowski momentum square with $(+,-,-,-)$ signature. -/
 def minkowskiSquare (k : Momentum) : ℝ :=
-  k.E ^ 2 - spatialNormSq k
+  ⟪k, k⟫ₘ
 
 /-- Mass-shell polynomial $k^2 - m^2$. -/
 def massShellPolynomial (k : Momentum) (mass : ℝ) : ℝ :=
@@ -207,10 +215,10 @@ def minkowskiMetric (μ ν : LorentzIndex) : ℝ :=
 /-- Contravariant momentum component. -/
 def momentumComponent (k : Momentum) (μ : LorentzIndex) : ℝ :=
   match μ.1 with
-  | 0 => k.E
-  | 1 => k.p.1
-  | 2 => k.p.2.1
-  | _ => k.p.2.2
+  | 0 => k (Sum.inl 0)
+  | 1 => k (Sum.inr 0)
+  | 2 => k (Sum.inr 1)
+  | _ => k (Sum.inr 2)
 
 /-- Minimal Dirac numerator container for $\gamma\!\cdot\!k + m$. -/
 structure DiracNumerator where
