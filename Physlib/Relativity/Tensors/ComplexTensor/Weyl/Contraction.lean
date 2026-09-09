@@ -198,8 +198,9 @@ def rightDualContraction : (rightHandedRep.tprod dualRightHandedRep).Intertwinin
       rw [transpose_mul]
       change M.1.conjTranspose * (M.1)⁻¹.conjTranspose = 1ᵀ
       rw [← @conjTranspose_mul]
-      simp only [SpecialLinearGroup.det_coe, isUnit_iff_ne_zero, ne_eq, one_ne_zero,
-        not_false_eq_true, nonsing_inv_mul, conjTranspose_one, transpose_one]
+      have hInv : (M.1)⁻¹ * M.1 = 1 := by
+        exact Matrix.nonsing_inv_mul (A := M.1) (by simp)
+      simp [hInv]
     rw [h2]
     simp only [one_mulVec, vec2_dotProduct, Fin.isValue, RightHandedWeyl.toFin2ℂEquiv_apply,
       DualRightHandedWeyl.toFin2ℂEquiv_apply]
@@ -239,8 +240,9 @@ def dualRightContraction : (dualRightHandedRep.tprod rightHandedRep).Intertwinin
       rw [transpose_mul]
       change M.1.conjTranspose * (M.1)⁻¹.conjTranspose = 1ᵀ
       rw [← @conjTranspose_mul]
-      simp only [SpecialLinearGroup.det_coe, isUnit_iff_ne_zero, ne_eq, one_ne_zero,
-        not_false_eq_true, nonsing_inv_mul, conjTranspose_one, transpose_one]
+      have hInv : (M.1)⁻¹ * M.1 = 1 := by
+        exact Matrix.nonsing_inv_mul (A := M.1) (by simp)
+      simp [hInv]
     rw [h2]
     simp only [vecMul_one, vec2_dotProduct, Fin.isValue, DualRightHandedWeyl.toFin2ℂEquiv_apply,
       RightHandedWeyl.toFin2ℂEquiv_apply]
