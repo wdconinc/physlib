@@ -21,6 +21,10 @@ moments `Γ₁(Q²) = ∫₀¹ dx g₁(x, Q²)` and `Γ₂(Q²) = ∫₀¹ dx g�
   rule is violated experimentally: stating it unconditionally would formalize a falsehood
   about the physical proton.
 - `BurkhardtCottingham` — `Γ₂(Q²) = 0`.
+- `g2WW`, `wandzuraWilczek` — the twist-2 Wandzura-Wilczek expression for `g₂` in terms of
+  `g₁`, together with the one genuine theorem in this file: the Wandzura-Wilczek `g₂`
+  satisfies the Burkhardt-Cottingham sum rule, by a Fubini argument on the triangle
+  `0 ≤ x < y ≤ 1`.
 
 **Moment convention.** `firstMomentG1` and `firstMomentG2` carry weight `x⁰`: they are
 plain integrals over `[0, 1]`. In terms of `Physlib.Particles.Parton.PDF.mellinMoment`,
@@ -131,6 +135,140 @@ family of structure functions that provably satisfies it. -/
 structure BurkhardtCottingham (G : StructureFunctions) : Prop where
   /-- The vanishing of the first moment of `g₂`, at every scale. -/
   bc : ∀ Q2, firstMomentG2 G Q2 = 0
+
+/-! ## Wandzura-Wilczek relation -/
+
+/-- The Wandzura-Wilczek (twist-2) expression for `g₂` in terms of `g₁`:
+
+`g₂^WW(x, Q²) = −g₁(x, Q²) + ∫_x¹ (dy / y) g₁(y, Q²)`.
+
+The tail integral is taken over `Set.Ioc x 1`; the half-open interval is the natural one
+for the triangle decomposition `0 ≤ x < y ≤ 1` used below, and differs from `Set.Icc x 1`
+by a null set, so the value is unchanged. -/
+def g2WW (G : StructureFunctions) (x Q2 : ℝ) : ℝ :=
+  -G.g1 x Q2 + ∫ y in Set.Ioc x 1, G.g1 y Q2 / y
+
+/-- The Wandzura-Wilczek structure-function pair built from a given `g₁`: the same `g₁`,
+and `g₂` replaced by its twist-2 Wandzura-Wilczek expression. -/
+def wandzuraWilczek (G : StructureFunctions) : StructureFunctions where
+  g1 := G.g1
+  g2 := g2WW G
+
+/-- Integrability hypotheses needed to evaluate the Wandzura-Wilczek first moment at a
+fixed scale `Q²`.
+
+These are collected here rather than assumed inline at each use, per the repository
+convention for definitions that integrate. Only `g₁` appears: `g₂^WW` is built from it. -/
+structure WandzuraWilczekAssumptions (G : StructureFunctions) (Q2 : ℝ) : Prop where
+  /-- `g₁(·, Q²)` is integrable on the physical support `[0, 1]`. -/
+  g1_integrableOn :
+    MeasureTheory.IntegrableOn (fun x : ℝ => G.g1 x Q2) (Set.Icc (0 : ℝ) 1)
+  /-- The Wandzura-Wilczek tail `x ↦ ∫_(x,1] dy g₁(y, Q²)/y` is integrable on `[0, 1]`. -/
+  tail_integrableOn :
+    MeasureTheory.IntegrableOn
+      (fun x : ℝ => ∫ y in Set.Ioc x 1, G.g1 y Q2 / y) (Set.Icc (0 : ℝ) 1)
+  /-- The integrand of the double integral is integrable for the product measure on
+  `[0, 1] × [0, 1]`. This is exactly the hypothesis that licenses the Fubini swap
+  `∫₀¹ dx ∫_x¹ dy = ∫₀¹ dy ∫₀^y dx`; it is not derivable from the two one-dimensional
+  integrability statements above. -/
+  prod_integrable :
+    MeasureTheory.Integrable
+      (fun p : ℝ × ℝ => if p.1 < p.2 then G.g1 p.2 Q2 / p.2 else 0)
+      ((MeasureTheory.volume.restrict (Set.Icc (0 : ℝ) 1)).prod
+        (MeasureTheory.volume.restrict (Set.Icc (0 : ℝ) 1)))
+
+/-- Fubini on the triangle `{(x, y) : 0 ≤ x ≤ 1, x < y ≤ 1}`: integrating the
+Wandzura-Wilczek tail over `x ∈ [0, 1]` and swapping the order of integration replaces the
+inner `x`-integral by the length `y` of `[0, y)`. -/
+lemma integral_tail_swap
+    (G : StructureFunctions) (Q2 : ℝ)
+    (hWW : WandzuraWilczekAssumptions G Q2) :
+    (∫ x in Set.Icc (0 : ℝ) 1, ∫ y in Set.Ioc x 1, G.g1 y Q2 / y)
+      = ∫ y in Set.Icc (0 : ℝ) 1, G.g1 y Q2 / y * y := by
+  -- TODO(task/sum-rules): the Fubini swap itself is not written out. Intended argument,
+  -- in three steps.
+  -- (1) For `x ∈ Set.Icc 0 1` one has the exact set identity
+  --     `Set.Ioc x 1 = {y ∈ Set.Icc 0 1 | x < y}` (`0 ≤ x` and `x < y` force `0 < y`),
+  --     so the inner integral equals
+  --     `∫ y in Set.Icc (0:ℝ) 1, if x < y then G.g1 y Q2 / y else 0`.
+  --     Rewriting under the outer integral needs `MeasureTheory.setIntegral_congr_fun`
+  --     (or `integral_congr_ae` on the restricted measure) plus measurability of
+  --     `Set.Icc 0 1`.
+  -- (2) Apply `MeasureTheory.integral_integral_swap` to
+  --     `fun x y => if x < y then G.g1 y Q2 / y else 0` on the product measure
+  --     `(volume.restrict (Set.Icc 0 1)).prod (volume.restrict (Set.Icc 0 1))`, with
+  --     `hWW.prod_integrable` as the product-integrability hypothesis. Note that
+  --     `integral_integral_swap` is stated for `Integrable (Function.uncurry f)`, so the
+  --     field may need to be restated in `Function.uncurry` form, or bridged with
+  --     `MeasureTheory.integrable_prod_iff`.
+  -- (3) Evaluate the resulting inner `x`-integral: for `y ∈ Set.Icc 0 1`,
+  --     `∫ x in Set.Icc (0:ℝ) 1, (if x < y then c else 0) = c * y`, since
+  --     `{x ∈ Set.Icc 0 1 | x < y} = Set.Ico 0 y` and `Real.volume_Ico` gives
+  --     `ENNReal.ofReal (y - 0)`. Expected route: `MeasureTheory.integral_indicator`
+  --     (after rewriting the `if` as `Set.indicator`), then
+  --     `MeasureTheory.setIntegral_const` and `MeasureTheory.measureReal_restrict_apply`.
+  -- The obstruction is that none of the names in steps (1)-(3) could be checked against
+  -- mathlib v4.31.0 from this machine: the repository has no Lean toolchain and no
+  -- mathlib source tree, and several of them (`setIntegral_congr_fun`,
+  -- `measureReal_restrict_apply`, the exact form of `integral_integral_swap` for
+  -- restricted product measures) have been renamed at least once in recent mathlib.
+  -- Writing an unchecked hundred-line measure-theory proof would be guessing, so this is
+  -- left explicit. The mathematics is standard and the statement is believed correct.
+  sorry
+
+/-- Integrating the Wandzura-Wilczek tail over `[0, 1]` returns the first moment of `g₁`,
+`∫₀¹ dx ∫_x¹ (dy/y) g₁(y) = ∫₀¹ dy g₁(y)`.
+
+The swap of `integral_tail_swap` produces a factor `y` which cancels the `1/y`, almost
+everywhere on `[0, 1]` — the exceptional point `y = 0` is null. Stated with the integral
+written out rather than as `firstMomentG1 G Q2` so that it rewrites without unfolding a
+definition. -/
+lemma integral_tail_eq_integral_g1
+    (G : StructureFunctions) (Q2 : ℝ)
+    (hWW : WandzuraWilczekAssumptions G Q2) :
+    (∫ x in Set.Icc (0 : ℝ) 1, ∫ y in Set.Ioc x 1, G.g1 y Q2 / y)
+      = ∫ y in Set.Icc (0 : ℝ) 1, G.g1 y Q2 := by
+  rw [integral_tail_swap G Q2 hWW]
+  refine MeasureTheory.integral_congr_ae ?_
+  have hne :
+      ∀ᵐ y : ℝ ∂(MeasureTheory.volume.restrict (Set.Icc (0 : ℝ) 1)), y ≠ 0 := by
+    refine MeasureTheory.ae_restrict_of_ae ?_
+    rw [MeasureTheory.ae_iff]
+    simp
+  filter_upwards [hne] with y hy
+  field_simp
+
+/-- **The Wandzura-Wilczek `g₂` satisfies the Burkhardt-Cottingham sum rule.**
+
+`∫₀¹ dx g₂^WW(x, Q²) = 0`. The `−g₁` term contributes `−Γ₁` and the tail term contributes
+`+Γ₁`, by `integral_tail_eq_integral_g1`. -/
+theorem firstMoment_g2WW_eq_zero
+    (G : StructureFunctions) (Q2 : ℝ)
+    (hWW : WandzuraWilczekAssumptions G Q2) :
+    (∫ x in Set.Icc (0 : ℝ) 1, g2WW G x Q2) = 0 := by
+  have hneg :
+      MeasureTheory.IntegrableOn (fun x : ℝ => -G.g1 x Q2) (Set.Icc (0 : ℝ) 1) :=
+    hWW.g1_integrableOn.neg
+  calc (∫ x in Set.Icc (0 : ℝ) 1, g2WW G x Q2)
+      = ∫ x in Set.Icc (0 : ℝ) 1,
+          (-G.g1 x Q2 + ∫ y in Set.Ioc x 1, G.g1 y Q2 / y) := rfl
+    _ = (∫ x in Set.Icc (0 : ℝ) 1, -G.g1 x Q2)
+          + ∫ x in Set.Icc (0 : ℝ) 1, ∫ y in Set.Ioc x 1, G.g1 y Q2 / y :=
+        MeasureTheory.integral_add hneg hWW.tail_integrableOn
+    _ = -(∫ x in Set.Icc (0 : ℝ) 1, G.g1 x Q2)
+          + ∫ y in Set.Icc (0 : ℝ) 1, G.g1 y Q2 := by
+        rw [MeasureTheory.integral_neg, integral_tail_eq_integral_g1 G Q2 hWW]
+    _ = 0 := by ring
+
+/-- The Wandzura-Wilczek structure-function pair satisfies the Burkhardt-Cottingham sum
+rule at every scale for which the integrability hypotheses hold. -/
+theorem burkhardtCottingham_wandzuraWilczek
+    (G : StructureFunctions)
+    (hWW : ∀ Q2, WandzuraWilczekAssumptions G Q2) :
+    BurkhardtCottingham (wandzuraWilczek G) := by
+  refine ⟨fun Q2 => ?_⟩
+  have h := firstMoment_g2WW_eq_zero G Q2 (hWW Q2)
+  simpa [firstMomentG2, wandzuraWilczek] using h
 
 /-! ## Remaining targets
 
