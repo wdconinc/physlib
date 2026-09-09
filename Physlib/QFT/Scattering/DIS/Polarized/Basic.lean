@@ -33,8 +33,56 @@ abbrev Bilin := LinearMap.BilinForm ℝ V
 
 /-- Minimal polarized structure-function container. -/
 structure StructureFunctions where
+  /-- The polarized structure function `g₁(x, Q²)`, in the Bjorken variable `x`
+  and the virtuality `Q²`. -/
   g1 : ℝ → ℝ → ℝ
+  /-- The polarized structure function `g₂(x, Q²)`, in the Bjorken variable `x`
+  and the virtuality `Q²`. -/
   g2 : ℝ → ℝ → ℝ
+
+/-- Structural assumptions on a polarized structure-function pair, mirroring
+`Physlib.Particles.Parton.PDF.Assumptions`.
+
+These are what makes any *moment* statement about `G` meaningful: without support and
+integrability there is no reason for `∫₀¹ dx g₁(x, Q²)` to be anything but the junk value
+that `MeasureTheory.integral` returns on a non-integrable function.
+
+Integrability is required only on the physical support `[0, 1]` (`IntegrableOn`), not on
+all of `ℝ`; combined with `support_g1` / `support_g2` that is equivalent to global
+integrability, and it is the weaker hypothesis to discharge for a fit. -/
+structure Assumptions (G : StructureFunctions) : Prop where
+  /-- `g₁` is supported in the physical interval `[0, 1]`. -/
+  support_g1 : ∀ x Q2, x < 0 ∨ 1 < x → G.g1 x Q2 = 0
+  /-- `g₂` is supported in the physical interval `[0, 1]`. -/
+  support_g2 : ∀ x Q2, x < 0 ∨ 1 < x → G.g2 x Q2 = 0
+  /-- `g₁(·, Q²)` is almost-everywhere strongly measurable at every scale. -/
+  measurable_g1 : ∀ Q2, MeasureTheory.AEStronglyMeasurable (fun x : ℝ => G.g1 x Q2)
+  /-- `g₂(·, Q²)` is almost-everywhere strongly measurable at every scale. -/
+  measurable_g2 : ∀ Q2, MeasureTheory.AEStronglyMeasurable (fun x : ℝ => G.g2 x Q2)
+  /-- `g₁(·, Q²)` is integrable on the physical support at every scale. -/
+  integrableOn_g1 : ∀ Q2,
+    MeasureTheory.IntegrableOn (fun x : ℝ => G.g1 x Q2) (Set.Icc (0 : ℝ) 1)
+  /-- `g₂(·, Q²)` is integrable on the physical support at every scale. -/
+  integrableOn_g2 : ∀ Q2,
+    MeasureTheory.IntegrableOn (fun x : ℝ => G.g2 x Q2) (Set.Icc (0 : ℝ) 1)
+
+/-- The first moment `Γ₁(Q²) = ∫₀¹ dx g₁(x, Q²)`.
+
+Convention: this is the moment with weight `x⁰`, i.e. the plain integral of `g₁` over the
+physical support. It is what the Bjorken and Ellis-Jaffe sum rules constrain. Note the
+index offset relative to `Physlib.Particles.Parton.PDF.mellinMoment`, where
+`mellinMoment f n` is `∫₀¹ dx xⁿ f`, and relative to the literature, which usually writes
+the `n`-th moment as `∫₀¹ dx xⁿ⁻¹ g`; on both of those scales `firstMomentG1` is `n = 0`
+and `n = 1` respectively. -/
+def firstMomentG1 (G : StructureFunctions) (Q2 : ℝ) : ℝ :=
+  ∫ x in Set.Icc (0 : ℝ) 1, G.g1 x Q2
+
+/-- The first moment `Γ₂(Q²) = ∫₀¹ dx g₂(x, Q²)`.
+
+Same weight convention as `firstMomentG1`: weight `x⁰`, no `xⁿ⁻¹` offset. This is the
+quantity the Burkhardt-Cottingham sum rule asserts to vanish. -/
+def firstMomentG2 (G : StructureFunctions) (Q2 : ℝ) : ℝ :=
+  ∫ x in Set.Icc (0 : ℝ) 1, G.g2 x Q2
 
 /-- Assumptions for a polarized hadronic tensor interface. -/
 structure TensorAssumptions (A : Bilin V) : Prop where
