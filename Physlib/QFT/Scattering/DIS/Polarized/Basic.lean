@@ -10,7 +10,10 @@ public import Physlib.QFT.Scattering.DIS.Tensors.Basic
 
 # Polarized DIS Interfaces (Stage 10)
 
-This module introduces polarized DIS interfaces and sum-rule schemas.
+This module introduces polarized DIS interfaces: a structure-function container for
+`g₁`, `g₂`, an antisymmetry assumption on the polarized hadronic tensor, a decomposition
+schema, and endpoint conditions at `x = 1`. The moment identities usually called sum rules
+live in `Physlib.QFT.Scattering.DIS.Polarized.SumRules`.
 
 -/
 
@@ -43,26 +46,33 @@ def IsPolarizedDecomposition
     (A : Bilin V) : Prop :=
   ∀ x Q2, A = (G.g1 x Q2 + G.g2 x Q2) • A
 
-/-- Sum-rule assumptions for polarized DIS. -/
-structure SumRuleAssumptions (G : StructureFunctions) : Prop where
-  bjorken : ∀ Q2, G.g1 1 Q2 = 0
-  ellisJaffe : ∀ Q2, G.g2 1 Q2 = 0
+/-- Endpoint conditions on the polarized structure functions at the elastic point `x = 1`.
 
-/-- Bjorken-style sum-rule interface theorem. -/
-lemma bjorken_sumRule
+These are *not* sum rules: a sum rule is an identity for a moment `∫₀¹ dx xⁿ g(x, Q²)`,
+whereas the fields below are pointwise statements at the single point `x = 1`. The real
+moment identities (Bjorken, Ellis-Jaffe, Burkhardt-Cottingham) are stated in
+`Physlib.QFT.Scattering.DIS.Polarized.SumRules`. -/
+structure EndpointAssumptions (G : StructureFunctions) : Prop where
+  /-- `g₁` vanishes at the elastic endpoint `x = 1`, at every scale. -/
+  g1_vanishes_at_one : ∀ Q2, G.g1 1 Q2 = 0
+  /-- `g₂` vanishes at the elastic endpoint `x = 1`, at every scale. -/
+  g2_vanishes_at_one : ∀ Q2, G.g2 1 Q2 = 0
+
+/-- Interface projection: `g₁` vanishes at `x = 1`. -/
+lemma g1_vanishes_at_one
     (G : StructureFunctions)
-    (h : SumRuleAssumptions G)
+    (h : EndpointAssumptions G)
     (Q2 : ℝ) :
     G.g1 1 Q2 = 0 :=
-  h.bjorken Q2
+  h.g1_vanishes_at_one Q2
 
-/-- Ellis-Jaffe-style sum-rule interface theorem. -/
-lemma ellisJaffe_sumRule
+/-- Interface projection: `g₂` vanishes at `x = 1`. -/
+lemma g2_vanishes_at_one
     (G : StructureFunctions)
-    (h : SumRuleAssumptions G)
+    (h : EndpointAssumptions G)
     (Q2 : ℝ) :
     G.g2 1 Q2 = 0 :=
-  h.ellisJaffe Q2
+  h.g2_vanishes_at_one Q2
 
 end Polarized
 end DIS
