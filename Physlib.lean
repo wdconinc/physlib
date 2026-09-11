@@ -266,11 +266,14 @@ public import Physlib.QFT.AnomalyCancellation.Basic
 public import Physlib.QFT.AnomalyCancellation.GroupActions
 public import Physlib.QFT.Factorization.Basic
 public import Physlib.QFT.Factorization.Convolution.Basic
+public import Physlib.QFT.Factorization.Convolution.Collinear
+public import Physlib.QFT.Factorization.Convolution.Mellin
 public import Physlib.QFT.Factorization.Convolution.Properties
 public import Physlib.QFT.Factorization.DIS.DiagrammaticHardKernel
 public import Physlib.QFT.Factorization.DIS.HardKernel
 public import Physlib.QFT.Factorization.DIS.LO
 public import Physlib.QFT.Factorization.Evolution.Basic
+public import Physlib.QFT.Factorization.Evolution.CollinearForm
 public import Physlib.QFT.Factorization.Evolution.Consistency
 public import Physlib.QFT.Factorization.Evolution.QCDCore
 public import Physlib.QFT.Factorization.Evolution.Solutions
