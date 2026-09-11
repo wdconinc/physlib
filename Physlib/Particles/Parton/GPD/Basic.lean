@@ -117,7 +117,10 @@ def ForwardLimitToPdfAtScale
 /-- Antiquark forward-limit relation at fixed scale `Q2`: `H(-x, 0, 0) = -f̄(x, Q2)`.
 
 The negative-`x` half of the corrected support carries the antiquark distribution, with
-the conventional relative minus sign (Diehl, Phys. Rept. **388** (2003) 41, eq. (3.9)).
+the conventional relative minus sign (Diehl, *Generalized parton distributions*,
+Phys. Rept. **388** (2003) 41, arXiv:hep-ph/0307382; see its discussion of GPD support and the
+forward limit — no equation number is given here because the primary source was not consulted
+directly when this file was written).
 This relation is not expressible while the support is restricted to `x ≥ 0`, which is
 why it is stated here rather than in the original half-range interface. -/
 def AntiquarkForwardLimitToPdfAtScale

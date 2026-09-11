@@ -21,7 +21,9 @@ with concrete low-order consequences.
 
 * **Moment index.** Following `PDF.mellinMoment`, the integrand carries `x ^ n`, i.e.
   `mellinMomentH M n i ξ t = ∫_{-1}^{1} dx x^n H_i(x, ξ, t)`. The literature's *n*-th
-  moment is `∫_{-1}^{1} dx x^{n-1} H` (Diehl, Phys. Rept. **388** (2003) 41, eq. (4.25)),
+  moment is `∫_{-1}^{1} dx x^{n-1} H` (Diehl, *Generalized parton distributions*,
+  Phys. Rept. **388** (2003) 41, arXiv:hep-ph/0307382 — general reference; the primary source
+  was not consulted directly, so no equation number is cited),
   so the literature index is `n + 1` in the notation used here. Two consequences of the
   shift, both visible in `PolynomialityAssumptions` below:
   - the polynomiality degree bound is `n + 1`, not `n`;
