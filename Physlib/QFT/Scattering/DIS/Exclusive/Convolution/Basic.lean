@@ -29,14 +29,19 @@ namespace Convolution
 /-- A scalar hard kernel for exclusive GPD observables. -/
 abbrev Kernel : Type := ℝ → ℝ → ℝ → ℝ
 
-/-- Convolution of an exclusive kernel with the `H` component of a GPD model. -/
+/-- Convolution of an exclusive kernel with the `H` component of a GPD model.
+
+The integral runs over the full GPD support `x ∈ [-1, 1]` (see
+`Physlib.Particles.Parton.GPD.Basic`). Restricting to `[0, 1]` would discard the
+antiquark region and the negative-`x` half of the ERBL region, both of which
+contribute to exclusive amplitudes. -/
 def convolveHAt
     {Flavor : Type}
     (K : Kernel)
     (M : Physlib.Particles.Parton.GPD.Model Flavor)
     (i : Flavor)
     (xi t : ℝ) : ℝ :=
-  ∫ x in Set.Icc (0 : ℝ) 1, K x xi t * M.H i x xi t
+  ∫ x in Set.Icc (-1 : ℝ) 1, K x xi t * M.H i x xi t
 
 /-- A constant unit kernel used for baseline bridge specializations. -/
 def unitKernel : Kernel :=
@@ -47,7 +52,7 @@ lemma convolveHAt_unitKernel
     (M : Physlib.Particles.Parton.GPD.Model Flavor)
     (i : Flavor)
     (xi t : ℝ) :
-    convolveHAt unitKernel M i xi t = ∫ x in Set.Icc (0 : ℝ) 1, M.H i x xi t := by
+    convolveHAt unitKernel M i xi t = ∫ x in Set.Icc (-1 : ℝ) 1, M.H i x xi t := by
   simp [convolveHAt, unitKernel]
 
 lemma convolveHAt_eq_of_kernel_eq
