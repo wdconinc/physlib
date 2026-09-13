@@ -6,6 +6,7 @@ Authors: Joseph Tooby-Smith
 module
 
 public import Physlib.QFT.Scattering.DIS.Kinematics.Basic
+public import Physlib.Meta.Linters.Sorry
 /-!
 
 # DIS Tensors
@@ -13,10 +14,51 @@ public import Physlib.QFT.Scattering.DIS.Kinematics.Basic
 This module introduces tensor objects for inclusive DIS:
 
 - A leptonic tensor model built from incoming and outgoing lepton momenta.
-- An abstract hadronic tensor with explicit symmetry and current-conservation assumptions.
-- A decomposition interface in terms of structure functions `F1` and `F2`.
+- Reflections of a bilinear form, used as concrete elements of the stabilizer of the
+  kinematics inside the `g`-isometry group.
+- An abstract hadronic tensor with explicit Lorentz-covariance, symmetry and
+  current-conservation assumptions.
+- The *transverse* basis `{-g + q ⊗ q / q², p_T ⊗ p_T}` and the decomposition interface in
+  terms of structure functions `F1` and `F2` written against it.
 - A uniqueness theorem for decomposition coefficients under probe-vector assumptions.
 - Pointwise contraction lemmas used by later cross-section derivations.
+
+## Conventions
+
+Tensors are real bilinear forms `Bilin V := LinearMap.BilinForm ℝ V` on an abstract real
+vector space `V`; `g` plays the role of the metric and carries no built-in signature. The
+kinematic invariants follow `DIS.Kinematics`: `K.Q2 g = - g K.q K.q`, i.e. the metric
+convention is `+---`, spacelike momentum transfer has `g K.q K.q < 0` and `Q² > 0`. All
+transverse constructions divide by `g K.q K.q`, so they carry `g K.q K.q ≠ 0` as an explicit
+hypothesis rather than assuming `Q² > 0`; the photoproduction limit `Q² = 0` is a legitimate
+boundary case elsewhere in the repository.
+
+The structure-function basis is the one of Callan-Gross (Phys. Rev. Lett. 22 (1969) 156) and
+Collins, *Foundations of Perturbative QCD* (2011):
+
+  `W^{μν} = F₁ (-g^{μν} + q^μ q^ν / q²) + (F₂ / (p·q)) p_T^μ p_T^ν`,
+  `p_T^μ = p^μ - (p·q / q²) q^μ`.
+
+Both basis tensors are individually transverse to `q` — that is the point of writing them
+this way and it is what makes `F1` and `F2` well defined (`transverseMetric_conserved_left`,
+`transverseMetric_conserved_right`, `pTransverse_orthogonal_q`). **The second coefficient
+here is the literature's `F₂ / (p·q)`, not `F₂`**: the `1/(p·q)` normalization is not folded
+into the basis, so that no statement in this module needs `g K.p K.q ≠ 0`.
+
+## Status
+
+`IsF1F2Decomposition` is still a definition rather than a consequence of covariance: the
+exhaustion statement `exists_isF1F2Decomposition` is stated over concrete hypotheses but is
+not proved here (one `sorry`). What *is* proved is that the transverse basis satisfies all of
+`Assumptions` (`fromF1F2Assumptions`), that covariance in the sense of
+`IsLorentzCovariant` has teeth (`covariant_spectator_offDiagonal_zero`), and that the
+coefficients are unique (`decomposition_unique`).
+
+The parity-violating `F₃ ε^{μναβ} p_α q_β / (2 p·q)` term is *not* included: on an abstract
+`V` with only a bilinear form there is no orientation or volume form, and physlib's
+`Relativity.Tensors.RealTensor.Metrics.LeviCivita` supplies `leviCivita4Int` only as a
+component symbol on `Fin 4` indices of `realLorentzTensor`. Adding `F₃` honestly requires
+first specializing this module to `Lorentz.Vector 3`.
 
 -/
 
@@ -62,6 +104,79 @@ def rankOne (g : Bilin V) (a b : V) : Bilin V where
 @[simp] lemma rankOne_apply (g : Bilin V) (a b v w : V) :
     rankOne g a b v w = g a v * g b w := rfl
 
+/-- A rank-one form built from a single vector is symmetric. -/
+lemma rankOne_isSymm (g : Bilin V) (a : V) : (rankOne g a a).IsSymm := by
+  refine { eq := ?_ }
+  intro v w
+  simp [rankOne_apply, mul_comm]
+
+/-- Expansion of a bilinear form on a pair of vectors each shifted along `u`. -/
+lemma apply_sub_smul_pair (g : Bilin V) (u x y : V) (a b : ℝ) :
+    g (x - a • u) (y - b • u)
+      = g x y - b * g x u - a * g u y + a * b * g u u := by
+  have h1 : g (x - a • u) = g x - a • g u := by
+    rw [map_sub, map_smul]
+  have h3 : ∀ z : V, g z (y - b • u) = g z y - b * g z u := by
+    intro z
+    rw [map_sub, map_smul, smul_eq_mul]
+  rw [h1, LinearMap.sub_apply, LinearMap.smul_apply, smul_eq_mul, h3 x, h3 u]
+  ring
+
+/-- A linear endomorphism preserving the background form `g`. For `g` a Lorentz metric these
+are exactly the (linear) Lorentz transformations. -/
+def IsIsometry (g : Bilin V) (f : V →ₗ[ℝ] V) : Prop :=
+  ∀ v w : V, g (f v) (f w) = g v w
+
+/-- The identity map is a `g`-isometry. -/
+lemma isIsometry_id (g : Bilin V) : IsIsometry g (LinearMap.id) := by
+  intro v w
+  simp
+
+/-- Reflection of `V` in the `g`-orthogonal hyperplane to `u`, `v ↦ v - 2 (g u v / g u u) u`.
+The definition is unconditional; it is a `g`-isometry when `g` is symmetric and
+`g u u ≠ 0` (`reflect_isometry`), and degenerates to the identity when `g u u = 0`, since
+`(0 : ℝ)⁻¹ = 0`. -/
+noncomputable def reflect (g : Bilin V) (u : V) : V →ₗ[ℝ] V where
+  toFun := fun v => v - (2 * (g u u)⁻¹ * g u v) • u
+  map_add' := by
+    intro v₁ v₂
+    have h : 2 * (g u u)⁻¹ * g u (v₁ + v₂)
+        = 2 * (g u u)⁻¹ * g u v₁ + 2 * (g u u)⁻¹ * g u v₂ := by
+      rw [map_add]
+      ring
+    simp only [h, add_smul]
+    abel
+  map_smul' := by
+    intro c v
+    have h : 2 * (g u u)⁻¹ * g u (c • v) = c * (2 * (g u u)⁻¹ * g u v) := by
+      rw [map_smul, smul_eq_mul]
+      ring
+    simp only [RingHom.id_apply, h, smul_sub, smul_smul]
+
+@[simp] lemma reflect_apply (g : Bilin V) (u v : V) :
+    reflect g u v = v - (2 * (g u u)⁻¹ * g u v) • u := rfl
+
+/-- The reflection in `u` reverses `u`. -/
+lemma reflect_apply_self (g : Bilin V) (u : V) (hu : g u u ≠ 0) :
+    reflect g u u = -u := by
+  have h : 2 * (g u u)⁻¹ * g u u = 2 := by
+    rw [mul_assoc, inv_mul_cancel₀ hu, mul_one]
+  rw [reflect_apply, h, two_smul]
+  abel
+
+/-- The reflection in `u` fixes every vector `g`-orthogonal to `u`. -/
+lemma reflect_apply_of_orthogonal (g : Bilin V) (u v : V) (h : g u v = 0) :
+    reflect g u v = v := by
+  rw [reflect_apply, h, mul_zero, zero_smul, sub_zero]
+
+/-- A reflection in a non-null direction is a `g`-isometry when `g` is symmetric. -/
+lemma reflect_isometry (g : Bilin V) (hSymm : g.IsSymm) (u : V) (hu : g u u ≠ 0) :
+    IsIsometry g (reflect g u) := by
+  intro v w
+  have hc : (g u u)⁻¹ * g u u = 1 := inv_mul_cancel₀ hu
+  rw [reflect_apply, reflect_apply, apply_sub_smul_pair, hSymm.eq v u]
+  linear_combination (4 * (g u u)⁻¹ * g u v * g u w) * hc
+
 end Bilin
 
 namespace Leptonic
@@ -94,12 +209,187 @@ variable {V}
 
 open Kinematics
 
-/-- Assumptions on an abstract hadronic tensor. -/
-structure Assumptions (g : Bilin V) (K : Kinematics.DisKinematics V) (W : Bilin V) : Type where
-  /-- Placeholder proposition for Lorentz-covariant tensor structure assumptions. -/
-  lorentzCovariant : Prop
-  /-- Witness that the Lorentz-covariance proposition holds. -/
-  hLorentzCovariant : lorentzCovariant
+/-!
+
+## The `Q²` sign convention
+
+`Kinematics.DisKinematics.Q2` is defined as `- g K.q K.q`. Every lemma below is stated in
+terms of `g K.q K.q` directly, with `q_sq_eq_neg_Q2` available to translate.
+
+-/
+
+/-- The repository's hard-scale convention: `g q q = - Q²`. -/
+lemma q_sq_eq_neg_Q2 (g : Bilin V) (K : DisKinematics V) :
+    g K.q K.q = - K.Q2 g := by
+  unfold Kinematics.DisKinematics.Q2
+  ring
+
+/-- `Q² ≠ 0` is the same hypothesis as `g q q ≠ 0`. -/
+lemma q_sq_ne_zero_iff (g : Bilin V) (K : DisKinematics V) :
+    g K.q K.q ≠ 0 ↔ K.Q2 g ≠ 0 := by
+  rw [q_sq_eq_neg_Q2, neg_ne_zero]
+
+/-!
+
+## The transverse basis
+
+-/
+
+/-- The transverse metric projector `-g^{μν} + q^μ q^ν / q²`, written in the `+---`
+convention of `Kinematics` (so the `q ⊗ q` coefficient is `(g q q)⁻¹ = -(Q²)⁻¹`). It is
+transverse to `q` in both slots whenever `g q q ≠ 0`. -/
+noncomputable def transverseMetric (g : Bilin V) (K : DisKinematics V) : Bilin V :=
+  (-1 : ℝ) • g + (g K.q K.q)⁻¹ • Bilin.rankOne g K.q K.q
+
+/-- Pointwise value of the transverse metric projector. -/
+lemma transverseMetric_apply (g : Bilin V) (K : DisKinematics V) (v w : V) :
+    transverseMetric g K v w = -g v w + (g K.q K.q)⁻¹ * (g K.q v * g K.q w) := by
+  simp only [transverseMetric, LinearMap.add_apply, LinearMap.smul_apply, smul_eq_mul,
+    Bilin.rankOne_apply]
+  ring
+
+/-- The transverse metric projector written with `Q² = - q²`, for comparison with the
+literature form `-g^{μν} + q^μ q^ν / q²`. -/
+lemma transverseMetric_apply_Q2 (g : Bilin V) (K : DisKinematics V) (v w : V) :
+    transverseMetric g K v w = -g v w - (K.Q2 g)⁻¹ * (g K.q v * g K.q w) := by
+  rw [transverseMetric_apply, q_sq_eq_neg_Q2, inv_neg]
+  ring
+
+/-- The transverse metric projector is transverse in the first slot. -/
+lemma transverseMetric_conserved_left (g : Bilin V) (K : DisKinematics V)
+    (hQ2 : g K.q K.q ≠ 0) (v : V) :
+    transverseMetric g K K.q v = 0 := by
+  rw [transverseMetric_apply, inv_mul_cancel_left₀ hQ2]
+  ring
+
+/-- The transverse metric projector is transverse in the second slot. This needs symmetry of
+`g`: `transverseMetric` is symmetric only because `g` is. -/
+lemma transverseMetric_conserved_right (g : Bilin V) (K : DisKinematics V)
+    (hSymm : g.IsSymm) (hQ2 : g K.q K.q ≠ 0) (v : V) :
+    transverseMetric g K v K.q = 0 := by
+  rw [transverseMetric_apply, hSymm.eq v K.q, mul_comm (g K.q v) (g K.q K.q),
+    inv_mul_cancel_left₀ hQ2]
+  ring
+
+/-- The transverse metric projector is symmetric when `g` is. -/
+lemma transverseMetric_isSymm (g : Bilin V) (K : DisKinematics V) (hSymm : g.IsSymm) :
+    (transverseMetric g K).IsSymm := by
+  refine { eq := ?_ }
+  intro v w
+  have hg : ∀ x y : V, g x y = g y x := hSymm.eq
+  simp [transverseMetric_apply, hg, mul_comm]
+
+/-- The transverse part of the hadron momentum, `p^μ - (p·q / q²) q^μ`. -/
+noncomputable def pTransverse (g : Bilin V) (K : DisKinematics V) : V :=
+  K.p - (g K.p K.q / g K.q K.q) • K.q
+
+/-- Pointwise pairing of the transverse hadron momentum against a vector. -/
+lemma pTransverse_pairing (g : Bilin V) (K : DisKinematics V) (v : V) :
+    g (pTransverse g K) v = g K.p v - (g K.p K.q / g K.q K.q) * g K.q v := by
+  simp only [pTransverse, map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply,
+    smul_eq_mul]
+
+/-- The transverse hadron momentum is `g`-orthogonal to `q`. -/
+lemma pTransverse_orthogonal_q (g : Bilin V) (K : DisKinematics V) (hQ2 : g K.q K.q ≠ 0) :
+    g (pTransverse g K) K.q = 0 := by
+  have h : g K.p K.q / g K.q K.q * g K.q K.q = g K.p K.q := by
+    rw [div_eq_mul_inv, mul_assoc, inv_mul_cancel₀ hQ2, mul_one]
+  rw [pTransverse_pairing, h, sub_self]
+
+/-!
+
+## Lorentz covariance
+
+Covariance of the hadronic tensor is the statement that `W` is built only out of `g`, `p` and
+`q`: it is invariant under every `g`-isometry that fixes `p` and `q`. This replaces the
+`lorentzCovariant : Prop` placeholder that previously stood in `Assumptions` and carried no
+information (any such field is satisfiable by `True`).
+
+-/
+
+/-- A `g`-isometry fixing both hadron and probe momenta, i.e. an element of the stabilizer of
+the kinematics inside the isometry group of `g`. -/
+structure IsKinematicStabilizer (g : Bilin V) (K : DisKinematics V) (f : V →ₗ[ℝ] V) :
+    Prop where
+  /-- `f` preserves the background form. -/
+  isometry : Bilin.IsIsometry g f
+  /-- `f` fixes the hadron momentum. -/
+  fixes_p : f K.p = K.p
+  /-- `f` fixes the momentum transfer. -/
+  fixes_q : f K.q = K.q
+
+/-- Lorentz covariance of a hadronic tensor, stated concretely: `W` is invariant under every
+`g`-isometry fixing `p` and `q`. -/
+def IsLorentzCovariant (g : Bilin V) (K : DisKinematics V) (W : Bilin V) : Prop :=
+  ∀ f : V →ₗ[ℝ] V, IsKinematicStabilizer g K f → ∀ v w : V, W (f v) (f w) = W v w
+
+/-- Pairing against a vector fixed by a stabilizer element is invariant. -/
+lemma pairing_invariant_of_fixed (g : Bilin V) (K : DisKinematics V) {f : V →ₗ[ℝ] V}
+    (hf : IsKinematicStabilizer g K f) {a : V} (ha : f a = a) (v : V) :
+    g a (f v) = g a v := by
+  calc g a (f v) = g (f a) (f v) := by rw [ha]
+    _ = g a v := hf.isometry a v
+
+/-- A stabilizer element fixes the transverse hadron momentum. -/
+lemma stabilizer_fixes_pTransverse (g : Bilin V) (K : DisKinematics V) {f : V →ₗ[ℝ] V}
+    (hf : IsKinematicStabilizer g K f) :
+    f (pTransverse g K) = pTransverse g K := by
+  simp only [pTransverse, map_sub, map_smul, hf.fixes_p, hf.fixes_q]
+
+/-- The transverse metric projector is Lorentz covariant. -/
+lemma transverseMetric_isLorentzCovariant (g : Bilin V) (K : DisKinematics V) :
+    IsLorentzCovariant g K (transverseMetric g K) := by
+  intro f hf v w
+  rw [transverseMetric_apply, transverseMetric_apply, hf.isometry v w,
+    pairing_invariant_of_fixed g K hf hf.fixes_q v,
+    pairing_invariant_of_fixed g K hf hf.fixes_q w]
+
+/-- The transverse hadron rank-one tensor is Lorentz covariant. -/
+lemma rankOne_pTransverse_isLorentzCovariant (g : Bilin V) (K : DisKinematics V) :
+    IsLorentzCovariant g K (Bilin.rankOne g (pTransverse g K) (pTransverse g K)) := by
+  intro f hf v w
+  rw [Bilin.rankOne_apply, Bilin.rankOne_apply,
+    pairing_invariant_of_fixed g K hf (stabilizer_fixes_pTransverse g K hf) v,
+    pairing_invariant_of_fixed g K hf (stabilizer_fixes_pTransverse g K hf) w]
+
+/-- Reflection in a spectator direction — a direction `g`-orthogonal to both `p` and `q` —
+is an element of the kinematic stabilizer. This is the concrete supply of covariance
+constraints used by `covariant_spectator_offDiagonal_zero`. -/
+lemma reflect_isKinematicStabilizer (g : Bilin V) (K : DisKinematics V) (hSymm : g.IsSymm)
+    (u : V) (hu : g u u ≠ 0) (hup : g u K.p = 0) (huq : g u K.q = 0) :
+    IsKinematicStabilizer g K (Bilin.reflect g u) where
+  isometry := Bilin.reflect_isometry g hSymm u hu
+  fixes_p := Bilin.reflect_apply_of_orthogonal g u K.p hup
+  fixes_q := Bilin.reflect_apply_of_orthogonal g u K.q huq
+
+/-- **Covariance has content.** A Lorentz-covariant tensor has no mixed component between a
+non-null spectator direction `u` and any vector `g`-orthogonal to `u`: the reflection in `u`
+is a stabilizer element that reverses `u` and fixes `v`, so covariance forces
+`W u v = - W u v`. This is the step that removes the `p^μ u^ν` and off-diagonal spectator
+structures from a general symmetric conserved tensor. -/
+theorem covariant_spectator_offDiagonal_zero (g : Bilin V) (K : DisKinematics V) (W : Bilin V)
+    (hSymm : g.IsSymm) (hW : IsLorentzCovariant g K W) (u v : V) (hu : g u u ≠ 0)
+    (hup : g u K.p = 0) (huq : g u K.q = 0) (huv : g u v = 0) :
+    W u v = 0 := by
+  have hf := reflect_isKinematicStabilizer g K hSymm u hu hup huq
+  have h := hW (Bilin.reflect g u) hf u v
+  rw [Bilin.reflect_apply_self g u hu, Bilin.reflect_apply_of_orthogonal g u v huv] at h
+  have hneg : W (-u) v = -W u v := by simp
+  rw [hneg] at h
+  linarith
+
+/-!
+
+## The hadronic tensor and its `F1`/`F2` decomposition
+
+-/
+
+/-- Assumptions on an abstract hadronic tensor: Lorentz covariance in the concrete sense of
+`IsLorentzCovariant`, current conservation in both slots, and symmetry (the parity-even,
+electromagnetic case). -/
+structure Assumptions (g : Bilin V) (K : DisKinematics V) (W : Bilin V) : Type where
+  /-- Invariance under every `g`-isometry fixing `p` and `q`. -/
+  covariant : IsLorentzCovariant g K W
   /-- Current conservation in the first tensor slot. -/
   conserved_left : ∀ v : V, W K.q v = 0
   /-- Current conservation in the second tensor slot. -/
@@ -107,74 +397,233 @@ structure Assumptions (g : Bilin V) (K : Kinematics.DisKinematics V) (W : Bilin 
   /-- Symmetry of the hadronic tensor. -/
   symm : W.IsSymm
 
-/-- Pointwise `F1`/`F2` decomposition relation for hadronic tensors. -/
+/-- Pointwise `F1`/`F2` decomposition relation in the transverse basis. `F2` here carries the
+literature's `1/(p·q)` normalization: it is `F₂/(p·q)`. -/
 def IsF1F2Decomposition
-    (g : Bilin V) (K : Kinematics.DisKinematics V) (W : Bilin V) (F1 F2 : ℝ) : Prop :=
-  ∀ v w : V, W v w = F1 * g v w + F2 * (g K.p v * g K.p w)
+    (g : Bilin V) (K : DisKinematics V) (W : Bilin V) (F1 F2 : ℝ) : Prop :=
+  ∀ v w : V, W v w = F1 * transverseMetric g K v w
+    + F2 * (g (pTransverse g K) v * g (pTransverse g K) w)
 
-/-- One concrete representative built from `F1` and `F2` coefficients. -/
-def fromF1F2
-    (g : Bilin V) (K : Kinematics.DisKinematics V) (F1 F2 : ℝ) : Bilin V :=
-  F1 • g + F2 • Bilin.rankOne g K.p K.p
+/-- One concrete representative built from `F1` and `F2` coefficients in the transverse
+basis. `F2` carries the literature's `1/(p·q)` normalization. -/
+noncomputable def fromF1F2
+    (g : Bilin V) (K : DisKinematics V) (F1 F2 : ℝ) : Bilin V :=
+  F1 • transverseMetric g K + F2 • Bilin.rankOne g (pTransverse g K) (pTransverse g K)
 
+/-- Pointwise value of the transverse-basis representative. -/
+lemma fromF1F2_apply (g : Bilin V) (K : DisKinematics V) (F1 F2 : ℝ) (v w : V) :
+    fromF1F2 g K F1 F2 v w = F1 * transverseMetric g K v w
+      + F2 * (g (pTransverse g K) v * g (pTransverse g K) w) := by
+  simp only [fromF1F2, LinearMap.add_apply, LinearMap.smul_apply, smul_eq_mul,
+    Bilin.rankOne_apply]
+
+/-- The transverse-basis representative decomposes with the coefficients it was built from. -/
 lemma fromF1F2_isDecomposition
-    (g : Bilin V) (K : Kinematics.DisKinematics V) (F1 F2 : ℝ) :
+    (g : Bilin V) (K : DisKinematics V) (F1 F2 : ℝ) :
     IsF1F2Decomposition g K (fromF1F2 g K F1 F2) F1 F2 := by
   intro v w
-  simp [fromF1F2, Bilin.rankOne_apply]
+  rw [fromF1F2_apply]
 
-/-- Assumptions that separate `F1` and `F2` coefficients via probe vectors. -/
-structure UniquenessAssumptions (g : Bilin V) (K : Kinematics.DisKinematics V) : Type where
+/-- The transverse-basis representative is conserved in the first slot. -/
+lemma fromF1F2_conserved_left (g : Bilin V) (K : DisKinematics V) (hQ2 : g K.q K.q ≠ 0)
+    (F1 F2 : ℝ) (v : V) :
+    fromF1F2 g K F1 F2 K.q v = 0 := by
+  rw [fromF1F2_apply, transverseMetric_conserved_left g K hQ2 v,
+    pTransverse_orthogonal_q g K hQ2]
+  ring
+
+/-- The transverse-basis representative is conserved in the second slot. -/
+lemma fromF1F2_conserved_right (g : Bilin V) (K : DisKinematics V) (hSymm : g.IsSymm)
+    (hQ2 : g K.q K.q ≠ 0) (F1 F2 : ℝ) (v : V) :
+    fromF1F2 g K F1 F2 v K.q = 0 := by
+  rw [fromF1F2_apply, transverseMetric_conserved_right g K hSymm hQ2 v,
+    pTransverse_orthogonal_q g K hQ2]
+  ring
+
+/-- The transverse-basis representative is symmetric when `g` is. -/
+lemma fromF1F2_isSymm (g : Bilin V) (K : DisKinematics V) (hSymm : g.IsSymm) (F1 F2 : ℝ) :
+    (fromF1F2 g K F1 F2).IsSymm := by
+  refine { eq := ?_ }
+  intro v w
+  have hg : ∀ x y : V, g x y = g y x := hSymm.eq
+  simp [fromF1F2_apply, transverseMetric_apply, hg, mul_comm]
+
+/-- The transverse-basis representative is Lorentz covariant. -/
+lemma fromF1F2_isLorentzCovariant (g : Bilin V) (K : DisKinematics V) (F1 F2 : ℝ) :
+    IsLorentzCovariant g K (fromF1F2 g K F1 F2) := by
+  intro f hf v w
+  rw [fromF1F2_apply, fromF1F2_apply, transverseMetric_isLorentzCovariant g K f hf v w,
+    pairing_invariant_of_fixed g K hf (stabilizer_fixes_pTransverse g K hf) v,
+    pairing_invariant_of_fixed g K hf (stabilizer_fixes_pTransverse g K hf) w]
+
+/-- **`Assumptions` is instantiable in the transverse basis, for every pair of structure
+functions.** This is the statement that fails in the non-transverse basis
+`F1 • g + F2 • rankOne g p p`, where `conserved_left` forces `F1 = 0` and `F2 * g p q = 0`.
+The only hypotheses are symmetry of `g` and `Q² ≠ 0`. -/
+def fromF1F2Assumptions (g : Bilin V) (K : DisKinematics V) (hSymm : g.IsSymm)
+    (hQ2 : g K.q K.q ≠ 0) (F1 F2 : ℝ) :
+    Assumptions g K (fromF1F2 g K F1 F2) where
+  covariant := fromF1F2_isLorentzCovariant g K F1 F2
+  conserved_left := fromF1F2_conserved_left g K hQ2 F1 F2
+  conserved_right := fromF1F2_conserved_right g K hSymm hQ2 F1 F2
+  symm := fromF1F2_isSymm g K hSymm F1 F2
+
+/-- Assumptions that separate `F1` and `F2` coefficients via probe vectors, stated against
+the transverse basis: one pair of vectors sees the projector but not `p_T ⊗ p_T`, and one
+pair does the reverse. -/
+structure UniquenessAssumptions (g : Bilin V) (K : DisKinematics V) : Type where
+  /-- First slot of the probe pair isolating `F1`. -/
   vF1 : V
+  /-- Second slot of the probe pair isolating `F1`. -/
   wF1 : V
-  g_nonzero : g vF1 wF1 ≠ 0
-  p_outer_zero : g K.p vF1 * g K.p wF1 = 0
+  /-- The `F1` probe pair sees the transverse projector. -/
+  transverse_nonzero : transverseMetric g K vF1 wF1 ≠ 0
+  /-- The `F1` probe pair does not see `p_T ⊗ p_T`. -/
+  pT_outer_zero : g (pTransverse g K) vF1 * g (pTransverse g K) wF1 = 0
+  /-- First slot of the probe pair isolating `F2`. -/
   vF2 : V
+  /-- Second slot of the probe pair isolating `F2`. -/
   wF2 : V
-  g_zero : g vF2 wF2 = 0
-  p_outer_nonzero : g K.p vF2 * g K.p wF2 ≠ 0
+  /-- The `F2` probe pair does not see the transverse projector. -/
+  transverse_zero : transverseMetric g K vF2 wF2 = 0
+  /-- The `F2` probe pair sees `p_T ⊗ p_T`. -/
+  pT_outer_nonzero : g (pTransverse g K) vF2 * g (pTransverse g K) wF2 ≠ 0
 
+/-- With probe vectors separating the two basis structures, a decomposition with
+`(F1, F2) ≠ (0, 0)` is a non-zero tensor. Together with `fromF1F2Assumptions` this is the
+non-triviality statement that the old, non-transverse basis could not support. -/
+lemma fromF1F2_ne_zero (g : Bilin V) (K : DisKinematics V) (F1 F2 : ℝ)
+    (hU : UniquenessAssumptions g K) (h : F1 ≠ 0 ∨ F2 ≠ 0) :
+    fromF1F2 g K F1 F2 ≠ 0 := by
+  intro hzero
+  rcases h with hF1 | hF2
+  · have h0 : fromF1F2 g K F1 F2 hU.vF1 hU.wF1 = 0 := by rw [hzero]; simp
+    rw [fromF1F2_apply, hU.pT_outer_zero, mul_zero, add_zero] at h0
+    rcases mul_eq_zero.mp h0 with h | h
+    · exact hF1 h
+    · exact hU.transverse_nonzero h
+  · have h0 : fromF1F2 g K F1 F2 hU.vF2 hU.wF2 = 0 := by rw [hzero]; simp
+    rw [fromF1F2_apply, hU.transverse_zero, mul_zero, zero_add] at h0
+    rcases mul_eq_zero.mp h0 with h | h
+    · exact hF2 h
+    · exact hU.pT_outer_nonzero h
+
+/-- **Uniqueness of the structure functions.** Given one probe pair that sees the transverse
+projector but not `p_T ⊗ p_T`, and one pair that does the reverse, the coefficients of a
+decomposition are pinned. Ported unchanged from the non-transverse basis: the argument only
+uses non-degeneracy of the two structures, so only the witness fields are renamed. -/
 lemma decomposition_unique
-    (g : Bilin V) (K : Kinematics.DisKinematics V) (W : Bilin V)
+    (g : Bilin V) (K : DisKinematics V) (W : Bilin V)
     (F1 F2 F1' F2' : ℝ)
     (hW : IsF1F2Decomposition g K W F1 F2)
     (hW' : IsF1F2Decomposition g K W F1' F2')
     (hU : UniquenessAssumptions g K) :
     F1 = F1' ∧ F2 = F2' := by
   have hEqF1 :
-      F1 * g hU.vF1 hU.wF1 + F2 * (g K.p hU.vF1 * g K.p hU.wF1)
-        = F1' * g hU.vF1 hU.wF1 + F2' * (g K.p hU.vF1 * g K.p hU.wF1) := by
+      F1 * transverseMetric g K hU.vF1 hU.wF1
+          + F2 * (g (pTransverse g K) hU.vF1 * g (pTransverse g K) hU.wF1)
+        = F1' * transverseMetric g K hU.vF1 hU.wF1
+          + F2' * (g (pTransverse g K) hU.vF1 * g (pTransverse g K) hU.wF1) := by
     calc
-      F1 * g hU.vF1 hU.wF1 + F2 * (g K.p hU.vF1 * g K.p hU.wF1)
+      F1 * transverseMetric g K hU.vF1 hU.wF1
+          + F2 * (g (pTransverse g K) hU.vF1 * g (pTransverse g K) hU.wF1)
           = W hU.vF1 hU.wF1 := by simp [hW hU.vF1 hU.wF1]
-      _ = F1' * g hU.vF1 hU.wF1 + F2' * (g K.p hU.vF1 * g K.p hU.wF1) := by
+      _ = F1' * transverseMetric g K hU.vF1 hU.wF1
+          + F2' * (g (pTransverse g K) hU.vF1 * g (pTransverse g K) hU.wF1) := by
           simp [hW' hU.vF1 hU.wF1]
-  have hEqF1' : F1 * g hU.vF1 hU.wF1 = F1' * g hU.vF1 hU.wF1 := by
-    simpa [hU.p_outer_zero] using hEqF1
-  have hMulF1 : (F1 - F1') * g hU.vF1 hU.wF1 = 0 := by
+  have hEqF1' : F1 * transverseMetric g K hU.vF1 hU.wF1
+      = F1' * transverseMetric g K hU.vF1 hU.wF1 := by
+    simpa [hU.pT_outer_zero] using hEqF1
+  have hMulF1 : (F1 - F1') * transverseMetric g K hU.vF1 hU.wF1 = 0 := by
     linarith [hEqF1']
   have hF1 : F1 = F1' := by
-    have hSub : F1 - F1' = 0 := (mul_eq_zero.mp hMulF1).resolve_right hU.g_nonzero
+    have hSub : F1 - F1' = 0 :=
+      (mul_eq_zero.mp hMulF1).resolve_right hU.transverse_nonzero
     exact sub_eq_zero.mp hSub
 
   have hEqF2 :
-      F1 * g hU.vF2 hU.wF2 + F2 * (g K.p hU.vF2 * g K.p hU.wF2)
-        = F1' * g hU.vF2 hU.wF2 + F2' * (g K.p hU.vF2 * g K.p hU.wF2) := by
+      F1 * transverseMetric g K hU.vF2 hU.wF2
+          + F2 * (g (pTransverse g K) hU.vF2 * g (pTransverse g K) hU.wF2)
+        = F1' * transverseMetric g K hU.vF2 hU.wF2
+          + F2' * (g (pTransverse g K) hU.vF2 * g (pTransverse g K) hU.wF2) := by
     calc
-      F1 * g hU.vF2 hU.wF2 + F2 * (g K.p hU.vF2 * g K.p hU.wF2)
+      F1 * transverseMetric g K hU.vF2 hU.wF2
+          + F2 * (g (pTransverse g K) hU.vF2 * g (pTransverse g K) hU.wF2)
           = W hU.vF2 hU.wF2 := by simp [hW hU.vF2 hU.wF2]
-      _ = F1' * g hU.vF2 hU.wF2 + F2' * (g K.p hU.vF2 * g K.p hU.wF2) := by
+      _ = F1' * transverseMetric g K hU.vF2 hU.wF2
+          + F2' * (g (pTransverse g K) hU.vF2 * g (pTransverse g K) hU.wF2) := by
           simp [hW' hU.vF2 hU.wF2]
   have hEqF2' :
-      F2 * (g K.p hU.vF2 * g K.p hU.wF2) = F2' * (g K.p hU.vF2 * g K.p hU.wF2) := by
-    simpa [hU.g_zero, hF1] using hEqF2
-  have hMulF2 : (F2 - F2') * (g K.p hU.vF2 * g K.p hU.wF2) = 0 := by
+      F2 * (g (pTransverse g K) hU.vF2 * g (pTransverse g K) hU.wF2)
+        = F2' * (g (pTransverse g K) hU.vF2 * g (pTransverse g K) hU.wF2) := by
+    simpa [hU.transverse_zero, hF1] using hEqF2
+  have hMulF2 :
+      (F2 - F2') * (g (pTransverse g K) hU.vF2 * g (pTransverse g K) hU.wF2) = 0 := by
     linarith [hEqF2']
   have hF2 : F2 = F2' := by
-    have hSub : F2 - F2' = 0 := (mul_eq_zero.mp hMulF2).resolve_right hU.p_outer_nonzero
+    have hSub : F2 - F2' = 0 :=
+      (mul_eq_zero.mp hMulF2).resolve_right hU.pT_outer_nonzero
     exact sub_eq_zero.mp hSub
 
   exact ⟨hF1, hF2⟩
+
+/-!
+
+## Exhaustion: covariance and conservation leave exactly two structures
+
+The statement below is the honest version of K1: it asserts that `IsF1F2Decomposition` is a
+*consequence* of `Assumptions`, not a definition users must posit. It is not proved here.
+
+Note that exhaustion is false for an arbitrary abstract `V` and `g`: if the stabilizer of the
+kinematics is trivial then `IsLorentzCovariant` is vacuous and any conserved symmetric `W`
+qualifies. The three linear-algebra inputs that make the argument go through are collected in
+`SpectatorAssumptions`; they hold for `V = Lorentz.Vector 3` with `g` the Minkowski form, `p`
+timelike and `q` spacelike, and none of them is the conclusion.
+
+-/
+
+/-- Linear-algebra inputs about the spectator subspace `{p, q}^⊥` needed to turn covariance
+plus conservation into the two-structure decomposition. These are facts about `g`, `p`, `q`
+and the isometry group — not about the hadronic tensor. -/
+structure SpectatorAssumptions (g : Bilin V) (K : DisKinematics V) : Type where
+  /-- Every vector splits into a transverse-hadron part, a longitudinal `q` part, and a
+  spectator part orthogonal to both. -/
+  span : ∀ v : V, ∃ (a b : ℝ) (u : V), g K.q u = 0 ∧ g (pTransverse g K) u = 0 ∧
+    v = a • pTransverse g K + b • K.q + u
+  /-- The spectator subspace is negative definite — spacelike, in the `+---` convention of
+  `Kinematics`. In particular every non-zero spectator direction is non-null, so
+  `Bilin.reflect` supplies a stabilizer element for it. -/
+  definite : ∀ u : V, g K.q u = 0 → g (pTransverse g K) u = 0 → u ≠ 0 → g u u < 0
+  /-- Witt-type transitivity: the kinematic stabilizer acts transitively on spectator
+  vectors of equal norm. -/
+  transitive : ∀ u u' : V, g K.q u = 0 → g (pTransverse g K) u = 0 →
+    g K.q u' = 0 → g (pTransverse g K) u' = 0 → g u u = g u' u' →
+    ∃ f : V →ₗ[ℝ] V, IsKinematicStabilizer g K f ∧ f u = u'
+
+/-- **Open target (K1).** Lorentz covariance, current conservation and symmetry leave exactly
+the two transverse structures, so the `F1`/`F2` decomposition is a theorem rather than an
+interface.
+
+The intended proof: `conserved_left`/`conserved_right` kill the `q` component, so `W` is
+determined by its restriction to `span {p_T} ⊕ {p,q}^⊥`;
+`covariant_spectator_offDiagonal_zero` (with `definite` supplying non-null spectator
+directions) kills the mixed `p_T`-spectator and off-diagonal spectator components;
+`transitive` plus homogeneity of degree two forces `W u u = F1 * (- g u u)` with a single
+constant `F1` on the spectator subspace, which is `F1 * transverseMetric` there since
+`g K.q u = 0`; the remaining `p_T ⊗ p_T` component defines `F2`; `span` assembles the
+pointwise identity. -/
+-- TODO(task/k1-hadronic-tensor): the four steps above are each short but need a polarization
+-- identity and a scaling argument that we could not write down with confidence without a
+-- toolchain; the `transitive` and `definite` hypotheses may also need strengthening (for
+-- instance to a statement about reflections generating the spectator isometry group) once
+-- the proof is attempted. Nothing downstream depends on this lemma: `fromF1F2Assumptions`
+-- and `decomposition_unique` are the load-bearing results.
+@[sorryful]
+theorem exists_isF1F2Decomposition (g : Bilin V) (K : DisKinematics V) (W : Bilin V)
+    (hSymm : g.IsSymm) (hQ2 : g K.q K.q ≠ 0) (hS : SpectatorAssumptions g K)
+    (hA : Assumptions g K W) :
+    ∃ F1 F2 : ℝ, IsF1F2Decomposition g K W F1 F2 := by
+  sorry
 
 end Hadronic
 
@@ -188,12 +637,15 @@ open Hadronic
 /-- Pointwise scalar contraction proxy used to state contraction identities. -/
 def contractAt (L W : Bilin V) (v w : V) : ℝ := L v w * W v w
 
+/-- The leptonic-hadronic contraction of a decomposed hadronic tensor, in the transverse
+basis. -/
 lemma contractAt_withF1F2
     (g : Bilin V) (K : Kinematics.DisKinematics V) (L W : Bilin V)
     (F1 F2 : ℝ) (hW : IsF1F2Decomposition g K W F1 F2)
     (v w : V) :
     contractAt L W v w
-      = L v w * (F1 * g v w + F2 * (g K.p v * g K.p w)) := by
+      = L v w * (F1 * transverseMetric g K v w
+        + F2 * (g (pTransverse g K) v * g (pTransverse g K) w)) := by
   simp [contractAt, hW v w]
 
 end Contraction
