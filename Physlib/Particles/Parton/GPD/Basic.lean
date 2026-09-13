@@ -37,7 +37,7 @@ structure Model (Flavor : Type) : Type where
 /-- Structural assumptions for a GPD model. -/
 structure Assumptions (M : Model Flavor) : Prop where
   supportH : ∀ i x xi t, x < 0 ∨ 1 < x → M.H i x xi t = 0
-  support_E : ∀ i x xi t, x < 0 ∨ 1 < x → M.E i x xi t = 0
+  supportE : ∀ i x xi t, x < 0 ∨ 1 < x → M.E i x xi t = 0
   skewnessBound : ∀ i x xi t, 1 < |xi| → M.H i x xi t = 0 ∧ M.E i x xi t = 0
 
 /-- Forward-limit relation at fixed scale `Q2`: `H(x,0,0) = f(x,Q2)`. -/

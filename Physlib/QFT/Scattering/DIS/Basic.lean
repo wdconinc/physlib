@@ -34,17 +34,6 @@ public import Physlib.QFT.Scattering.DIS.SIDIS.Basic
 public import Physlib.QFT.Scattering.DIS.Inference.Basic
 public import Physlib.QFT.Scattering.DIS.Inference.Unfolding
 public import Physlib.QFT.Scattering.DIS.PVES.Basic
-public import Physlib.QFT.Scattering.DIS.SIDIS.Asymmetries.Harmonics
-public import Physlib.QFT.Scattering.DIS.SIDIS.Asymmetries.Basic
-public import Physlib.QFT.Scattering.DIS.Exclusive.Kinematics.Basic
-public import Physlib.QFT.Scattering.DIS.Exclusive.Amplitudes.Basic
-public import Physlib.QFT.Scattering.DIS.Exclusive.Convolution.Basic
-public import Physlib.QFT.Scattering.DIS.Exclusive.DVCS.Basic
-public import Physlib.QFT.Scattering.DIS.Exclusive.DVCS.Interference
-public import Physlib.QFT.Scattering.DIS.Exclusive.DVMP.Basic
-public import Physlib.QFT.Scattering.DIS.Exclusive.DVMP.Channels
-public import Physlib.QFT.Scattering.DIS.Inference.Helicity
-public import Physlib.QFT.Scattering.DIS.Inference.Gluon
 public import Physlib.QFT.Scattering.DIS.Inference.JointHelicity
 public import Physlib.QFT.Scattering.DIS.Inference.ExclusiveJoint
 public import Physlib.QFT.Scattering.DIS.Inference.Conjectures
