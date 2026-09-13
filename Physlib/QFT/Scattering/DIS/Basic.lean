@@ -9,6 +9,7 @@ public import Physlib.QFT.Scattering.DIS.Kinematics.Basic
 public import Physlib.QFT.Scattering.DIS.Kinematics.Bounds
 public import Physlib.QFT.Scattering.DIS.Kinematics.AccessMethods
 public import Physlib.QFT.Scattering.DIS.Tensors.Basic
+public import Physlib.QFT.Scattering.DIS.Tensors.Longitudinal
 public import Physlib.Particles.Parton.Basic
 public import Physlib.QFT.Factorization.DIS.LO
 public import Physlib.QFT.Factorization.DIS.DiagrammaticHardKernel
