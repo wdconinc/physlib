@@ -6,6 +6,7 @@ Authors: Joseph Tooby-Smith
 module
 
 public import Physlib.QFT.Scattering.DIS.Inference.Unfolding
+public import Physlib.Meta.Linters.Sorry
 /-!
 
 # Identifiability of the parton-distribution inverse problem
@@ -222,15 +223,14 @@ theorem not_finiteDimensional_blindSubspace (hE : ¬ FiniteDimensional ℝ E)
   intro hker
   exact hE (finiteDimensional_of_finiteDimensional_ker (predictLin X) hker)
 
-/-- The same statement phrased with mathlib's `InfiniteDimensional`. -/
-theorem not_finiteDimensional_blindSubspace_of_infiniteDimensional
-    [hE : InfiniteDimensional ℝ E] (X : Experiment E m) :
-    ¬ FiniteDimensional ℝ (blindSubspace X) :=
-  -- TODO(task/u2-identifiability): this line assumes `InfiniteDimensional K V` unfolds to
-  -- `¬ FiniteDimensional K V` at the pinned mathlib revision, which could not be confirmed
-  -- without a toolchain. If it is instead a structure class, replace `hE` by the projection
-  -- (`hE.out` or `hE.not_finiteDimensional`).
-  not_finiteDimensional_blindSubspace hE X
+-- A convenience wrapper phrased with mathlib's `InfiniteDimensional` typeclass was removed
+-- here: checked directly against the pinned mathlib source (grepped the whole tree), there is
+-- no `InfiniteDimensional` class for modules/vector spaces at this pin -- the only matches are
+-- an unrelated order-theoretic `InfiniteDimensional` (`Mathlib/Order/RelSeries.lean`, about
+-- poset chains) and module *length* (`Mathlib/RingTheory/Length.lean`). Mathlib's own idiom
+-- for "infinite-dimensional vector space" at this revision is exactly the plain hypothesis
+-- `¬ FiniteDimensional ℝ E` that `not_finiteDimensional_blindSubspace` above already takes;
+-- there is no bridging class to wrap it in.
 
 /-!
 
@@ -472,13 +472,15 @@ against the kernel. -/
 def kernelMeasurement (K : DensityL2) : DensityL2 →L[ℝ] ℝ := innerSL ℝ K
 
 /-- The measurement functional in integral form. -/
+@[sorryful]
 lemma kernelMeasurement_apply (K f : DensityL2) :
     kernelMeasurement K f
       = ∫ x, K x * f x ∂(MeasureTheory.volume.restrict (Set.Ioc (0 : ℝ) 1)) := by
-  -- TODO(task/u2-identifiability): this is `MeasureTheory.L2.inner_def` specialised to real
-  -- scalars, where `starRingEnd ℝ` is the identity. Neither the name nor the argument order
-  -- of that lemma could be confirmed at the pinned mathlib revision without a toolchain, so
-  -- the step is left open rather than guessed at.
+  -- Confirmed against the pinned mathlib source: `MeasureTheory.L2.inner_def (f g) :
+  -- ⟪f, g⟫ = ∫ a, ⟪f a, g a⟫ ∂μ` exists exactly as anticipated
+  -- (Mathlib/MeasureTheory/Function/L2Space.lean:137). Not attempting the full proof here --
+  -- DensityL2's own inner-product/coercion unfolding is not traced -- so this stays open, but
+  -- with the previously-unconfirmed name now confirmed.
   sorry
 
 /-- An experiment built from `m` square-integrable measurement kernels. -/
@@ -486,6 +488,7 @@ def experimentOfKernels (K : Fin m → DensityL2) : Experiment DensityL2 m :=
   fun a => kernelMeasurement (K a)
 
 /-- The concrete density space is infinite-dimensional. -/
+@[sorryful]
 lemma not_finiteDimensional_densityL2 : ¬ FiniteDimensional ℝ DensityL2 := by
   -- TODO(task/u2-identifiability): the intended argument exhibits an infinite linearly
   -- independent family, for instance the indicators of the pairwise disjoint intervals
@@ -500,6 +503,7 @@ lemma not_finiteDimensional_densityL2 : ¬ FiniteDimensional ℝ DensityL2 := by
 infinite-dimensional blind subspace of square-integrable densities on `(0, 1]`. This is the
 instance that carries the physics content: the abstract theorem alone does not exhibit a
 space in which the measurement functionals really are continuous. -/
+@[sorryful]
 theorem not_finiteDimensional_blindSubspace_kernels (K : Fin m → DensityL2) :
     ¬ FiniteDimensional ℝ (blindSubspace (experimentOfKernels K)) :=
   not_finiteDimensional_blindSubspace not_finiteDimensional_densityL2 _
