@@ -27,18 +27,24 @@ namespace TMD
 
 variable {Flavor : Type}
 
-/-- Collinear proxy obtained from truncated `kT` integration. -/
+/-- Collinear proxy obtained from truncated integration over the transverse measure.
+
+The reduction integrates `d²k_T`, i.e. carries the Jacobian `2π k_T`; see
+`Physlib.Particles.Parton.TMD.integrateTransverse`. An earlier version of this definition
+used the plain `k_T` integral `integrateKT`, which is off by that weight and so did not
+produce the collinear density its name claims. -/
 def collinearFromTmd
     (fTmd : Tmd Flavor)
     (ktMax ζ : ℝ) : PDF.Pdf Flavor :=
-  fun i x Q2 => integrateKT fTmd i x Q2 ζ ktMax
+  fun i x Q2 => integrateTransverse fTmd i x Q2 ζ ktMax
 
-/-- Reduction interface stating that integrated TMD recovers a collinear PDF. -/
+/-- Reduction interface stating that the transverse-measure integral of a TMD recovers a
+collinear PDF. -/
 def IntegratesToPdf
     (fTmd : Tmd Flavor)
     (fPdf : PDF.Pdf Flavor)
     (ktMax ζ : ℝ) : Prop :=
-  ∀ i x Q2, integrateKT fTmd i x Q2 ζ ktMax = fPdf i x Q2
+  ∀ i x Q2, integrateTransverse fTmd i x Q2 ζ ktMax = fPdf i x Q2
 
 /-- Canonical reduction theorem wrapper. -/
 lemma tmd_to_pdf_reduction
