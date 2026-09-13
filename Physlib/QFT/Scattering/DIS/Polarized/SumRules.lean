@@ -6,6 +6,7 @@ Authors: Joseph Tooby-Smith
 module
 
 public import Physlib.QFT.Scattering.DIS.Polarized.Basic
+public import Physlib.Meta.Linters.Sorry
 /-!
 
 # Polarized Sum Rules
@@ -22,9 +23,12 @@ moments `Γ₁(Q²) = ∫₀¹ dx g₁(x, Q²)` and `Γ₂(Q²) = ∫₀¹ dx g�
   about the physical proton.
 - `BurkhardtCottingham` — `Γ₂(Q²) = 0`.
 - `g2WW`, `wandzuraWilczek` — the twist-2 Wandzura-Wilczek expression for `g₂` in terms of
-  `g₁`, together with the one genuine theorem in this file: the Wandzura-Wilczek `g₂`
+  `g₁`, together with `burkhardtCottingham_wandzuraWilczek`: the Wandzura-Wilczek `g₂`
   satisfies the Burkhardt-Cottingham sum rule, by a Fubini argument on the triangle
-  `0 ≤ x < y ≤ 1`.
+  `0 ≤ x < y ≤ 1`. That argument's own claim to being "the one genuine theorem in this
+  file" does not hold yet: it rests on `integral_tail_swap`, whose Fubini-swap step is
+  still `@[sorryful]` below, so the sum rule is proved conditionally on that step, not
+  unconditionally.
 
 **Moment convention.** `firstMomentG1` and `firstMomentG2` carry weight `x⁰`: they are
 plain integrals over `[0, 1]`. In terms of `Physlib.Particles.Parton.PDF.mellinMoment`,
@@ -180,6 +184,7 @@ structure WandzuraWilczekAssumptions (G : StructureFunctions) (Q2 : ℝ) : Prop 
 /-- Fubini on the triangle `{(x, y) : 0 ≤ x ≤ 1, x < y ≤ 1}`: integrating the
 Wandzura-Wilczek tail over `x ∈ [0, 1]` and swapping the order of integration replaces the
 inner `x`-integral by the length `y` of `[0, y)`. -/
+@[sorryful]
 lemma integral_tail_swap
     (G : StructureFunctions) (Q2 : ℝ)
     (hWW : WandzuraWilczekAssumptions G Q2) :
@@ -207,13 +212,16 @@ lemma integral_tail_swap
   --     `ENNReal.ofReal (y - 0)`. Expected route: `MeasureTheory.integral_indicator`
   --     (after rewriting the `if` as `Set.indicator`), then
   --     `MeasureTheory.setIntegral_const` and `MeasureTheory.measureReal_restrict_apply`.
-  -- The obstruction is that none of the names in steps (1)-(3) could be checked against
-  -- mathlib v4.31.0 from this machine: the repository has no Lean toolchain and no
-  -- mathlib source tree, and several of them (`setIntegral_congr_fun`,
-  -- `measureReal_restrict_apply`, the exact form of `integral_integral_swap` for
-  -- restricted product measures) have been renamed at least once in recent mathlib.
-  -- Writing an unchecked hundred-line measure-theory proof would be guessing, so this is
-  -- left explicit. The mathematics is standard and the statement is believed correct.
+  -- Update: all three names above are confirmed present at the pinned mathlib rev
+  -- (v4.33.0, packages/mathlib read directly from /opt/lake/builds) --
+  -- `MeasureTheory.setIntegral_congr_fun (hs : MeasurableSet s) (h : EqOn f g s)`
+  -- (Mathlib/MeasureTheory/Integral/Bochner/Set.lean), `MeasureTheory.integral_integral_swap`
+  -- (Mathlib/MeasureTheory/Integral/Prod.lean, takes `Integrable (uncurry f) (μ.prod ν)`
+  -- exactly as anticipated), and `measureReal_restrict_apply` (used elsewhere in mathlib
+  -- itself, e.g. Integral/Gamma.lean). Confirming the *names* exist is not the same as a
+  -- checked proof term -- assembling the three steps still needs a real elaborator, which
+  -- remains unavailable here -- so this stays `sorry`/`@[sorryful]` rather than an attempted
+  -- proof. The mathematics is standard and the statement is believed correct.
   sorry
 
 /-- Integrating the Wandzura-Wilczek tail over `[0, 1]` returns the first moment of `g₁`,
