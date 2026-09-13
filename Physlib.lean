@@ -213,10 +213,13 @@ public import Physlib.Particles.FlavorPhysics.CKMMatrix.StandardParameterization
 public import Physlib.Particles.Fragmentation.Basic
 public import Physlib.Particles.NeutrinoPhysics.Basic
 public import Physlib.Particles.Parton.Basic
+public import Physlib.Particles.Parton.GPD.Ambiguity
 public import Physlib.Particles.Parton.GPD.Basic
 public import Physlib.Particles.Parton.GPD.Moments
 public import Physlib.Particles.Parton.PDF.Basic
+public import Physlib.Particles.Parton.PDF.MsbarPositivity
 public import Physlib.Particles.Parton.TMD.Basic
+public import Physlib.Particles.Parton.TMD.CollinsSoper
 public import Physlib.Particles.Parton.TMD.Reduction
 public import Physlib.Particles.Parton.Unified.Basic
 public import Physlib.Particles.Parton.Unified.Consistency
@@ -377,6 +380,8 @@ public import Physlib.QFT.Scattering.DIS.Exclusive.DVCS.Basic
 public import Physlib.QFT.Scattering.DIS.Exclusive.DVCS.Interference
 public import Physlib.QFT.Scattering.DIS.Exclusive.DVMP.Basic
 public import Physlib.QFT.Scattering.DIS.Exclusive.DVMP.Channels
+public import Physlib.QFT.Scattering.DIS.Exclusive.Deconvolution.Basic
+public import Physlib.QFT.Scattering.DIS.Exclusive.Deconvolution.Uniqueness
 public import Physlib.QFT.Scattering.DIS.Exclusive.Kinematics.Basic
 public import Physlib.QFT.Scattering.DIS.Inference.Basic
 public import Physlib.QFT.Scattering.DIS.Inference.Conjectures

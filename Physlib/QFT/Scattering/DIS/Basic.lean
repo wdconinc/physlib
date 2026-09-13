@@ -35,6 +35,8 @@ public import Physlib.QFT.Scattering.DIS.Corrections.Basic
 public import Physlib.QFT.Scattering.DIS.SIDIS.Basic
 public import Physlib.QFT.Scattering.DIS.Inference.Basic
 public import Physlib.QFT.Scattering.DIS.Inference.Unfolding
+public import Physlib.QFT.Scattering.DIS.Exclusive.Deconvolution.Basic
+public import Physlib.QFT.Scattering.DIS.Exclusive.Deconvolution.Uniqueness
 public import Physlib.QFT.Scattering.DIS.PVES.Basic
 public import Physlib.QFT.Scattering.DIS.Inference.JointHelicity
 public import Physlib.QFT.Scattering.DIS.Inference.ExclusiveJoint
