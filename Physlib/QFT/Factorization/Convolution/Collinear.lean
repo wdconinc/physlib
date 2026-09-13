@@ -143,13 +143,13 @@ Mellin transform, whose `x ^ (N - 1)` weight is singular at `0`, consumes the co
 lemma convolveAt_eq_integral_Ioc (K : Kernel) (f : ℝ → ℝ) (x : ℝ) :
     convolveAt K f x = ∫ z in Set.Ioc (0 : ℝ) 1, integrand K f x z := by
   rw [convolveAt]
-  -- TODO(task/e1-mellin-convolution): discharge with the `[NoAtoms μ]` lemma stating that the
-  -- integral over `Icc a b` equals the integral over `Ioc a b` (Lebesgue measure has no atoms,
-  -- so the endpoint `{0}` is null). In mathlib this is `integral_Icc_eq_integral_Ioc`, but the
-  -- namespace could NOT be confirmed at this pin — no mathlib source is available in this
-  -- checkout (no `.lake`), so whether it is `MeasureTheory.integral_Icc_eq_integral_Ioc` or
-  -- root-namespaced is unverified. Left as `sorry` rather than asserting an unchecked name.
-  sorry
+  -- Confirmed against the pinned mathlib source (read-only under /opt/lake/builds, not
+  -- compiled): `MeasureTheory.integral_Icc_eq_integral_Ioc` at
+  -- Mathlib/MeasureTheory/Integral/Bochner/Set.lean, requiring `[NullSingletonClass μ]`,
+  -- which `Mathlib/MeasureTheory/Measure/Lebesgue/Basic.lean` supplies for `volume : Measure ℝ`
+  -- as `nullSingletonClass_volume`. Both names and the instance path are verified by reading
+  -- source; the term itself is not compiler-checked (no elaborator available here).
+  exact MeasureTheory.integral_Icc_eq_integral_Ioc
 
 /-- Explicit collinear form of the convolution:
 `(C ⊗ f) (x) = ∫_{(0,1]} 1_{x ≤ z} * z⁻¹ * C (x / z) * f z dz`, i.e. `∫_x^1 (dz / z) C (x / z) f z`
@@ -158,14 +158,11 @@ lemma convolveAt_collinearKernel_eq (C f : ℝ → ℝ) (x : ℝ) :
     convolveAt (collinearKernel C) f x
       = ∫ z in Set.Ioc (0 : ℝ) 1, if x ≤ z then z⁻¹ * C (x / z) * f z else 0 := by
   rw [convolveAt_eq_integral_Ioc]
-  -- TODO(task/e1-mellin-convolution): congruence of set integrals under pointwise equality on
-  -- the domain. Intended proof, once the lemma name is confirmed against the pin:
-  --   refine <setIntegral_congr_fun> measurableSet_Ioc (fun z hz => ?_)
-  --   simp only [integrand, collinearKernel, hz.1, and_true, ite_mul, zero_mul]
-  -- The name could NOT be confirmed here (no mathlib source in this checkout); mathlib has
-  -- variously called it `setIntegral_congr_fun` / `setIntegral_congr` / `set_integral_congr`,
-  -- with differing argument order. Left as `sorry` rather than asserting an unchecked name.
-  sorry
+  -- Confirmed against the pinned mathlib source: `MeasureTheory.setIntegral_congr_fun
+  -- (hs : MeasurableSet s) (h : EqOn f g s) : ∫ x in s, f x ∂μ = ∫ x in s, g x ∂μ`
+  -- (Mathlib/MeasureTheory/Integral/Bochner/Set.lean). Term not compiler-checked.
+  refine MeasureTheory.setIntegral_congr_fun measurableSet_Ioc (fun z hz => ?_)
+  simp only [integrand, collinearKernel, hz.1, and_true, ite_mul, zero_mul]
 
 /-- Outside the physical region the collinear convolution vanishes: for `1 < x` there is no
 `z ∈ (0,1]` with `x ≤ z`. -/
@@ -174,11 +171,9 @@ lemma convolveAt_collinearKernel_eq_zero_of_one_lt (C f : ℝ → ℝ) {x : ℝ}
   rw [convolveAt_eq_integral_Ioc]
   have h : (∫ z in Set.Ioc (0 : ℝ) 1, integrand (collinearKernel C) f x z)
       = ∫ _z in Set.Ioc (0 : ℝ) 1, (0 : ℝ) := by
-    -- TODO(task/e1-mellin-convolution): same unconfirmed set-integral congruence lemma as in
-    -- `convolveAt_collinearKernel_eq` above. Intended proof:
-    --   refine <setIntegral_congr_fun> measurableSet_Ioc (fun z hz => ?_)
-    --   rw [integrand, collinearKernel_of_lt C (lt_of_le_of_lt hz.2 hx), zero_mul]
-    sorry
+    -- Same confirmed setIntegral_congr_fun as convolveAt_collinearKernel_eq above.
+    refine MeasureTheory.setIntegral_congr_fun measurableSet_Ioc (fun z hz => ?_)
+    rw [integrand, collinearKernel_of_lt C (lt_of_le_of_lt hz.2 hx), zero_mul]
   rw [h, MeasureTheory.integral_zero]
 
 /-- A kernel of collinear form may be replaced by the canonical representative inside the
