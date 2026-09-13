@@ -57,8 +57,8 @@ instance finite_spectrum_inst (ρ : MState d) : Fintype (spectrum ℝ ρ.m) :=
 
 theorem pinching_kraus_orthogonal (ρ : MState d) {i j : spectrum ℝ ρ.m} (h : i ≠ j) :
     (pinching_kraus ρ i).mat * (pinching_kraus ρ j).mat = 0 := by
-  convert (HermitianMat.mat_cfc_mul ρ.M _ _).symm
-  convert congr($((ρ.M.cfc_const 0).symm).mat)
+  convert! (HermitianMat.mat_cfc_mul ρ.M _ _).symm
+  convert! congr($((ρ.M.cfc_const 0).symm).mat)
   · simp
   · grind [Pi.mul_apply]
 
@@ -78,6 +78,7 @@ theorem pinching_kraus_ortho (ρ : MState d) (i j : spectrum ℝ ρ.m) :
   · grind [sq, HermitianMat.mat_pow, pinching_sq_eq_self]
   · exact pinching_kraus_orthogonal ρ hij
 
+set_option backward.isDefEq.respectTransparency false in
 theorem pinching_sum (ρ : MState d) : ∑ k, pinching_kraus ρ k = 1 := by
   ext i j
   simp only [pinching_kraus, HermitianMat.cfc]
@@ -252,6 +253,7 @@ theorem pinching_idempotent (ρ σ : MState d) :
   ext1
   grind [pinching_eq_sum_conj]
 
+set_option backward.isDefEq.respectTransparency false in
 theorem inner_cfc_pinching (ρ σ : MState d) (f : ℝ → ℝ) :
     ⟪ρ.M, (pinching_map σ ρ).M.cfc f⟫ = ⟪(pinching_map σ ρ).M, (pinching_map σ ρ).M.cfc f⟫ := by
   nth_rw 2 [pinchingMap_apply_M]
@@ -275,7 +277,7 @@ theorem inner_cfc_pinching (ρ σ : MState d) (f : ℝ → ℝ) :
   congr 2
   rw [← Finset.mul_sum]
   convert (mul_one _).symm
-  convert congr($(pinching_sum σ).mat)
+  convert! congr($(pinching_sum σ).mat)
   simp
 
 theorem inner_cfc_pinching_right (ρ σ : MState d) (f : ℝ → ℝ) :
@@ -324,7 +326,12 @@ theorem pinching_map_ker_le (ρ σ : MState d) : (pinching_map σ ρ).M.ker ≤ 
   replace hv_sum := congr(WithLp.toLp 2 $(hv_sum))
   simp only [WithLp.toLp_sum, WithLp.toLp_ofLp] at hv_sum
   rw [← hv_sum]
-  exact Submodule.sum_mem _ fun k _ ↦ by simpa [HermitianMat.ker_conj ρ.nonneg] using hv k
+  exact Submodule.sum_mem _ fun k _ ↦ by
+    have h1 := hv k;
+    simp only [HermitianMat.ker_conj ρ.nonneg, HermitianMat.conjTranspose_mat,
+      Submodule.mem_comap] at h1 ⊢
+    exact h1
+
 
 noncomputable section AristotleLemmas
 

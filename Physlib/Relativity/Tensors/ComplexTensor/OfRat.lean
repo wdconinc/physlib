@@ -67,6 +67,7 @@ lemma basis_eq_ofRat {n : ℕ} {c : Fin n → complexLorentzTensor.Color}
   simp only [Rat.cast_one, Rat.cast_zero, zero_mul, add_zero]
   simp
 
+set_option backward.isDefEq.respectTransparency false in
 lemma contr_basis_ratComplexNum {c : complexLorentzTensor.Color}
     (i : Fin (complexLorentzTensor.repDim c))
     (j : Fin (complexLorentzTensor.repDim (complexLorentzTensor.τ c))) :
@@ -76,20 +77,24 @@ lemma contr_basis_ratComplexNum {c : complexLorentzTensor.Color}
       = toComplexNum (if i.val = j.val then 1 else 0) := by
   match c with
   | Color.upL =>
-    change Fermion.leftAltContraction (Fermion.leftBasis i ⊗ₜ Fermion.altLeftBasis j) = _
-    rw [Fermion.leftAltContraction_basis]
+    change Fermion.leftDualContraction
+      (Fermion.LeftHandedWeyl.basis i ⊗ₜ Fermion.DualLeftHandedWeyl.basis j) = _
+    rw [Fermion.leftDualContraction_basis]
     simp
   | Color.downL =>
-    change Fermion.altLeftContraction (Fermion.altLeftBasis i ⊗ₜ Fermion.leftBasis j) = _
-    rw [Fermion.altLeftContraction_basis]
+    change Fermion.dualLeftContraction
+      (Fermion.DualLeftHandedWeyl.basis i ⊗ₜ Fermion.LeftHandedWeyl.basis j) = _
+    rw [Fermion.dualLeftContraction_basis]
     simp
   | Color.upR =>
-    change Fermion.rightAltContraction (Fermion.rightBasis i ⊗ₜ Fermion.altRightBasis j) = _
-    rw [Fermion.rightAltContraction_basis]
+    change Fermion.rightDualContraction
+      (Fermion.RightHandedWeyl.basis i ⊗ₜ Fermion.DualRightHandedWeyl.basis j) = _
+    rw [Fermion.rightDualContraction_basis]
     simp
   | Color.downR =>
-    change Fermion.rightAltContraction (Fermion.rightBasis i ⊗ₜ Fermion.altRightBasis j) = _
-    rw [Fermion.rightAltContraction_basis]
+    change Fermion.rightDualContraction
+      (Fermion.RightHandedWeyl.basis i ⊗ₜ Fermion.DualRightHandedWeyl.basis j) = _
+    rw [Fermion.rightDualContraction_basis]
     simp
   | Color.up =>
     change Lorentz.contrCoContraction
@@ -164,10 +169,10 @@ lemma contrT_ofRat {n : ℕ} {c : Fin (n + 1 + 1) → complexLorentzTensor.Color
 
 lemma permT_ofRat {n m : ℕ} {c : Fin n → complexLorentzTensor.Color}
     {c1 : Fin m → complexLorentzTensor.Color}
-    {σ : Fin m → Fin n} (h : PermCond c c1 σ)
+    {σ : Fin m → Fin n} (h : IsReindexing c c1 σ)
     (f : ComponentIdx c → RatComplexNum) :
     (permT σ h ((ofRat f))) =
-    ((ofRat (fun b => f (fun i => Fin.cast (by simp [PermCond.inv_perserve_color])
+    ((ofRat (fun b => f (fun i => Fin.cast (by simp [IsReindexing.inv_perserve_color])
       (b (h.inv σ i)))))) := by
   apply (Tensor.basis _).repr.injective
   ext b

@@ -31,12 +31,12 @@ def H₁ : Prob → ℝ :=
 
 /-- H₁ of 0 is zero.-/
 @[simp]
-def H₁_zero_eq_zero : H₁ 0 = 0 := by
+lemma H₁_zero_eq_zero : H₁ 0 = 0 := by
   simp [H₁]
 
 /-- H₁ of 1 is zero.-/
 @[simp]
-def H₁_one_eq_zero : H₁ 1 = 0 := by
+lemma H₁_one_eq_zero : H₁ 1 = 0 := by
   simp [H₁]
 
 /-- Entropy is nonnegative. -/
@@ -58,6 +58,7 @@ theorem H₁_le_1 (p : Prob) : H₁ p < 1 := by
 theorem H₁_le_exp_m1 (p : Prob) : H₁ p ≤ Real.exp (-1) :=
   Real.negMulLog_le_rexp_neg_one p.zero_le_coe
 
+set_option backward.isDefEq.respectTransparency false in
 theorem H₁_concave : ∀ (x y : Prob), ∀ (p : Prob), p[H₁ x ↔ H₁ y] ≤ H₁ (p[x ↔ y]) := by
   intros x y p
   simp only [H₁, smul_eq_mul, Prob.coe_one_minus, Mixable.mix, Mixable.mix_ab, Mixable.mkT_instUniv,

@@ -33,8 +33,7 @@ component indices induced by tensor products and contractions live in sibling fi
 
 ## iv. References
 
-There are no known references for the material in this module.
-
+* None.
 -/
 
 @[expose] public section
@@ -69,7 +68,7 @@ abbrev ComponentIdx {n : ℕ} {S : TensorSpecies k C G V basisIdx rep b}
 lemma ComponentIdx.congr_right {n : ℕ} {c : Fin n → C} (b : ComponentIdx (S := S) c)
     (i j : Fin n) (h : i = j) : b i = basisIdxCongr (by simp [h]) (b j) := by
   subst h
-  simp [basisIdxCongr]
+  rfl
 
 /-- Casting of a `ComponentIdx` through equivalent color maps. -/
 def ComponentIdx.cast {n m : ℕ} {c : Fin n → C} {cm : Fin m → C}

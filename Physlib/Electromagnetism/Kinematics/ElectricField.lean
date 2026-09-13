@@ -22,8 +22,8 @@ In this module we define the electric field, and prove lemmas about it.
 ## ii. Key results
 
 - `electricField` : The electric field from the electromagnetic potential.
-- `electricField_eq_fieldStrengthMatrix` : The electric field expressed in terms of the
-  field strength tensor.
+- `electricField_eq_toFieldStrength_eval` : The electric field expressed in terms of the
+  components of the field strength tensor.
 
 ## iii. Table of contents
 
@@ -36,6 +36,7 @@ In this module we define the electric field, and prove lemmas about it.
 
 ## iv. References
 
+* None.
 -/
 
 @[expose] public section
@@ -126,7 +127,7 @@ lemma ofElectromagneticField_electricField {c : SpeedOfLight}
         let u := p.2
         (u • basis.repr x) ⨯ₑ₃ B t (u • x)
       suffices h : ContDiff ℝ 1 (fun x => C x i) by
-        convert h
+        convert! h
         exact 1
       fin_cases i
       all_goals
@@ -145,12 +146,12 @@ The electric field can be expressed in terms of the field strength tensor as
 `E_i = - c * F_0^i`.
 -/
 
-lemma electricField_eq_fieldStrengthMatrix {c : SpeedOfLight}
+lemma electricField_eq_toFieldStrength_eval {c : SpeedOfLight}
     (A : ElectromagneticPotential d) (t : Time)
     (x : Space d) (i : Fin d) (hA : Differentiable ℝ A) :
-    A.electricField c t x i = -
-    c * A.fieldStrengthMatrix ((toTimeAndSpace c).symm (t, x)) (Sum.inl 0, Sum.inr i) := by
-  rw [toFieldStrength_basis_repr_apply_eq_single]
+    A.electricField c t x i = - c *
+    toField {A.toFieldStrength ((toTimeAndSpace c).symm (t, x)) | [Sum.inl 0] [Sum.inr i]}ᵀ := by
+  rw [toFieldStrength_eval_apply_eq_single]
   simp only [Fin.isValue, inl_0_inl_0, one_mul, inr_i_inr_i, neg_mul, sub_neg_eq_add]
   rw [electricField]
   simp only [PiLp.sub_apply, PiLp.neg_apply, Fin.isValue, mul_add, neg_add_rev]
@@ -165,13 +166,8 @@ lemma electricField_eq_fieldStrengthMatrix {c : SpeedOfLight}
       change Space.deriv i (fun y => c * A ((toTimeAndSpace c).symm (t, y)) (Sum.inl 0)) x = _
       rw [Space.deriv_eq_fderiv_basis, fderiv_const_mul]
       simp [← Space.deriv_eq_fderiv_basis]
-      · apply Differentiable.differentiableAt
-        have h1 := (differentiable_component A hA (Sum.inl 0))
-        apply Differentiable.comp h1
-        refine Differentiable.fun_comp ?_ ?_
-        · exact ContinuousLinearEquiv.differentiable (toTimeAndSpace c).symm
-        · fun_prop
-      · exact fun μ => (differentiable_component A hA _).differentiableAt
+      · fun_prop
+      · fun_prop
   · exact 2
   · rw [SpaceTime.deriv_sum_inl c]
     simp only [ContinuousLinearEquiv.apply_symm_apply]
@@ -185,42 +181,27 @@ lemma electricField_eq_fieldStrengthMatrix {c : SpeedOfLight}
     · apply Time.differentiable_euclid
       intro i
       simp only
-      generalize (Sum.inr i) = j
-      revert j
-      rw [Lorentz.Vector.differentiable_apply]
-      intro μ
-      apply Differentiable.differentiableAt
-      refine Differentiable.fun_comp ?_ ?_
-      · exact hA
-      refine Differentiable.fun_comp ?_ ?_
-      · exact ContinuousLinearEquiv.differentiable (toTimeAndSpace c).symm
-      · fun_prop
-    · intro μ
-      apply Differentiable.differentiableAt
-      refine Differentiable.fun_comp hA ?_
-      refine Differentiable.fun_comp ?_ ?_
-      · exact ContinuousLinearEquiv.differentiable (toTimeAndSpace c).symm
-      · fun_prop
+      fun_prop
+    · fun_prop
     · exact hA
   · exact 1
 
-lemma fieldStrengthMatrix_inl_inr_eq_electricField {c : SpeedOfLight}
+lemma toFieldStrength_eval_inl_inr_eq_electricField {c : SpeedOfLight}
     (A : ElectromagneticPotential d)
     (x : SpaceTime d) (i : Fin d) (hA : Differentiable ℝ A) :
-    A.fieldStrengthMatrix x (Sum.inl 0, Sum.inr i) =
+    toField {A.toFieldStrength x | [Sum.inl 0] [Sum.inr i]}ᵀ =
     - (1 /c) * A.electricField c (x.time c) x.space i := by
-  rw [electricField_eq_fieldStrengthMatrix A (x.time c) x.space i hA]
+  rw [electricField_eq_toFieldStrength_eval A (x.time c) x.space i hA]
   simp
 
-lemma fieldStrengthMatrix_inr_inl_eq_electricField {c : SpeedOfLight}
+lemma toFieldStrength_eval_inr_inl_eq_electricField {c : SpeedOfLight}
     (A : ElectromagneticPotential d)
     (x : SpaceTime d) (i : Fin d) (hA : Differentiable ℝ A) :
-    A.fieldStrengthMatrix x (Sum.inr i, Sum.inl 0) =
+    toField {A.toFieldStrength x | [Sum.inr i] [Sum.inl 0]}ᵀ =
     (1 /c) * A.electricField c (x.time c) x.space i := by
-  rw [electricField_eq_fieldStrengthMatrix A (x.time c) x.space i hA]
-  simp only [Fin.isValue, one_div, toTimeAndSpace_symm_apply_time_space, neg_mul, mul_neg, ne_eq,
-    SpeedOfLight.val_ne_zero, not_false_eq_true, inv_mul_cancel_left₀]
-  rw [fieldStrengthMatrix_antisymm A x (Sum.inr i) (Sum.inl 0)]
+  rw [toFieldStrength_eval_antisymm A x (Sum.inr i) (Sum.inl 0),
+    toFieldStrength_eval_inl_inr_eq_electricField A x i hA]
+  ring
 /-!
 
 ## C. Smoothness of the electric field
@@ -234,43 +215,26 @@ lemma electricField_contDiff {n} {c : SpeedOfLight} {A : ElectromagneticPotentia
   conv =>
     enter [3, x];
     change A.electricField c x.1 x.2 i
-    rw [electricField_eq_fieldStrengthMatrix (A) x.1 x.2 i (hA.differentiable (by simp))]
-    change - c * A.fieldStrengthMatrix ((toTimeAndSpace c).symm (x.1, x.2)) (Sum.inl 0, Sum.inr i)
+    rw [electricField_eq_toFieldStrength_eval (A) x.1 x.2 i (hA.differentiable (by simp))]
   apply ContDiff.mul
   · fun_prop
-  change ContDiff ℝ n ((fun x => A.fieldStrengthMatrix x (Sum.inl 0, Sum.inr i))
-    ∘ (toTimeAndSpace c (d := d)).symm)
-  refine ContDiff.comp ?_ ?_
-  · exact fieldStrengthMatrix_contDiff hA
-  · exact ContinuousLinearEquiv.contDiff (toTimeAndSpace c).symm
+  exact (toFieldStrength_eval_contDiff hA).comp
+    (ContinuousLinearEquiv.contDiff (toTimeAndSpace c).symm)
 
 lemma electricField_apply_contDiff {n} {c : SpeedOfLight} {A : ElectromagneticPotential d}
-    (hA : ContDiff ℝ (n + 1) A) : ContDiff ℝ n (↿(fun t x => A.electricField c t x i)) := by
-  change ContDiff ℝ n (EuclideanSpace.proj i ∘ ↿(A.electricField c))
-  refine ContDiff.comp ?_ ?_
-  · exact ContinuousLinearMap.contDiff (𝕜 := ℝ) _
-  · exact electricField_contDiff hA
+    (hA : ContDiff ℝ (n + 1) A) : ContDiff ℝ n (↿(fun t x => A.electricField c t x i)) :=
+  (ContinuousLinearMap.contDiff (𝕜 := ℝ) (EuclideanSpace.proj i)).comp (electricField_contDiff hA)
 
 lemma electricField_apply_contDiff_space {n} {A : ElectromagneticPotential d}
     {c : SpeedOfLight}
     (hA : ContDiff ℝ (n + 1) A) (t : Time) :
-    ContDiff ℝ n (fun x => A.electricField c t x i) := by
-  change ContDiff ℝ n (EuclideanSpace.proj i ∘ (↿(A.electricField c) ∘ fun x => (t, x)))
-  refine ContDiff.comp ?_ ?_
-  · exact ContinuousLinearMap.contDiff (𝕜 := ℝ) _
-  · refine ContDiff.comp ?_ ?_
-    · exact electricField_contDiff hA
-    · fun_prop
+    ContDiff ℝ n (fun x => A.electricField c t x i) :=
+  (electricField_apply_contDiff hA).comp (f := fun x => (t, x)) (by fun_prop)
 
 lemma electricField_apply_contDiff_time {n} {c : SpeedOfLight} {A : ElectromagneticPotential d}
     (hA : ContDiff ℝ (n + 1) A) (x : Space d) :
-    ContDiff ℝ n (fun t => A.electricField c t x i) := by
-  change ContDiff ℝ n (EuclideanSpace.proj i ∘ (↿(A.electricField c) ∘ fun t => (t, x)))
-  refine ContDiff.comp ?_ ?_
-  · exact ContinuousLinearMap.contDiff (𝕜 := ℝ) _
-  · refine ContDiff.comp ?_ ?_
-    · exact electricField_contDiff hA
-    · fun_prop
+    ContDiff ℝ n (fun t => A.electricField c t x i) :=
+  (electricField_apply_contDiff hA).comp (f := fun t => (t, x)) (by fun_prop)
 
 /-!
 
@@ -279,61 +243,34 @@ lemma electricField_apply_contDiff_time {n} {c : SpeedOfLight} {A : Electromagne
 -/
 
 lemma electricField_differentiable {A : ElectromagneticPotential d} {c : SpeedOfLight}
-    (hA : ContDiff ℝ 2 A) : Differentiable ℝ (↿(A.electricField c)) := by
-  rw [differentiable_euclidean]
-  intro i
-  conv =>
-    enter [2, x];
-    change A.electricField c x.1 x.2 i
-    rw [electricField_eq_fieldStrengthMatrix (A) x.1 x.2 i (hA.differentiable (by simp))]
-    change - c * A.fieldStrengthMatrix ((toTimeAndSpace c).symm (x.1, x.2)) (Sum.inl 0, Sum.inr i)
-  apply Differentiable.mul
-  · fun_prop
-  change Differentiable ℝ ((fun x => A.fieldStrengthMatrix x (Sum.inl 0, Sum.inr i))
-    ∘ (toTimeAndSpace c (d := d)).symm)
-  refine Differentiable.comp ?_ ?_
-  · exact fieldStrengthMatrix_differentiable (hA)
-  · exact ContinuousLinearEquiv.differentiable (toTimeAndSpace c).symm
+    (hA : ContDiff ℝ 2 A) : Differentiable ℝ (↿(A.electricField c)) :=
+  (electricField_contDiff (n := 1) hA).differentiable one_ne_zero
 
 lemma electricField_differentiable_time {A : ElectromagneticPotential d} {c : SpeedOfLight}
-    (hA : ContDiff ℝ 2 A) (x : Space d) : Differentiable ℝ (A.electricField c · x) := by
-  change Differentiable ℝ (↿(A.electricField c) ∘ fun t => (t, x))
-  refine Differentiable.comp ?_ ?_
-  · exact electricField_differentiable hA
-  · fun_prop
+    (hA : ContDiff ℝ 2 A) (x : Space d) : Differentiable ℝ (A.electricField c · x) :=
+  (electricField_differentiable hA).comp (f := fun t => (t, x)) (by fun_prop)
 
 lemma electricField_differentiable_space {A : ElectromagneticPotential d} {c : SpeedOfLight}
-    (hA : ContDiff ℝ 2 A) (t : Time) : Differentiable ℝ (A.electricField c t) := by
-  change Differentiable ℝ (↿(A.electricField c) ∘ fun x => (t, x))
-  refine Differentiable.comp ?_ ?_
-  · exact electricField_differentiable hA
-  · fun_prop
+    (hA : ContDiff ℝ 2 A) (t : Time) : Differentiable ℝ (A.electricField c t) :=
+  (electricField_differentiable hA).comp (f := fun x => (t, x)) (by fun_prop)
 
 lemma electricField_apply_differentiable {A : ElectromagneticPotential d}
     {c : SpeedOfLight}
     (hA : ContDiff ℝ 2 A) :
-    Differentiable ℝ (fun (tx : Time × Space d) => A.electricField c tx.1 tx.2 i) := by
-  change Differentiable ℝ (EuclideanSpace.proj i ∘ ↿(A.electricField c))
-  refine Differentiable.comp ?_ ?_
-  · exact ContinuousLinearMap.differentiable (𝕜 := ℝ) (EuclideanSpace.proj i)
-  · exact electricField_differentiable hA
+    Differentiable ℝ (fun (tx : Time × Space d) => A.electricField c tx.1 tx.2 i) :=
+  (ContinuousLinearMap.differentiable (𝕜 := ℝ) (EuclideanSpace.proj i)).comp
+    (electricField_differentiable hA)
 lemma electricField_apply_differentiable_space {A : ElectromagneticPotential d}
     {c : SpeedOfLight}
     (hA : ContDiff ℝ 2 A) (t : Time) (i : Fin d) :
-    Differentiable ℝ (fun x => A.electricField c t x i) := by
-  change Differentiable ℝ (EuclideanSpace.proj i ∘ (A.electricField c t))
-  refine Differentiable.comp ?_ ?_
-  · exact ContinuousLinearMap.differentiable (𝕜 := ℝ) (EuclideanSpace.proj i)
-  · exact electricField_differentiable_space hA t
+    Differentiable ℝ (fun x => A.electricField c t x i) :=
+  (electricField_apply_differentiable hA).comp (f := fun x => (t, x)) (by fun_prop)
 
 lemma electricField_apply_differentiable_time {A : ElectromagneticPotential d}
     {c : SpeedOfLight}
     (hA : ContDiff ℝ 2 A) (x : Space d) (i : Fin d) :
-    Differentiable ℝ (fun t => A.electricField c t x i) := by
-  change Differentiable ℝ (EuclideanSpace.proj i ∘ (A.electricField c · x))
-  refine Differentiable.comp ?_ ?_
-  · exact ContinuousLinearMap.differentiable (𝕜 := ℝ) (EuclideanSpace.proj i)
-  · exact electricField_differentiable_time hA x
+    Differentiable ℝ (fun t => A.electricField c t x i) :=
+  (electricField_apply_differentiable hA).comp (f := fun t => (t, x)) (by fun_prop)
 
 /-!
 
@@ -368,51 +305,47 @@ lemma time_deriv_comp_vectorPotential_eq_electricField {d} {A : ElectromagneticP
 
 open Space
 
-lemma time_deriv_electricField_eq_fieldStrengthMatrix {d} {A : ElectromagneticPotential d}
+lemma time_deriv_electricField_eq_toFieldStrength_eval {d} {A : ElectromagneticPotential d}
     {c : SpeedOfLight} (hA : ContDiff ℝ 2 A) (t : Time) (x : Space d) (i : Fin d) :
     ∂ₜ (fun t => A.electricField c t x) t i =
-    - c ^ 2 * ∂_ (Sum.inl 0) (fun x => (A.fieldStrengthMatrix x) (Sum.inl 0, Sum.inr i))
+    - c ^ 2 * ∂_ (Sum.inl 0) (fun x => toField {A.toFieldStrength x | [Sum.inl 0] [Sum.inr i]}ᵀ)
     ((toTimeAndSpace c).symm (t, x)) := by
   rw [SpaceTime.deriv_sum_inl c]
   simp only [one_div, ContinuousLinearEquiv.apply_symm_apply, Fin.isValue, smul_eq_mul, neg_mul]
   rw [← Time.deriv_euclid]
   conv_lhs =>
     enter [1, t]
-    rw [electricField_eq_fieldStrengthMatrix (c := c) A t x i (hA.differentiable (by simp))]
-  rw [Time.deriv_eq]
-  rw [fderiv_const_mul]
+    rw [electricField_eq_toFieldStrength_eval (c := c) A t x i (hA.differentiable (by simp))]
+  rw [Time.deriv_eq, fderiv_const_mul]
   simp [← Time.deriv_eq]
   field_simp
-  · apply Differentiable.differentiableAt
-    apply fieldStrengthMatrix_differentiable_time hA
+  · exact (toFieldStrength_eval_differentiable_time hA x).differentiableAt
   · apply electricField_differentiable_time hA x
-  · apply fieldStrengthMatrix_differentiable hA
+  · apply toFieldStrength_eval_differentiable hA
 
-lemma div_electricField_eq_fieldStrengthMatrix{d} {A : ElectromagneticPotential d}
+lemma div_electricField_eq_toFieldStrength_eval {d} {A : ElectromagneticPotential d}
     {c : SpeedOfLight} (hA : ContDiff ℝ 2 A) (t : Time) (x : Space d) :
     (∇ ⬝ A.electricField c t) x = c * ∑ (μ : (Fin 1 ⊕ Fin d)),
-      (∂_ μ (A.fieldStrengthMatrix · (μ, Sum.inl 0)) ((toTimeAndSpace c).symm (t, x))) := by
+      (∂_ μ (fun x => toField {A.toFieldStrength x | [μ] [Sum.inl 0]}ᵀ)
+        ((toTimeAndSpace c).symm (t, x))) := by
   rw [Finset.mul_sum]
   simp only [Fin.isValue, Fintype.sum_sum_type, Finset.univ_unique, Fin.default_eq_zero,
-    Finset.sum_singleton, fieldStrengthMatrix_diag_eq_zero, SpaceTime.deriv_zero, Pi.ofNat_apply,
+    Finset.sum_singleton, toFieldStrength_eval_diag_eq_zero, SpaceTime.deriv_zero, Pi.ofNat_apply,
     mul_zero, zero_add]
   conv_rhs =>
     enter [2, i]
-    rw [SpaceTime.deriv_sum_inr c _ (fieldStrengthMatrix_differentiable hA)]
-    simp only [Fin.isValue]
+    rw [SpaceTime.deriv_sum_inr c _ (toFieldStrength_eval_differentiable hA)]
   rw [Space.div]
   congr
   funext i
   simp only [ContinuousLinearEquiv.apply_symm_apply, Fin.isValue]
   conv_lhs =>
     enter [2, y]
-    rw [electricField_eq_fieldStrengthMatrix (c := c) A t y i (hA.differentiable (by simp))]
-    rw [fieldStrengthMatrix_antisymm]
+    rw [electricField_eq_toFieldStrength_eval (c := c) A t y i (hA.differentiable (by simp))]
+    rw [toFieldStrength_eval_antisymm]
   rw [Space.deriv_eq_fderiv_basis, fderiv_const_mul]
   simp [← Space.deriv_eq_fderiv_basis]
-  apply Differentiable.differentiableAt
-  apply Differentiable.neg
-  apply fieldStrengthMatrix_differentiable_space hA
+  exact (toFieldStrength_eval_differentiable_space hA t).neg.differentiableAt
 end ElectromagneticPotential
 
 end Electromagnetism

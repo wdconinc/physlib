@@ -19,9 +19,8 @@ doublet.
 
 ## References
 
-- https://arxiv.org/abs/hep-ph/0605184
-- https://arxiv.org/abs/1605.03237
-
+* https://arxiv.org/abs/hep-ph/0605184. [ref: arxiv_hep_ph_0605184]
+* https://arxiv.org/abs/1605.03237. [ref: arxiv_1605_03237]
 -/
 
 @[expose] public section
@@ -50,7 +49,6 @@ open InnerProductSpace
 lemma ext_of_fst_snd {H1 H2 : TwoHiggsDoublet}
     (h1 : H1.Φ1 = H2.Φ1) (h2 : H1.Φ2 = H2.Φ2) : H1 = H2 := by
   cases H1
-  cases H2
   congr
 /-!
 
@@ -60,21 +58,21 @@ lemma ext_of_fst_snd {H1 H2 : TwoHiggsDoublet}
 
 noncomputable instance : SMul StandardModel.GaugeGroupI TwoHiggsDoublet where
   smul g H :=
-    { Φ1 := g • H.Φ1
-      Φ2 := g • H.Φ2 }
+    { Φ1 := StandardModel.HiggsVec.repGaugeGroupI g H.Φ1
+      Φ2 := StandardModel.HiggsVec.repGaugeGroupI g H.Φ2 }
 
 @[simp]
 lemma gaugeGroupI_smul_fst (g : StandardModel.GaugeGroupI) (H : TwoHiggsDoublet) :
-    (g • H).Φ1 = g • H.Φ1 := rfl
+    (g • H).Φ1 = StandardModel.HiggsVec.repGaugeGroupI g H.Φ1 := rfl
 
 @[simp]
 lemma gaugeGroupI_smul_snd (g : StandardModel.GaugeGroupI) (H : TwoHiggsDoublet) :
-    (g • H).Φ2 = g • H.Φ2 := rfl
+    (g • H).Φ2 = StandardModel.HiggsVec.repGaugeGroupI g H.Φ2 := rfl
 
 noncomputable instance : MulAction StandardModel.GaugeGroupI TwoHiggsDoublet where
   one_smul H := by
     ext <;> simp
   mul_smul g1 g2 H := by
-    ext <;> simp [mul_smul]
+    ext <;> simp [Module.End.mul_apply]
 
 end TwoHiggsDoublet

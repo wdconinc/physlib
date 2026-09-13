@@ -6,7 +6,7 @@ Authors: Joseph Tooby-Smith
 module
 
 public import Physlib.Electromagnetism.Distributional.Basic
-public import Mathlib.Data.Real.Hom
+public import Mathlib.Algebra.Order.Archimedean.Real.Hom
 /-!
 
 # The vector Potential
@@ -33,6 +33,7 @@ the vector potential is non-relativistic and is therefore a distribution of `Tim
 
 ## iv. References
 
+* None.
 -/
 
 @[expose] public section
@@ -63,14 +64,9 @@ noncomputable def vectorPotential {d} (c : SpeedOfLight) :
     (Time × Space d) →d[ℝ] EuclideanSpace ℝ (Fin d) where
   toFun A := Lorentz.Vector.spatialCLM d ∘L distTimeSlice c A
   map_add' A₁ A₂ := by
-    ext ε
     simp [distTimeSlice]
   map_smul' r A := by
-    ext ε i
-    simp only [distTimeSlice, map_smul, ContinuousLinearEquiv.coe_mk, LinearEquiv.coe_mk,
-      LinearMap.coe_mk, AddHom.coe_mk, ContinuousLinearMap.coe_smul', ContinuousLinearMap.coe_comp',
-      Pi.smul_apply, Function.comp_apply,
-      Real.ringHom_apply, PiLp.smul_apply, smul_eq_mul]
+    simp [distTimeSlice]
 
 end DistElectromagneticPotential
 

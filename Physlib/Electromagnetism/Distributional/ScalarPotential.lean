@@ -6,7 +6,7 @@ Authors: Joseph Tooby-Smith
 module
 
 public import Physlib.Electromagnetism.Distributional.Basic
-public import Mathlib.Data.Real.Hom
+public import Mathlib.Algebra.Order.Archimedean.Real.Hom
 /-!
 
 # The Scalar Potential
@@ -33,6 +33,7 @@ the scalar potential is non-relativistic and is therefore a distribution of `Tim
 
 ## iv. References
 
+* None.
 -/
 
 @[expose] public section
@@ -66,10 +67,7 @@ noncomputable def scalarPotential {d} (c : SpeedOfLight) :
     simp [distTimeSlice]
   map_smul' r A := by
     ext ε
-    simp only [distTimeSlice, map_smul, ContinuousLinearEquiv.coe_mk, LinearEquiv.coe_mk,
-      LinearMap.coe_mk, AddHom.coe_mk, ContinuousLinearMap.coe_comp', ContinuousLinearMap.coe_smul',
-      Function.comp_apply, Pi.smul_apply, smul_eq_mul, Real.ringHom_apply]
-    ring
+    simp [distTimeSlice, mul_left_comm]
 
 end DistElectromagneticPotential
 end Electromagnetism

@@ -9,6 +9,7 @@ public import Physlib.SpaceAndTime.Space.Derivatives.Laplacian
 public import Mathlib.MeasureTheory.Integral.CurveIntegral.Poincare
 public import Physlib.SpaceAndTime.Space.CrossProduct
 public import Mathlib.Analysis.Calculus.ParametricIntervalIntegral
+public import Physlib.Mathematics.LeviCivita.Basic
 
 /-!
 
@@ -27,6 +28,8 @@ We also prove some basic vector-identities involving of the curl operator.
 - `distCurl` : The curl operator on distributions from `Space 3` to `EuclideanSpace ℝ (Fin 3)`.
 - `div_of_curl_eq_zero` : The divergence of the curl of a function is zero.
 - `distCurl_distGrad_eq_zero` : The curl of the gradient of a distribution is zero.
+- `curl_eq_sum_leviCivitaSymbol` : The components of the curl as a contraction with the
+  Levi-Civita symbol.
 
 ## iii. Table of contents
 
@@ -41,6 +44,7 @@ We also prove some basic vector-identities involving of the curl operator.
   - A.8. The curl of a curl
   - A.9. A divergence-free field is a curl
   - A.10. A curl-free field is a gradient
+  - A.11. The curl in terms of the Levi-Civita symbol
 - B. The curl on distributions
   - B.1. The components of the curl
   - B.2. Basic equalities
@@ -48,6 +52,7 @@ We also prove some basic vector-identities involving of the curl operator.
 
 ## iv. References
 
+* None.
 -/
 
 @[expose] public section
@@ -84,7 +89,7 @@ macro (name := curlNotation) "∇" "⨯" f:term:100 : term => `(curl $f)
 lemma curl_zero : ∇ ⨯ (0 : Space → EuclideanSpace ℝ (Fin 3)) = 0 := by
   unfold curl Space.deriv
   simp only [Fin.isValue, Pi.zero_apply, PiLp.zero_apply, fderiv_fun_const,
-    ContinuousLinearMap.zero_apply, sub_self]
+    _root_.zero_apply, sub_self]
   rfl
 
 /-!
@@ -96,7 +101,7 @@ lemma curl_zero : ∇ ⨯ (0 : Space → EuclideanSpace ℝ (Fin 3)) = 0 := by
 @[simp]
 lemma curl_const : ∇ ⨯ (fun _ : Space => v₃) = 0 := by
   unfold curl Space.deriv
-  simp only [Fin.isValue, fderiv_fun_const, Pi.zero_apply, ContinuousLinearMap.zero_apply,
+  simp only [Fin.isValue, fderiv_fun_const, Pi.zero_apply, _root_.zero_apply,
     sub_self]
   rfl
 
@@ -132,8 +137,7 @@ lemma curl_smul (f : Space → EuclideanSpace ℝ (Fin 3)) (k : ℝ)
 @[to_fun]
 lemma curl_neg (f : Space → EuclideanSpace ℝ (Fin 3)) (hf : Differentiable ℝ f) :
     ∇ ⨯ (-f) = -∇ ⨯ f := by
-  rw [← neg_one_smul ℝ, curl_smul, neg_one_smul]
-  · exact hf
+  rw [← neg_one_smul ℝ, curl_smul _ _ hf, neg_one_smul]
 
 @[to_fun]
 lemma curl_sub (f1 f2 : Space → EuclideanSpace ℝ (Fin 3))
@@ -156,12 +160,10 @@ lemma curl_linear_map (f : W → Space 3 → EuclideanSpace ℝ (Fin 3))
     IsLinearMap ℝ (fun w => ∇ ⨯ (f w)) := by
   constructor
   · intro w w'
-    rw [hf'.map_add]
-    rw [curl_add]
+    rw [hf'.map_add, curl_add]
     repeat fun_prop
   · intros k w
-    rw [hf'.map_smul]
-    rw [curl_smul]
+    rw [hf'.map_smul, curl_smul]
     fun_prop
 
 /-!
@@ -178,7 +180,7 @@ lemma deriv_coord_2nd_add (f : Space → EuclideanSpace ℝ (Fin 3)) (hf : ContD
   repeat rw [deriv_eq_fderiv_fun]
   ext x
   rw [fderiv_fun_add, fderiv_fun_add]
-  simp only [ContinuousLinearMap.add_apply, Pi.add_apply]
+  simp only [_root_.add_apply, Pi.add_apply]
   ring
   repeat fun_prop
 
@@ -190,7 +192,7 @@ lemma deriv_coord_2nd_sub (f : Space → EuclideanSpace ℝ (Fin 3)) (hf : ContD
   ext x
   simp only [Pi.sub_apply]
   rw [fderiv_fun_sub]
-  simp only [ContinuousLinearMap.coe_sub', Pi.sub_apply]
+  simp only [FunLike.coe_sub, Pi.sub_apply]
   repeat fun_prop
 
 /-!
@@ -226,9 +228,8 @@ lemma curl_of_grad_eq_zero (f : Space → ℝ) (hf : ContDiff ℝ 2 f) :
   unfold curl grad
   ext x i
   simp only [Fin.isValue, Pi.zero_apply, PiLp.zero_apply]
-  rw [deriv_commute]
+  rw [deriv_commute _ hf]
   simp only [Fin.isValue, sub_self]
-  · exact hf
 
 /-!
 
@@ -318,9 +319,8 @@ private lemma homotopyOperatorIntegrand_continuous_param {f : Space → Euclidea
 
 private lemma intervalIntegrable_homotopyOperatorIntegrand {f : Space → EuclideanSpace ℝ (Fin 3)}
     (hf : Differentiable ℝ f) (x : Space) :
-    IntervalIntegrable (homotopyOperatorIntegrand f x ·) volume (0 : ℝ) 1 := by
-  apply Continuous.intervalIntegrable
-  fun_prop
+    IntervalIntegrable (homotopyOperatorIntegrand f x ·) volume (0 : ℝ) 1 :=
+  Continuous.intervalIntegrable (by fun_prop) 0 1
 
 private lemma fderiv_homotopyOperatorIntegrand_eq_fderiv_crossProduct
     {f : Space → EuclideanSpace ℝ (Fin 3)}
@@ -347,7 +347,7 @@ private lemma fderiv_homotopyOperatorIntegrand_eq_fderiv_crossProduct
   · change _ = t • (fderiv ℝ (EuclideanSpace.proj i ∘
       (fun x => (WithLp.toLp 2 ((crossProduct (basis.repr x).ofLp) (f (t • x)).ofLp)))) x) y
     rw [fderiv_comp]
-    simp only [ContinuousLinearMap.fderiv, ContinuousLinearMap.coe_comp', Function.comp_apply,
+    simp only [ContinuousLinearMap.fderiv, ContinuousLinearMap.coe_comp, Function.comp_apply,
       PiLp.proj_apply]
     · fun_prop
     · exact Differentiable.differentiableAt (cross_diff t)
@@ -364,8 +364,8 @@ private lemma fderiv_homotopyOperatorIntegrand_apply_eq {f : Space → Euclidean
     rw [fderiv_comp _ (by fun_prop) (by fun_prop),
       fderiv_comp _ (by fun_prop) (by fun_prop), fderiv_fun_smul (by fun_prop) (by fun_prop)]
     simp only [Function.comp_apply, ContinuousLinearMap.fderiv, fderiv_fun_id, fderiv_fun_const,
-      Pi.zero_apply, ContinuousLinearMap.zero_smulRight, add_zero, ContinuousLinearMap.coe_comp',
-      ContinuousLinearMap.coe_smul', ContinuousLinearMap.coe_id', Pi.smul_apply, id_eq, map_smul,
+      Pi.zero_apply, ContinuousLinearMap.zero_smulRight, add_zero, ContinuousLinearMap.coe_comp,
+      FunLike.coe_smul, ContinuousLinearMap.coe_id', Pi.smul_apply, id_eq, map_smul,
       PiLp.proj_apply, smul_eq_mul]
   fin_cases i
   all_goals
@@ -386,7 +386,7 @@ private lemma continuous_uncurry_fderiv_homotopyOperatorIntegrand
   suffices h1 : Continuous ((PiLp.continuousLinearEquiv 2 ℝ _).symm ∘
     (PiLp.continuousLinearEquiv 2 ℝ _) ∘
     (fun p : Space × ℝ => fderiv ℝ (homotopyOperatorIntegrand f · p.2) p.1 y)) by
-    simpa using h1
+    exact h1
   apply Continuous.comp (by fun_prop) ?_
   apply continuous_pi
   intro i
@@ -416,7 +416,6 @@ private lemma hasFDerivAt_intervalIntegral_homotopyOperatorIntegrand
         fun_prop)
   change HasFDerivAt (fun (x : Space) => ∫ (t : ℝ) in 0..1, F x t ∂(volume))
       (∫ (t : ℝ) in 0..1, F' x₀ t ∂(volume)) x₀
-  have hx :=hf.differentiable (by simp)
   apply intervalIntegral.hasFDerivAt_integral_of_dominated_of_fderiv_le (s := s x₀)
     (bound := fun t => ‖F' a.1 a.2‖)
   · exact Metric.closedBall_mem_nhds x₀ (by simp)
@@ -491,8 +490,8 @@ lemma eq_neg_curl_of_div_zero (f : Space → EuclideanSpace ℝ (Fin 3)) (hf : C
     rw [fderiv_comp _ (by fun_prop) (by fun_prop), fderiv_comp _ (by fun_prop) (by fun_prop),
       fderiv_fun_smul (by fun_prop) (by fun_prop)]
     simp only [Function.comp_apply, ContinuousLinearMap.fderiv, fderiv_fun_const, Pi.zero_apply,
-      fderiv_fun_id, ContinuousLinearMap.coe_comp', ContinuousLinearMap.add_apply,
-      ContinuousLinearMap.coe_smul', Pi.smul_apply, ContinuousLinearMap.zero_apply, smul_zero,
+      fderiv_fun_id, ContinuousLinearMap.coe_comp, _root_.add_apply,
+      FunLike.coe_smul, Pi.smul_apply, _root_.zero_apply, smul_zero,
       ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.coe_id', id_eq, one_smul, zero_add,
       PiLp.proj_apply]
   have hi (x : Space) (i : Fin 3) : ∫ (t : ℝ) in 0..1, (t * f (t • x) i * 2) -
@@ -541,37 +540,9 @@ lemma exists_curl_of_div_zero (f : Space → EuclideanSpace ℝ (Fin 3)) (hf : C
     simp_all
     rw [curl_neg]
     fun_prop
-  have f_differentiable : Differentiable ℝ f := hf.differentiable (by simp)
-  have fderiv_f_t (x : Space) (t : ℝ)
-      (i : Fin 3) : (fderiv ℝ (fun t => (f (t • x)).ofLp i) t) 1 = fderiv ℝ f (t • x) x i := by
-    change (fderiv ℝ (EuclideanSpace.proj i ∘ f ∘ fun (t : ℝ) => t • x) t) 1 = _
-    rw [fderiv_comp _ (by fun_prop) (by fun_prop), fderiv_comp _ (by fun_prop) (by fun_prop),
-      fderiv_fun_smul (by fun_prop) (by fun_prop)]
-    simp only [Function.comp_apply, ContinuousLinearMap.fderiv, fderiv_fun_const, Pi.zero_apply,
-      fderiv_fun_id, ContinuousLinearMap.coe_comp', ContinuousLinearMap.add_apply,
-      ContinuousLinearMap.coe_smul', Pi.smul_apply, ContinuousLinearMap.zero_apply, smul_zero,
-      ContinuousLinearMap.smulRight_apply, ContinuousLinearMap.coe_id', id_eq, one_smul, zero_add,
-      PiLp.proj_apply]
-  have hi (x : Space) (i : Fin 3) : ∫ (t : ℝ) in 0..1, (t * f (t • x) i * 2) -
-        t * (- fderiv ℝ f (t • x) (t • x)) i ∂(volume) = f x i := by
-    trans ∫ (t : ℝ) in 0..1, fderiv ℝ (fun t => t ^ 2 * f (t • x) i) t 1 ∂(volume)
-    · congr
-      funext t
-      rw [fderiv_fun_mul (by fun_prop) (by fun_prop)]
-      simp [fderiv_f_t]
-      ring
-    simp only [fderiv_eq_smul_deriv, smul_eq_mul, one_mul]
-    rw [intervalIntegral.integral_deriv_eq_sub (by fun_prop)]
-    simp only [one_pow, one_smul, one_mul, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow,
-      zero_smul, zero_mul, sub_zero]
-    · apply Continuous.intervalIntegrable
-      fun_prop
   use fun x => ∫ (t : ℝ) in 0..1, homotopyOperatorIntegrand f x t ∂(volume)
-  apply And.intro
-  swap
-  · intro x
-    exact (hasFDerivAt_intervalIntegral_homotopyOperatorIntegrand (hf) _).differentiableAt
-  · exact eq_neg_curl_of_div_zero f hf hdiv
+  exact ⟨eq_neg_curl_of_div_zero f hf hdiv,
+    fun x => (hasFDerivAt_intervalIntegral_homotopyOperatorIntegrand hf x).differentiableAt⟩
 
 TODO "Generalize the statement that a div-free field is a curl
   to time-dependent fields."
@@ -633,13 +604,13 @@ lemma exists_grad_of_curl_zero (f : Space → EuclideanSpace ℝ (Fin 3)) (hf : 
     calc _
       _ = (fderiv ℝ (InnerProductSpace.toDual ℝ _ ∘
         fun a => (basis.repr.symm (f a))) a x) y := by rfl
-    rw [fderiv_comp _ (by simpa using
+    rw [fderiv_comp _ (by exact
       (InnerProductSpace.toDual ℝ (Space)).differentiable.differentiableAt) (by fun_prop)]
     erw [(InnerProductSpace.toDual ℝ (Space)).fderiv]
-    simp only [ContinuousLinearMap.coe_comp', ContinuousLinearEquiv.coe_coe,
+    simp only [ContinuousLinearMap.coe_comp, ContinuousLinearEquiv.coe_coe,
       LinearIsometryEquiv.coe_toContinuousLinearEquiv, Function.comp_apply]
     erw [InnerProductSpace.toDual_apply_apply]
-    rw [fderiv_comp' _ (by fun_prop) (by fun_prop)]
+    rw [fderiv_fun_comp _ (by fun_prop) (by fun_prop)]
     simp
   have hdω: ∀ a ∈ s, ∀ (x y : Space), ((fderiv ℝ ω a) x) y = ((fderiv ℝ ω a) y) x := by
     intro a ha x y
@@ -680,14 +651,32 @@ lemma eq_grad_integral_of_curl_zero (f : Space → EuclideanSpace ℝ (Fin 3)) (
     nth_rewrite 1 [eq_integral_grad h1]
     simp
   rw [contDiff_one_iff_hasFDerivAt]
-  use fun x => ((toDual ℝ Space) (basis.repr.symm (∇ g x)))
-  apply And.intro
-  · fun_prop
-  intro x
+  refine ⟨fun x => ((toDual ℝ Space) (basis.repr.symm (∇ g x))), by fun_prop, fun x => ?_⟩
   exact hasGradientAt_iff_hasFDerivAt.mpr (DifferentiableAt.hasGradientAt_grad x (hg x))
 
 TODO "Generalize the statement that a curl-free field is a gradient
   to time-dependent fields."
+
+/-!
+
+### A.11. The curl in terms of the Levi-Civita symbol
+
+-/
+
+open KroneckerDelta in
+set_option backward.isDefEq.respectTransparency false in
+/-- The components of the curl as a contraction with the Levi-Civita symbol,
+`(∇ ⨯ f) x i = ∑ j k, ε_{ijk} ∂[j] fₖ x`. -/
+lemma curl_eq_sum_leviCivitaSymbol (f : Space → EuclideanSpace ℝ (Fin 3))
+    (x : Space) (i : Fin 3) :
+    (∇ ⨯ f) x i = ∑ j, ∑ k, (leviCivitaSymbol ![i, j, k] : ℝ) * ∂[j] (fun y => f y k) x := by
+  fin_cases i <;>
+    simp only [curl, Fin.isValue, Fin.zero_eta, Fin.mk_one, Fin.reduceFinMk, Fin.reduceAdd,
+      Fin.sum_univ_three, leviCivitaSymbol_eq_det, Matrix.det_fin_three, kroneckerDelta,
+      Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_two, Matrix.head_cons,
+      Matrix.tail_cons] <;>
+    norm_num <;>
+    ring
 
 /-!
 
@@ -706,11 +695,11 @@ noncomputable def distCurl : (Space →d[ℝ] (EuclideanSpace ℝ (Fin 3))) →�
       toFun dfdx := WithLp.toLp 2 fun i => dfdx (basis (i+2)) (i+1) - dfdx (basis (i+1)) (i+2)
       map_add' v1 v2 := by
         ext i
-        simp only [Fin.isValue, ContinuousLinearMap.add_apply, PiLp.add_apply]
+        simp only [Fin.isValue, _root_.add_apply, PiLp.add_apply]
         ring
       map_smul' a v := by
         ext i
-        simp only [Fin.isValue, ContinuousLinearMap.coe_smul', Pi.smul_apply, PiLp.smul_apply,
+        simp only [Fin.isValue, FunLike.coe_smul, Pi.smul_apply, PiLp.smul_apply,
           smul_eq_mul, RingHom.id_apply]
         ring
       cont := by
@@ -736,23 +725,17 @@ lemma distCurl_coord_apply {i : Fin 3}
     (f : Space →d[ℝ] (EuclideanSpace ℝ (Fin 3))) (η : 𝓢(Space, ℝ)) :
     (∇ᵈ ⨯ f) η i = - f (SchwartzMap.evalCLM ℝ Space ℝ (basis (i+2)) (fderivCLM ℝ Space ℝ η)) (i+1)
     + f (SchwartzMap.evalCLM ℝ Space ℝ (basis (i+1)) (fderivCLM ℝ Space ℝ η)) (i+2) := by
-  simp [distCurl]
-  rw [fderivD_apply, fderivD_apply]
-  simp
+  simp [distCurl, fderivD_apply]
 
 lemma distCurl_apply_one (f : Space →d[ℝ] (EuclideanSpace ℝ (Fin 3))) (η : 𝓢(Space, ℝ)) :
     (∇ᵈ ⨯ f) η 1 = - f (SchwartzMap.evalCLM ℝ Space ℝ (basis 0) (fderivCLM ℝ Space ℝ η)) 2
     + f (SchwartzMap.evalCLM ℝ Space ℝ (basis 2) (fderivCLM ℝ Space ℝ η)) 0 := by
-  simp [distCurl]
-  rw [fderivD_apply, fderivD_apply]
-  simp
+  simpa using distCurl_coord_apply (i := 1) f η
 
 lemma distCurl_apply_two (f : Space →d[ℝ] (EuclideanSpace ℝ (Fin 3))) (η : 𝓢(Space, ℝ)) :
     (∇ᵈ ⨯ f) η 2 = - f (SchwartzMap.evalCLM ℝ Space ℝ (basis 1) (fderivCLM ℝ Space ℝ η)) 0
     + f (SchwartzMap.evalCLM ℝ Space ℝ (basis 0) (fderivCLM ℝ Space ℝ η)) 1 := by
-  simp [distCurl]
-  rw [fderivD_apply, fderivD_apply]
-  simp
+  simpa using distCurl_coord_apply (i := 2) f η
 
 /-!
 
@@ -778,7 +761,7 @@ lemma distCurl_apply (f : Space →d[ℝ] (EuclideanSpace ℝ (Fin 3))) (η : �
 lemma distCurl_distGrad_eq_zero (f : (Space) →d[ℝ] ℝ) :
     ∇ᵈ ⨯ (∇ᵈ f) = 0 := by
   ext η i
-  simp only [distCurl_coord_apply, Fin.isValue, ContinuousLinearMap.zero_apply, PiLp.zero_apply]
+  simp only [distCurl_coord_apply, Fin.isValue, _root_.zero_apply, PiLp.zero_apply]
   rw [distGrad_eq_sum_basis, distGrad_eq_sum_basis]
   simp only [Fin.isValue, neg_smul, Finset.sum_neg_distrib, PiLp.neg_apply, WithLp.ofLp_sum,
     WithLp.ofLp_smul, PiLp.ofLp_single, Finset.sum_apply, Pi.smul_apply, Pi.single_apply,
@@ -787,7 +770,7 @@ lemma distCurl_distGrad_eq_zero (f : (Space) →d[ℝ] ℝ) :
   rw [← map_neg, ← map_add, ← ContinuousLinearMap.map_zero f]
   congr
   ext x
-  simp only [Fin.isValue, SchwartzMap.add_apply, SchwartzMap.neg_apply, SchwartzMap.zero_apply]
+  simp only [Fin.isValue, _root_.add_apply, _root_.neg_apply, _root_.zero_apply]
   rw [schwartMap_fderiv_comm]
   simp
 

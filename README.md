@@ -1,8 +1,3 @@
-> [!NOTE]
-> Things look different? We've recently undergone a name change and move from /lean-phys-community/PhysLean
-> to /leanprover-community/physlib. Same repo, different location and name. This shouldn't affect
-> the average user, but please be patient as we update things.
-
 
 <div align="center">
 <img src="./docs/Physlib-logo.jpeg" alt="Physlib logo" width="500">
@@ -23,18 +18,67 @@
 
 
 [![](https://img.shields.io/badge/View_The-Stats-blue)](https://physlib.io/Stats)
-[![](https://img.shields.io/badge/Lean-v4.30.0-blue)](https://github.com/leanprover/lean4/releases/tag/v4.30.0)
+[![](https://img.shields.io/badge/Lean-v4.33.0-blue)](https://github.com/leanprover/lean4/releases/tag/v4.33.0)
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/leanprover-community/physlib)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/leanprover-community/physlib)
 [![api_docs](https://img.shields.io/badge/doc-API_docs-blue)](https://physlib.io/docs/)
 
 </div>
 
+<table>
+<tr>
+<td colspan="3" align="center">
+
+<sub><b>UPSTREAM</b></sub> · [**Mathlib**](https://github.com/leanprover-community/mathlib4) ↑
+
+</td>
+</tr>
+<tr>
+<td colspan="3" align="center">
+
+<sub><b>THIS REPOSITORY</b></sub>
+
+</td>
+</tr>
+<tr>
+<td width="33%" valign="top">
+
+### [**Physlib**](./Physlib)
+
+The core library — physics digitalizations reviewed and curated to a high standard, built for long-term reuse, readability, trust, and maintenance.
+
+</td>
+<td width="33%" valign="top">
+
+###  [**PhyslibAlpha**](./PhyslibAlpha)
+### [**PhyslibAlpha**](./PhyslibAlpha)
+
+PhyslibAlpha exists for the rapid development of physics digitalizations, enabled by a lighter review process built to handle large-scale, human- or AI-generated contributions.
+
+</td>
+<td width="33%" valign="top">
+
+### [**QuantumInfo**](./QuantumInfo)
+
+Quantum information theory. Currently a distinct codebase with its own conventions and review norms; work is underway to bring it closer to Physlib.
+
+</td>
+</tr><tr>
+<td colspan="3" align="center"></td></tr>
+<tr>
+<td colspan="3" align="center">
+
+<sub><b>ADJACENT</b></sub> · [**CSLib**](https://github.com/leanprover/cslib) →
+
+</td>
+</tr>
+</table>
 
 ## Requirements of the project
 
 🎯 The project shall contain results (definitions, theorems, lemmas and calculations) from **physics**,
   including quantum information, formalized (or **digitalized**) into the interactive theorem prover **Lean 4**.
+including quantum information, formalized (or **digitalized**) into the interactive theorem prover **Lean 4**.
 
 🎯 The project shall be **organized** by **physics**.
 
@@ -45,6 +89,7 @@
 🎯 The project shall contain Physics Lean **tactics**, **notation** and **syntax** for physicists.
 
 🎯 The project shall *not* be tied to physics axiomizations (e.g. axiomatic QFT), but rather flexiable enough to accommodate different approaches and starting points.
+🎯 The project shall _not_ be tied to physics axiomizations (e.g. axiomatic QFT), but rather flexiable enough to accommodate different approaches and starting points.
 
 🎯 The content of the project shall be carefully **reviewed** and curated, to ensure reusability, readability and fit.
 
@@ -55,12 +100,19 @@
 🎯 The project shall be for **mainstream** physics only.
 
 
+## PhyslibAlpha
+
+PhyslibAlpha sits downstream of `./Physlib` (within the same repository). The core idea is that PhyslibAlpha has a lower review-standards then Physlib making it easier to contribute large PRs, AI-generated content, or formalizations which are not-quite-perfect. PRs for PhyslibAlpha must pass basic linter checks, described [here](https://github.com/leanprover-community/physlib/blob/master/scripts/PhyslibAlpha/README.md). PRs must also undergo a light 'one-look' review checking 1) Whether the content is main-stream physics, 2) Whether it looks reasonable (no axioms, easy to read etc.), 3) Whether it is within the right place within PhyslibAlpha (mirroring its place in Physlib).
+
+Because of the lower-review bar for PhyslibAlpha we cannot promise to maintain contributions when they break — we will simply record when this happens.
+
 ## Contributing to Physlib
 
 Physlib is open-source and community run, and we welcome contributions from anyone.
 All you need to do is open a pull-request with your changes
 and our team of maintainers will review it and iterate with you on feedback until it
-can be merged.
+can be merged. Please add references to the `## References` section at the top of the file
+and add them to the .bib file.
 
 If you unsure where you would like to contribute, you may find ideas on:
 - our [open issues](https://github.com/leanprover-community/physlib/issues).
@@ -84,9 +136,12 @@ or
 
 - Clone this repository (or download the repository as a Zip file)
 - Open a terminal at the top-level in the corresponding directory.
-- Run `lake exe cache get`. The command `lake` should have been installed when you installed Lean.
+- Run `lake exe get_cache` to download the cached artifacts from the internet. This will speed up the next step drastically. Do not worry if it fails, you can still run `lake build`, it will just be much slower.
 - Run `lake build`.
 - Open the directory (not a single file) in Visual Studio Code (or another Lean compatible code editor).
+
+Once set up, `lake build` only recompiles files you have actually changed, plus
+anything importing them.
 
 At the moment Physlib is divided into two essentially disjoint halves, `Physlib` and `QuantumInfo`.
 These were two repositories that merged in an effort to create a more cohesive ecosystem for physics

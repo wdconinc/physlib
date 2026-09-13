@@ -1,12 +1,14 @@
 /-
 Copyright (c) 2024 Joseph Tooby-Smith. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Joseph Tooby-Smith
+Authors: Robert Sneiderman, Joseph Tooby-Smith
 -/
 module
 
+public import Physlib.Relativity.Tensors.RealTensor.Contraction.CrossToEnd
 public import Physlib.Relativity.Tensors.RealTensor.Basic
 public import Physlib.Relativity.Tensors.MetricTensor
+public import Physlib.Relativity.Tensors.RealTensor.Metrics.LeviCivita
 /-!
 
 ## Metrics as real Lorentz tensors
@@ -19,10 +21,14 @@ open Module
 open Matrix
 open MatrixGroups
 open TensorProduct
+open Equiv
+open TensorSpecies Tensor
 
 noncomputable section
 
 namespace realLorentzTensor
+
+open realLorentzTensor
 
 /-!
 
@@ -31,12 +37,17 @@ namespace realLorentzTensor
 -/
 
 /-- The metric `ηᵢᵢ` as a complex Lorentz tensor. -/
-abbrev coMetric (d : ℕ := 3) : ℝT[d, .down, .down] :=
-  (realLorentzTensor d).metricTensor .down
+abbrev coMetric (d : ℕ := 3) : ℝT[d, Color.down, Color.down] :=
+  (realLorentzTensor d).metricTensor Color.down
 
 /-- The metric `ηⁱⁱ` as a complex Lorentz tensor. -/
-abbrev contrMetric (d : ℕ := 3) : ℝT[d, .up, .up] :=
-  (realLorentzTensor d).metricTensor .up
+abbrev contrMetric (d : ℕ := 3) : ℝT[d, Color.up, Color.up] :=
+  (realLorentzTensor d).metricTensor Color.up
+
+/-- The mixed Kronecker delta (identity tensor) `δ^ρ_σ = η^{ρλ} η_{λσ}`.
+This is 1 when ρ = σ and 0 otherwise. -/
+def kroneckerDelta (d : ℕ := 3) : ℝT[d, Color.up, Color.down] :=
+  fromConstPair ((realLorentzTensor d).unit Color.down)
 
 /-!
 
@@ -58,31 +69,45 @@ scoped[realLorentzTensor] notation "η" => @contrMetric
 open TensorSpecies
 open Tensor
 
+/- The covariant rank-4 Levi-Civita tensor in 3+1 dimensions. -/
+/-
+noncomputable def leviCivita4Co : ℝT[.down, .down, .down, .down] :=
+  (Tensor.basis (S := realLorentzTensor 3)
+      ![Color.down, Color.down, Color.down, Color.down]).repr.symm <|
+    (Finsupp.linearEquivFunOnFinite ℝ ℝ ((j : Fin 4) → Fin 1 ⊕ Fin 3)).symm <|
+      fun j => (leviCivita4Int (finSumFinEquiv (j 0)) (finSumFinEquiv (j 1))
+        (finSumFinEquiv (j 2)) (finSumFinEquiv (j 3)) : ℝ)
+
+@[simp]
+lemma leviCivita4Co_basis_repr_apply
+    (b : ComponentIdx (S := realLorentzTensor 3)
+      ![Color.down, Color.down, Color.down, Color.down]) :
+    (Tensor.basis (S := realLorentzTensor 3)
+      ![Color.down, Color.down, Color.down, Color.down]).repr leviCivita4Co b =
+      (leviCivita4Int (finSumFinEquiv (b 0)) (finSumFinEquiv (b 1))
+        (finSumFinEquiv (b 2)) (finSumFinEquiv (b 3)) : ℝ) := by
+  simp [leviCivita4Co]
+-/
+
 lemma coMetric_eq_fromConstPair {d : ℕ} :
     η' d = fromConstPair (S := realLorentzTensor d) (c1 := .down) (c2 := .down)
       (Lorentz.preCoMetric d) := by
-  rw [coMetric, metricTensor]
   rfl
 
 lemma contrMetric_eq_fromConstPair {d : ℕ} :
     η d = fromConstPair (S := realLorentzTensor d)
       (c1 := .up) (c2 := .up) (Lorentz.preContrMetric d) := by
-  rw [contrMetric, metricTensor]
   rfl
 
 lemma coMetric_eq_fromPairT {d : ℕ} :
     η' d = fromPairT (S := realLorentzTensor d) (c1 := .down) (c2 := .down)
       (Lorentz.preCoMetricVal d) := by
-  rw [coMetric_eq_fromConstPair, fromConstPair]
-  congr 1
-  exact Lorentz.preCoMetric_apply_one
+  rw [coMetric_eq_fromConstPair, fromConstPair, Lorentz.preCoMetric_apply_one]
 
 lemma contrMetric_eq_fromPairT {d : ℕ} :
     η d = fromPairT (S := realLorentzTensor d) (c1 := .up) (c2 := .up)
         (Lorentz.preContrMetricVal d) := by
-  rw [contrMetric_eq_fromConstPair, fromConstPair]
-  congr 1
-  exact Lorentz.preContrMetric_apply_one
+  rw [contrMetric_eq_fromConstPair, fromConstPair, Lorentz.preContrMetric_apply_one]
 
 /-
 
@@ -103,7 +128,7 @@ lemma actionT_contrMetric {d} (g : LorentzGroup d) : g • η d = η d := by
 
 /-
 
-## There value with respect to a basis
+## Their value with respect to a basis
 
 -/
 
@@ -111,72 +136,88 @@ lemma coMetric_repr_apply_eq_minkowskiMatrix {d : ℕ}
     (b : ComponentIdx (S := realLorentzTensor d) ![Color.down, Color.down]) :
     (Tensor.basis _).repr (coMetric d) b =
     minkowskiMatrix (b 0) (b 1) := by
-  rw [coMetric_eq_fromPairT]
-  simp [Lorentz.preCoMetricVal]
-  erw [Lorentz.coCoToMatrixRe_symm_expand_tmul]
-  simp only [map_sum, _root_.map_smul, Finsupp.coe_finsetSum, Finsupp.coe_smul,
-    Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Fin.isValue]
-  conv_lhs =>
-    enter [2, x1, 2, x2]
-    rw [fromPairT_basis_repr]
-    enter [2]
-    change (((Lorentz.coBasis d).tensorProduct (Lorentz.coBasis d)).repr
-      ((Lorentz.coBasis d) x1 ⊗ₜ[ℝ] (Lorentz.coBasis d) x2)) _
-    simp [Fin.isValue, Basis.tensorProduct_repr_tmul_apply, smul_eq_mul, Lorentz.coBasisFin]
-    rw [Finsupp.single_apply, Finsupp.single_apply]
-  rw [Finset.sum_eq_single (b 0)]
-  · rw [Finset.sum_eq_single (b 1)]
-    · simp
-    · intro y _ hy
-      simp only [Fin.isValue, ↓reduceIte, mul_one, mul_ite, mul_zero,
-        ite_eq_right_iff]
-      intro hy2
-      rw [← hy2] at hy
-      simp at hy
-    · simp
-  · intro y _ hy
-    simp only [Fin.isValue, mul_ite, mul_one, mul_zero, Finset.sum_ite_irrel, Fintype.sum_sum_type,
-      Finset.univ_unique, Fin.default_eq_zero, Finset.sum_singleton, Finset.sum_const_zero,
-      ite_eq_right_iff]
-    intro hy2
-    rw [← hy2] at hy
-    simp at hy
-  · simp
+  change (Tensor.basis _).repr
+    (metricTensor (S := realLorentzTensor d) Color.down) b = _
+  rw [metricTensor_basis_repr,
+    show ((realLorentzTensor d).metric Color.down) (1 : ℝ) = Lorentz.preCoMetricVal d from
+      Lorentz.preCoMetric_apply_one,
+    Lorentz.preCoMetricVal_expand_tmul_minkowskiMatrix]
+  simp only [map_sum, Finsupp.coe_finsetSum, Finset.sum_apply, map_smul, Finsupp.coe_smul,
+    Pi.smul_apply, Basis.tensorProduct_repr_tmul_apply, Basis.repr_self, Finsupp.single_apply,
+    smul_eq_mul]
+  rw [Finset.sum_eq_single (b 0)] <;>
+    simp +contextual [minkowskiMatrix.as_diagonal, Matrix.diagonal_apply]
 
 lemma contrMetric_repr_apply_eq_minkowskiMatrix {d : ℕ}
     (b : ComponentIdx (S := realLorentzTensor d) ![Color.up, Color.up]) :
     (Tensor.basis _).repr (contrMetric d) b =
     minkowskiMatrix (b 0) (b 1) := by
-  rw [contrMetric_eq_fromPairT]
-  simp [Lorentz.preContrMetricVal]
-  erw [Lorentz.contrContrToMatrixRe_symm_expand_tmul]
-  simp only [map_sum, map_smul, Finsupp.coe_finsetSum, Finsupp.coe_smul, Finset.sum_apply,
-    Pi.smul_apply, smul_eq_mul, Fin.isValue]
-  conv_lhs =>
-    enter [2, x1, 2, x2]
-    rw [fromPairT_basis_repr]
-    enter [2]
-    change (((Lorentz.contrBasis d).tensorProduct (Lorentz.contrBasis d)).repr
-      ((Lorentz.contrBasis d) x1 ⊗ₜ[ℝ] (Lorentz.contrBasis d) x2)) _
-    simp [Fin.isValue, Basis.tensorProduct_repr_tmul_apply, smul_eq_mul, Lorentz.contrBasisFin]
-    rw [Finsupp.single_apply, Finsupp.single_apply]
-  rw [Finset.sum_eq_single (b 0)]
-  · rw [Finset.sum_eq_single (b 1)]
-    · simp
-    · intro y _ hy
-      simp only [Fin.isValue, ↓reduceIte, mul_one, mul_ite, mul_zero,
-        ite_eq_right_iff]
-      intro hy2
-      rw [← hy2] at hy
-      simp at hy
-    · simp
-  · intro y _ hy
-    simp only [Fin.isValue, mul_ite, mul_one, mul_zero, Finset.sum_ite_irrel, Fintype.sum_sum_type,
-      Finset.univ_unique, Fin.default_eq_zero, Finset.sum_singleton,
-      Finset.sum_const_zero, ite_eq_right_iff]
-    intro hy2
-    rw [← hy2] at hy
-    simp at hy
-  · simp
+  change (Tensor.basis _).repr
+    (metricTensor (S := realLorentzTensor d) Color.up) b = _
+  rw [metricTensor_basis_repr,
+    show ((realLorentzTensor d).metric Color.up) (1 : ℝ) = Lorentz.preContrMetricVal d from
+      Lorentz.preContrMetric_apply_one,
+    Lorentz.preContrMetricVal_expand_tmul_minkowskiMatrix]
+  simp only [map_sum, Finsupp.coe_finsetSum, Finset.sum_apply, map_smul, Finsupp.coe_smul,
+    Pi.smul_apply, Basis.tensorProduct_repr_tmul_apply, Basis.repr_self, Finsupp.single_apply,
+    smul_eq_mul]
+  rw [Finset.sum_eq_single (b 0)] <;>
+    simp +contextual [minkowskiMatrix.as_diagonal, Matrix.diagonal_apply]
+
+/-- The component matrix of either real Lorentz metric tensor is the Minkowski matrix. -/
+lemma metricTensor_repr_apply_eq_minkowskiMatrix {d : ℕ} (c : Color)
+    (φ : ComponentIdx (S := realLorentzTensor d) ![c, c]) :
+    (Tensor.basis _).repr (metricTensor (S := realLorentzTensor d) c) φ =
+      minkowskiMatrix (φ 0) (φ 1) := by
+  cases c with
+  | up => exact contrMetric_repr_apply_eq_minkowskiMatrix φ
+  | down => exact coMetric_repr_apply_eq_minkowskiMatrix φ
+
+set_option backward.isDefEq.respectTransparency false in
+/-- Raising or lowering one index of a real Lorentz tensor contracts that slot's components with
+the Minkowski matrix. -/
+lemma toDualMapAtIndex_basis_repr_apply {d n : ℕ} {c : Fin (n + 1) → Color}
+    (i : Fin (n + 1)) (t : ℝT(d, c))
+    (φ : ComponentIdx (S := realLorentzTensor d)
+      (Function.update c i ((realLorentzTensor d).τ (c i)))) :
+    (Tensor.basis _).repr (Tensor.toDualMapAtIndex (S := realLorentzTensor d) i t) φ =
+      ∑ x : Fin 1 ⊕ Fin d,
+        (Tensor.basis c).repr t (i.insertNth x (fun m => φ (i.succAbove m))) *
+          minkowskiMatrix x (φ i) := by
+  have h := crossToSlot_basis_repr_apply (S := realLorentzTensor d) i (0 : Fin 2) rfl
+    (metricTensor (S := realLorentzTensor d) ((realLorentzTensor d).τ (c i))) t φ
+  rw [crossToEnd_basis_repr_apply_eq_fin] at h
+  simp only [basisIdxCongr_eq_refl, Equiv.refl_apply] at h
+  refine h.trans (Finset.sum_congr rfl fun x _ => ?_)
+  congr 1
+  · congr 1
+    funext m
+    induction m using Fin.succAboveCases (i := i) with
+    | x => rw [Fin.insertNth_apply_same, Fin.insertNth_apply_same]
+    | p q =>
+      rw [Fin.insertNth_apply_succAbove, Fin.insertNth_apply_succAbove,
+        IsReindexing.inv_equiv_symm_eq,
+        ← Fin.append_succAbove_const_eq_cycleIcc i, Fin.append_left]
+  rw [metricTensor_repr_apply_eq_minkowskiMatrix]
+  congr 1
+  rw [show (1 : Fin 2) = (0 : Fin 2).succAbove 0 from rfl,
+    Fin.insertNth_apply_succAbove, IsReindexing.inv_equiv_symm_eq,
+    ← Fin.append_succAbove_const_eq_cycleIcc i, Fin.append_right]
+
+/-- In the standard Lorentz basis, raising or lowering an index multiplies the component with that
+index fixed by the corresponding diagonal entry of the Minkowski metric. -/
+lemma toDualMapAtIndex_basis_repr_apply_eq_mul {d n : ℕ} {c : Fin (n + 1) → Color}
+    (i : Fin (n + 1)) (t : ℝT(d, c))
+    (φ : ComponentIdx (S := realLorentzTensor d)
+      (Function.update c i ((realLorentzTensor d).τ (c i)))) :
+    (Tensor.basis _).repr (Tensor.toDualMapAtIndex (S := realLorentzTensor d) i t) φ =
+      (Tensor.basis c).repr t φ * minkowskiMatrix (φ i) (φ i) := by
+  rw [toDualMapAtIndex_basis_repr_apply]
+  change ((fun x => (Tensor.basis c).repr t
+    (i.insertNth x (fun m => φ (i.succAbove m)))) ᵥ* minkowskiMatrix) (φ i) = _
+  rw [minkowskiMatrix.vecMul_apply]
+  congr 2
+  change (i.insertNth (φ i) (i.removeNth φ) : Fin (n + 1) → Fin 1 ⊕ Fin d) = φ
+  exact Fin.insertNth_self_removeNth i φ
 
 end realLorentzTensor

@@ -19,6 +19,7 @@ noncomputable section
 
 namespace LorentzGroup
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The subgroup of rotations of the Lorentz group. -/
 def Rotations (d) : Subgroup (LorentzGroup d) where
   carrier Λ := Λ.1 (Sum.inl 0) (Sum.inl 0) = 1 ∧ IsProper Λ
@@ -39,9 +40,7 @@ def Rotations (d) : Subgroup (LorentzGroup d) where
       rw [h1.1]
     · exact isProper_mul h1.2 h2.2
   one_mem' := by
-    constructor
-    · simp
-    · simp
+    constructor <;> simp
   inv_mem' {Λ} h := by
     constructor
     · simp [inv_eq_dual, minkowskiMatrix.dual_apply, h.1]
@@ -56,6 +55,7 @@ lemma transpose_mem_rotations {d} (Λ : LorentzGroup d) :
     transpose Λ ∈ Rotations d ↔ Λ ∈ Rotations d := by
   simp [mem_rotations_iff, LorentzGroup.transpose_val, IsProper]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The group homomorphism from the special orthogonal group to the Lorentz group. -/
 def ofSpecialOrthogonal {d} :
     Matrix.specialOrthogonalGroup (Fin d) ℝ ≃* Rotations d where

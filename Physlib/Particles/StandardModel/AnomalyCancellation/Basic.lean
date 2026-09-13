@@ -31,11 +31,20 @@ namespace SMCharges
 
 variable {n : ℕ}
 
+set_option backward.isDefEq.respectTransparency false in
+lemma sum_SMSpecies_numberCharges_one {M} [AddCommMonoid M]
+    (f : Fin (SMSpecies 1).numberCharges → M) :
+    ∑ i, f i = f ⟨0, by simp⟩ := by
+  change ∑ (i : Fin 1), f i = _
+  simp only [Finset.univ_unique, Fin.default_eq_zero, Fin.isValue, Finset.sum_singleton]
+  rfl
+
 /-- An equivalence between the set `(SMCharges n).charges` and the set
   `(Fin 5 → Fin n → ℚ)`. -/
 @[simps!]
-def toSpeciesEquiv : (SMCharges n).Charges ≃ (Fin 5 → Fin n → ℚ) :=
-  ((Equiv.curry _ _ _).symm.trans ((@finProdFinEquiv 5 n).arrowCongr (Equiv.refl ℚ))).symm
+def toSpeciesEquiv : (SMCharges n).Charges ≃ (Fin 5 → Fin (SMSpecies n).numberCharges → ℚ) :=
+  ((Equiv.curry _ _ _).symm.trans ((@finProdFinEquiv 5
+    (SMSpecies n).numberCharges).arrowCongr (Equiv.refl ℚ))).symm
 
 /-- For a given `i ∈ Fin 5`, the projection of a charge onto that species. -/
 @[simps!]
@@ -44,12 +53,16 @@ def toSpecies (i : Fin 5) : (SMCharges n).Charges →ₗ[ℚ] (SMSpecies n).Char
   map_add' _ _ := by rfl
   map_smul' _ _ := by rfl
 
+lemma toSpecies_apply_eq (i : Fin 5) (S : (SMCharges n).Charges) :
+    toSpecies i S = fun j => toSpeciesEquiv S i j := by rfl
+
 lemma charges_eq_toSpecies_eq (S T : (SMCharges n).Charges) :
     S = T ↔ ∀ i, toSpecies i S = toSpecies i T := by
   refine Iff.intro (fun a i => congrArg (⇑(toSpecies i)) a) (fun h => ?_)
   apply toSpeciesEquiv.injective
   exact (Set.eqOn_univ (toSpeciesEquiv S) (toSpeciesEquiv T)).mp fun ⦃x⦄ _ => h x
 
+set_option backward.isDefEq.respectTransparency false in
 lemma toSMSpecies_toSpecies_inv (i : Fin 5) (f : Fin 5 → Fin n → ℚ) :
     (toSpecies i) (toSpeciesEquiv.symm f) = f i := by
   change (toSpeciesEquiv ∘ toSpeciesEquiv.symm) _ i= f i
@@ -78,122 +91,127 @@ open SMCharges
 
 variable {n : ℕ}
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The gravitational anomaly equation. -/
-@[simp]
 def accGrav : (SMCharges n).Charges →ₗ[ℚ] ℚ where
   toFun S := ∑ i, (6 * Q S i + 3 * U S i + 3 * D S i + 2 * L S i + E S i)
   map_add' S T := by
     repeat rw [map_add]
-    simp only [SMSpecies_numberCharges, ACCSystemCharges.chargesAddCommMonoid_add, toSpecies_apply,
+    simp only [ACCSystemCharges.chargesAddCommMonoid_add, toSpecies_apply,
       Fin.isValue, mul_add]
     repeat rw [Finset.sum_add_distrib]
     ring
   map_smul' a S := by
     repeat rw [map_smul]
-    simp only [SMSpecies_numberCharges, HSMul.hSMul, SMul.smul, toSpecies_apply, Fin.isValue,
+    simp only [HSMul.hSMul, SMul.smul, toSpecies_apply, Fin.isValue,
       eq_ratCast, Rat.cast_eq_id, id_eq]
     repeat rw [Finset.sum_add_distrib]
     repeat rw [← Finset.mul_sum]
     --rw [show Rat.cast a = a from rfl]
     ring
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Extensionality lemma for `accGrav`. -/
 lemma accGrav_ext {S T : (SMCharges n).Charges}
     (hj : ∀ (j : Fin 5), ∑ i, (toSpecies j) S i = ∑ i, (toSpecies j) T i) :
     accGrav S = accGrav T := by
-  simp only [accGrav, SMSpecies_numberCharges, toSpecies_apply, Fin.isValue, LinearMap.coe_mk,
+  simp only [accGrav, toSpecies_apply, Fin.isValue, LinearMap.coe_mk,
     AddHom.coe_mk]
   repeat rw [Finset.sum_add_distrib]
   repeat rw [← Finset.mul_sum]
   simp_all
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The `SU(2)` anomaly equation. -/
-@[simp]
 def accSU2 : (SMCharges n).Charges →ₗ[ℚ] ℚ where
   toFun S := ∑ i, (3 * Q S i + L S i)
   map_add' S T := by
     repeat rw [map_add]
-    simp only [SMSpecies_numberCharges, ACCSystemCharges.chargesAddCommMonoid_add, toSpecies_apply,
+    simp only [ACCSystemCharges.chargesAddCommMonoid_add, toSpecies_apply,
       Fin.isValue, mul_add]
     repeat rw [Finset.sum_add_distrib]
     ring
   map_smul' a S := by
     repeat rw [map_smul]
-    simp only [SMSpecies_numberCharges, HSMul.hSMul, SMul.smul, toSpecies_apply, Fin.isValue,
+    simp only [ HSMul.hSMul, SMul.smul, toSpecies_apply, Fin.isValue,
       eq_ratCast, Rat.cast_eq_id, id_eq]
     repeat rw [Finset.sum_add_distrib]
     repeat rw [← Finset.mul_sum]
     --rw [show Rat.cast a = a from rfl]
     ring
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Extensionality lemma for `accSU2`. -/
 lemma accSU2_ext {S T : (SMCharges n).Charges}
     (hj : ∀ (j : Fin 5), ∑ i, (toSpecies j) S i = ∑ i, (toSpecies j) T i) :
     accSU2 S = accSU2 T := by
-  simp only [accSU2, SMSpecies_numberCharges, toSpecies_apply, Fin.isValue, LinearMap.coe_mk,
+  simp only [accSU2, toSpecies_apply, Fin.isValue, LinearMap.coe_mk,
     AddHom.coe_mk]
   repeat rw [Finset.sum_add_distrib]
   repeat rw [← Finset.mul_sum]
   exact Mathlib.Tactic.LinearCombination.add_eq_eq (congrArg (HMul.hMul 3) (hj 0)) (hj 3)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The `SU(3)` anomaly equations. -/
-@[simp]
 def accSU3 : (SMCharges n).Charges →ₗ[ℚ] ℚ where
   toFun S := ∑ i, (2 * Q S i + U S i + D S i)
   map_add' S T := by
     repeat rw [map_add]
-    simp only [SMSpecies_numberCharges, ACCSystemCharges.chargesAddCommMonoid_add, toSpecies_apply,
+    simp only [ACCSystemCharges.chargesAddCommMonoid_add, toSpecies_apply,
       Fin.isValue, mul_add]
     repeat rw [Finset.sum_add_distrib]
     ring
   map_smul' a S := by
     repeat rw [map_smul]
-    simp only [SMSpecies_numberCharges, HSMul.hSMul, SMul.smul, toSpecies_apply, Fin.isValue,
+    simp only [HSMul.hSMul, SMul.smul, toSpecies_apply, Fin.isValue,
       eq_ratCast, Rat.cast_eq_id, id_eq]
     repeat rw [Finset.sum_add_distrib]
     repeat rw [← Finset.mul_sum]
     --rw [show Rat.cast a = a from rfl]
     ring
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Extensionality lemma for `accSU3`. -/
 lemma accSU3_ext {S T : (SMCharges n).Charges}
     (hj : ∀ (j : Fin 5), ∑ i, (toSpecies j) S i = ∑ i, (toSpecies j) T i) :
     accSU3 S = accSU3 T := by
-  simp only [accSU3, SMSpecies_numberCharges, toSpecies_apply, Fin.isValue, LinearMap.coe_mk,
+  simp only [accSU3, toSpecies_apply, Fin.isValue, LinearMap.coe_mk,
     AddHom.coe_mk]
   repeat rw [Finset.sum_add_distrib]
   repeat rw [← Finset.mul_sum]
   simp_all
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The `Y²` anomaly equation. -/
-@[simp]
 def accYY : (SMCharges n).Charges →ₗ[ℚ] ℚ where
   toFun S := ∑ i, (Q S i + 8 * U S i + 2 * D S i + 3 * L S i
     + 6 * E S i)
   map_add' S T := by
     repeat rw [map_add]
-    simp only [SMSpecies_numberCharges, ACCSystemCharges.chargesAddCommMonoid_add, toSpecies_apply,
+    simp only [ACCSystemCharges.chargesAddCommMonoid_add, toSpecies_apply,
       Fin.isValue, mul_add]
     repeat rw [Finset.sum_add_distrib]
     ring
   map_smul' a S := by
     repeat rw [map_smul]
-    simp only [SMSpecies_numberCharges, HSMul.hSMul, SMul.smul, toSpecies_apply, Fin.isValue,
+    simp only [HSMul.hSMul, SMul.smul, toSpecies_apply, Fin.isValue,
       eq_ratCast, Rat.cast_eq_id, id_eq]
     repeat rw [Finset.sum_add_distrib]
     repeat rw [← Finset.mul_sum]
     ring
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Extensionality lemma for `accYY`. -/
 lemma accYY_ext {S T : (SMCharges n).Charges}
     (hj : ∀ (j : Fin 5), ∑ i, (toSpecies j) S i = ∑ i, (toSpecies j) T i) :
     accYY S = accYY T := by
-  simp only [accYY, SMSpecies_numberCharges, toSpecies_apply, Fin.isValue, LinearMap.coe_mk,
+  simp only [accYY, toSpecies_apply, Fin.isValue, LinearMap.coe_mk,
     AddHom.coe_mk]
   repeat rw [Finset.sum_add_distrib]
   repeat rw [← Finset.mul_sum]
   simp_all
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The quadratic bilinear map. -/
 @[simps!]
 def quadBiLin : BiLinearSymm (SMCharges n).Charges := BiLinearSymm.mk₂
@@ -223,7 +241,7 @@ def quadBiLin : BiLinearSymm (SMCharges n).Charges := BiLinearSymm.mk₂
     ring)
   (by
     intro S T
-    simp only [SMSpecies_numberCharges, toSpecies_apply, Fin.isValue, neg_mul, one_mul]
+    simp only [toSpecies_apply, Fin.isValue, neg_mul, one_mul]
     apply Fintype.sum_congr
     intro i
     ring)
@@ -246,6 +264,7 @@ lemma accQuad_ext {S T : (SMCharges n).Charges}
   ring_nf
   simp_all
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The trilinear function defining the cubic. -/
 @[simps!]
 def cubeTriLin : TriLinearSymm (SMCharges n).Charges := TriLinearSymm.mk₃
@@ -274,13 +293,13 @@ def cubeTriLin : TriLinearSymm (SMCharges n).Charges := TriLinearSymm.mk₃
     ring)
   (by
     intro S T L
-    simp only [SMSpecies_numberCharges, toSpecies_apply, Fin.isValue]
+    simp only [toSpecies_apply, Fin.isValue]
     apply Fintype.sum_congr
     intro i
     ring)
   (by
     intro S T L
-    simp only [SMSpecies_numberCharges, toSpecies_apply, Fin.isValue]
+    simp only [toSpecies_apply, Fin.isValue]
     apply Fintype.sum_congr
     intro i
     ring)

@@ -52,7 +52,7 @@ def mk' (f : α → ℝ) (h₁ : ∀i, 0 ≤ f i) (hN : ∑ i, f i = 1) : ProbDi
 
 instance instFunLikeProb : FunLike (ProbDistribution α) α Prob where
   coe p a := p.1 a
-  coe_injective' _ _ h :=
+  coe_injective _ _ h :=
     Subtype.ext <| funext fun v ↦ by
       simpa only [Subtype.mk.injEq, coe_inj] using congrFun h v
 
@@ -149,6 +149,7 @@ def extend_right (d : ProbDistribution α) : ProbDistribution (α ⊕ β) :=
 def extend_left (d : ProbDistribution α) : ProbDistribution (β ⊕ α) :=
   ⟨fun x ↦ Sum.casesOn x (Function.const _ 0) d.val, by simp⟩
 
+set_option backward.isDefEq.respectTransparency false in
 /-- Make a convex mixture of two distributions on the same set. -/
 instance instMixable : Mixable (α → ℝ) (ProbDistribution α) :=
   Mixable.instSubtype (inferInstance) (fun _ _ hab hx hy ↦ by
@@ -164,6 +165,7 @@ def relabel (d : ProbDistribution α) (σ : β ≃ α) : ProbDistribution β :=
 -- The two properties below (and congrRandVar) follow from the fact that Distribution is a
 -- contravariant functor.
 -- However, mathlib does not seem to support that outside of the CategoryTheory namespace
+set_option backward.isDefEq.respectTransparency false in
 /-- ProbDistribution on α and β are equivalent for equivalent types α ≃ β. -/
 def congr (σ : α ≃ β) : ProbDistribution α ≃ ProbDistribution β := by
   constructor
@@ -252,6 +254,7 @@ def expect_val (X : RandVar α T) : T := by
     exact Set.mem_range.mp (inst.convex.sum_mem h₀ h₁ hz)
   exact (inst.mkT ht).1
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The expectation value of a random variable over `α = Fin 2` is the same as `Mixable.mix`
 with probabiliy weight `X.distr 0` -/
 theorem expect_val_eq_mixable_mix (d : ProbDistribution (Fin 2)) (x₁ x₂ : T) :
@@ -269,6 +272,7 @@ theorem expect_val_eq_mixable_mix (d : ProbDistribution (Fin 2)) (x₁ x₂ : T)
       simpa only [Subtype.ext_iff, Prob.coe_one_minus, eq_sub_iff_add_eq, add_comm,
         fun_eq_val, Fin.sum_univ_two] using d.property
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The expectation value of a random variable with constant probability distribution
   `constant x` is its value at `x` -/
 theorem expect_val_constant (x : α) (f : α → T) : expect_val ⟨f, (constant x)⟩ = f x := by
@@ -303,11 +307,13 @@ def congrRandVar (σ : α ≃ β) : RandVar α T ≃ RandVar β T := by
     · simp [Function.comp_assoc]
     · rw [← ProbDistribution.congr_symm_apply, Equiv.apply_symm_apply]
 
+omit inst in
 /-- Given a `T`-valued random variable `X` over `α`, mapping over `T` commutes
   with the equivalence over `α` -/
-def map_congr_eq_congr_map {S : Type _} [Mixable U S] (f : T → S) (σ : α ≃ β) (X : RandVar α T) :
+lemma map_congr_eq_congr_map {S : Type _} [Mixable U S] (f : T → S) (σ : α ≃ β) (X : RandVar α T) :
   f <$> congrRandVar σ X = congrRandVar σ (f <$> X) := by rfl
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The expectation value is invariant under equivalence of random variables -/
 @[simp]
 theorem expect_val_congr_eq_expect_val (σ : α ≃ β) (X : RandVar α T) :

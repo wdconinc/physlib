@@ -71,7 +71,7 @@ private lemma rightMulHS_real_smul_one (r : ℝ) :
     ofOp (toOp T * ((algebraMap ℝ (L ℋ)) r))
         = ofOp (((algebraMap ℝ (L ℋ)) r * toOp T) * (1 : L ℋ)) := by
             have hcomm := Algebra.commutes (R := ℝ) (A := L ℋ) r (toOp T)
-            simpa [mul_assoc] using congrArg (fun X => X * (1 : L ℋ)) hcomm.symm
+            exact congrArg (fun X => X * (1 : L ℋ)) hcomm.symm
     _ = r • ofOp (toOp T) := by
           delta HSOp
           rfl
@@ -115,7 +115,9 @@ private lemma rightMulHS_le_rightMulHS {A B : L ℋ} (hAB : A ≤ B) :
       rightMulHS (ℋ := ℋ) B - rightMulHS (ℋ := ℋ) A =
         rightMulHS (ℋ := ℋ) (B - A) := by
     ext T
-    simpa [sub_eq_add_neg] using (mul_add (toOp T) B (-A)).symm
+    have h1 := (mul_add (toOp T) B (-A)).symm
+    simp_all only [sub_eq_add_neg, mul_neg, add_apply, rightMulHS_apply, neg_apply]
+    exact h1
   exact sub_nonneg.mp (by simpa [hsub] using hnonneg)
 
 private lemma rightMulHS_pdSet {A : L ℋ} (hA : A ∈ pdSet (ℋ := ℋ)) :
@@ -124,10 +126,10 @@ private lemma rightMulHS_pdSet {A : L ℋ} (hA : A ∈ pdSet (ℋ := ℋ)) :
   have hright_sa : IsSelfAdjoint (rightMulHS (ℋ := ℋ) A) := by
     change star (rightMulHS (ℋ := ℋ) A) = rightMulHS (ℋ := ℋ) A
     simp [hA_sa.star_eq]
-  letI : Nontrivial (HSOp ℋ) := by
+  let : Nontrivial (HSOp ℋ) := by
     delta HSOp
     infer_instance
-  letI : Nontrivial (L (HSOp ℋ)) := inferInstance
+  let : Nontrivial (L (HSOp ℋ)) := inferInstance
   refine ⟨hright_sa, ?_⟩
   rcases (CFC.exists_pos_algebraMap_le_iff (A := L ℋ) (a := A) (ha := hA_sa)).2 hA_spec
     with ⟨r, hr, hrA⟩
@@ -190,7 +192,7 @@ private lemma leftMulHS_rankOne (A : L ℋ) (x y : ℋ) :
     leftMulHS (ℋ := ℋ) A (ofOp (InnerProductSpace.rankOne ℂ x y)) =
       ofOp (InnerProductSpace.rankOne ℂ (A x) y) := by
   change (A * InnerProductSpace.rankOne ℂ x y) = InnerProductSpace.rankOne ℂ (A x) y
-  simpa [leftMulHS_apply] using
+  exact
     (InnerProductSpace.comp_rankOne (𝕜 := ℂ) (x := x) (y := y) (f := A))
 
 omit [Nontrivial ℋ] in
@@ -198,7 +200,7 @@ private lemma rightMulHS_rankOne (B : L ℋ) (x y : ℋ) :
     rightMulHS (ℋ := ℋ) B (ofOp (InnerProductSpace.rankOne ℂ x y)) =
       ofOp (InnerProductSpace.rankOne ℂ x ((star B) y)) := by
   change (InnerProductSpace.rankOne ℂ x y * B) = InnerProductSpace.rankOne ℂ x ((star B) y)
-  simpa [rightMulHS_apply, ContinuousLinearMap.star_eq_adjoint] using
+  exact
     (InnerProductSpace.rankOne_comp (𝕜 := ℂ) (x := x) (y := y) (f := B))
 
 private lemma re_inner_nonneg_of_nonneg
@@ -246,7 +248,7 @@ private lemma cfcR_apply_of_mem_eigenspace_real
     (f : ℝ → ℝ) {T : L 𝓚} (hT : IsSelfAdjoint T) {r : ℝ} {x : 𝓚}
     (hx : x ∈ eigenspace T.toLinearMap (r : ℂ)) :
     cfcR (ℋ := 𝓚) f T x = (f r : ℂ) • x := by
-  haveI : IsScalarTower ℝ ℂ (L 𝓚) := RestrictScalars.isScalarTower ℝ ℂ (L 𝓚)
+  have : IsScalarTower ℝ ℂ (L 𝓚) := RestrictScalars.isScalarTower ℝ ℂ (L 𝓚)
   classical
   by_cases hx0 : x = 0
   · simp [hx0]
@@ -548,6 +550,7 @@ private lemma hmiddle_leftMul_rightMul
   simpa [lhs, rhs] using hlhs_eq_rhs
 
 -- The bridge lemma expands a large `HSOp`-valued generalized perspective term.
+set_option backward.isDefEq.respectTransparency false in
 set_option maxHeartbeats 800000 in
 private lemma phiK_operatorPowerMean_eq_liebTraceMap
     {s : ℝ} (K A B : L ℋ) (hA : A ∈ pdSet (ℋ := ℋ)) (hB : B ∈ pdSet (ℋ := ℋ)) :
@@ -797,6 +800,7 @@ lemma pdSet_convexCombo {A B : L ℋ} {t : ℝ}
   simpa [C] using
     (CFC.exists_pos_algebraMap_le_iff (A := L ℋ) (a := C) (ha := hC)).1 ⟨rC, hrC, hrC_le⟩ x hx
 
+set_option backward.isDefEq.respectTransparency false in
 omit [Nontrivial ℋ] in
 private lemma phiK_leftMul_rightMul_eq_traceRe (K C D : L ℋ) :
     phiK (ℋ := ℋ) K
@@ -1071,10 +1075,10 @@ theorem liebTrace_jointlyConcaveOn_pdSet
   have hB_combo :
       ((1 - θ) • B₁ + θ • B₂) ∈ pdSet (ℋ := ℋ) := by
     exact pdSet_convexCombo (ℋ := ℋ) hB₁ hB₂ hθ0 hθ1
-  letI : Nontrivial (HSOp ℋ) := by
+  let : Nontrivial (HSOp ℋ) := by
     delta HSOp
     infer_instance
-  letI : Nontrivial (L (HSOp ℋ)) := inferInstance
+  let : Nontrivial (L (HSOp ℋ)) := inferInstance
   have hconc_hs :=
     operatorPowerMean_jointlyConcaveOn_pdSet
       (ℋ := HSOp ℋ) (α := s) (β := 1)
@@ -1136,10 +1140,10 @@ theorem liebTrace_jointlyConvexOn_pdSet
   have hB_combo :
       ((1 - θ) • B₁ + θ • B₂) ∈ pdSet (ℋ := ℋ) := by
     exact pdSet_convexCombo (ℋ := ℋ) hB₁ hB₂ hθ0 hθ1
-  letI : Nontrivial (HSOp ℋ) := by
+  let : Nontrivial (HSOp ℋ) := by
     delta HSOp
     infer_instance
-  letI : Nontrivial (L (HSOp ℋ)) := inferInstance
+  let : Nontrivial (L (HSOp ℋ)) := inferInstance
   have hconv_hs :=
     operatorPowerMean_jointlyConvexOn_pdSet
       (ℋ := HSOp ℋ) (α := s) (β := 1)

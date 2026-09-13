@@ -700,7 +700,10 @@ theorem ratio_add_t_operatorMonotoneOn_Ici : ∀ (t : ℝ), 0 < t →
         simpa [Set.Ici] using (hspT hx)
       exact ne_of_gt (add_pos_of_nonneg_of_pos hx0 ht)
     have hT_cont : ContinuousOn invfun (spectrum ℝ T) := by
-      simpa [invfun, one_div] using (continuousOn_id.add continuousOn_const).inv₀ hT_ne0
+      have h1 : ContinuousOn (fun x : ℝ ↦ x + t) (spectrum ℝ T) :=
+        continuousOn_id.add continuousOn_const
+      have h2 : ContinuousOn (fun x : ℝ ↦ (x + t)⁻¹) (spectrum ℝ T) := h1.inv₀ hT_ne0
+      simpa [invfun, one_div] using h2
     dsimp [cfcR]
     have hcongr :
         cfcR (fun x : ℝ ↦ x / (x + t)) T =
@@ -765,7 +768,10 @@ theorem ratio_add_t_operatorConcaveOn_Ici : ∀ (t : ℝ), 0 < t →
           simpa [Set.Ici] using (Ts hx)
         exact ne_of_gt (add_pos_of_nonneg_of_pos hx0 ht)
       have hcont : ContinuousOn invfun (spectrum ℝ T) := by
-        simpa [invfun, one_div] using (continuousOn_id.add continuousOn_const).inv₀ hne0
+        have h1 : ContinuousOn (fun x : ℝ ↦ x + t) (spectrum ℝ T) :=
+          continuousOn_id.add continuousOn_const
+        have h2 : ContinuousOn (fun x : ℝ ↦ (x + t)⁻¹) (spectrum ℝ T) := h1.inv₀ hne0
+        simpa [invfun, one_div] using h2
       dsimp [cfcR]
       have hcongr :
           cfcR (fun x : ℝ ↦ - (x / (x + t))) T
@@ -1090,11 +1096,11 @@ private lemma concaveOn_rpow_Ioo {p : ℝ} (hp : p ∈ Set.Ioo (0 : ℝ) 1) :
   let q : NNReal := ⟨p, le_of_lt hp.1⟩
   have hq0 : (0 : NNReal) < q := by
     have : (0 : ℝ) < (q : ℝ) := by
-      simpa [q] using hp.1
+      exact hp.1
     exact (NNReal.coe_pos).1 this
   have hq1 : q < (1 : NNReal) := by
     have : (q : ℝ) < (1 : ℝ) := by
-      simpa [q] using hp.2
+      exact hp.2
     exact (NNReal.coe_lt_coe).1 (by simpa using this)
   have hq : q ∈ Set.Ioo (0 : NNReal) 1 := ⟨hq0, hq1⟩
   -- main lemma: concavity for `a ↦ a ^ q`
@@ -1104,7 +1110,7 @@ private lemma concaveOn_rpow_Ioo {p : ℝ} (hp : p ∈ Set.Ioo (0 : ℝ) 1) :
   refine hconc.congr ?_
   intro A hA
   -- `A ^ q = A ^ (q : ℝ)`, and `(q : ℝ) = p`
-  simpa [q] using (CFC.nnrpow_eq_rpow (A := 𝓐) (a := A) (x := q) hq0)
+  exact (CFC.nnrpow_eq_rpow (A := 𝓐) (a := A) (x := q) hq0)
 
 theorem power_Icc_zero_one_operatorConcaveOn_Ici : ∀ p ∈ Set.Icc (0 : ℝ) 1,
   OperatorConcaveOn (𝓐 := 𝓐) (Set.Ici (0 : ℝ)) (fun x ↦ x ^ p) := by
@@ -1364,10 +1370,11 @@ private lemma convexOn_G_rpowIntegrand₀₁_mul {q : NNReal} (hq_real : (q : �
   have hs : Convex ℝ (Set.Ici (0 : 𝓐)) := convex_Ici (𝕜 := ℝ) (0 : 𝓐)
   have h_aff : ConvexOn ℝ (Set.Ici (0 : 𝓐)) (fun X : 𝓐 ↦ X - algebraMap ℝ (𝓐) t) := by
     have hid : ConvexOn ℝ (Set.Ici (0 : 𝓐)) (fun X : 𝓐 ↦ X) := by
-      simpa using (convexOn_id (𝕜 := ℝ) (s := Set.Ici (0 : 𝓐)) hs)
+      exact convexOn_id (𝕜 := ℝ) (s := Set.Ici (0 : 𝓐)) hs
     have hconst : ConvexOn ℝ (Set.Ici (0 : 𝓐)) (fun _ : 𝓐 ↦ -algebraMap ℝ (𝓐) t) :=
       convexOn_const (-algebraMap ℝ (𝓐) t) hs
-    simpa [sub_eq_add_neg] using hid.add hconst
+    simp_all [sub_eq_add_neg]
+    exact hid.add hconst
   have h_one_div : ConvexOn ℝ (Set.Ici (0 : 𝓐)) (fun X : 𝓐 ↦ cfcR (fun x : ℝ ↦ 1 / (x + t)) X) :=
     convexOn_cfcR_one_div_add_t  t htpos
   have h_inner : ConvexOn ℝ (Set.Ici (0 : 𝓐))
@@ -1505,7 +1512,7 @@ private lemma convexOn_rpow_Ioo_one_two {p : ℝ} (hp : p ∈ Set.Ioo (1 : ℝ) 
   have hq1 : q < (1 : NNReal) := by
     have : (q : ℝ) < (1 : ℝ) := by
       have : p - 1 < (1 : ℝ) := by linarith [hp.2]
-      simpa [q] using this
+      exact this
     exact (NNReal.coe_lt_coe).1 (by simpa using this)
   have hq : q ∈ Set.Ioo (0 : NNReal) 1 := ⟨hq0, hq1⟩
   have hconv :

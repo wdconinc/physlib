@@ -153,12 +153,12 @@ lemma det_exp_of_blockTriangular_id {A : Matrix m m 𝕂} (hA : BlockTriangular 
     (NormedSpace.exp A).det = NormedSpace.exp A.trace := by
   have h_exp_upper : BlockTriangular (NormedSpace.exp A) id :=
     blockTriangular_exp_of_blockTriangular_id hA
-  rw [det_of_upperTriangular h_exp_upper]
+  rw [det_of_isUpperTriangular h_exp_upper]
   have h_diag_exp : (NormedSpace.exp A).diag = fun i => NormedSpace.exp (A i i) :=
     diag_exp_of_blockTriangular_id hA
   simp_rw [← diag_apply]
   simp_rw [h_diag_exp]
-  erw [← NormedSpace.exp_sum Finset.univ]
+  rw [← NormedSpace.exp_sum Finset.univ]
   congr 1
 
 /-- The trace is invariant under unitary conjugation. -/
@@ -202,9 +202,9 @@ theorem det_exp {𝕂 m : Type*} [RCLike 𝕂] [IsAlgClosed 𝕂] [Fintype m] [L
   have h_prop : T.val.IsUpperTriangular := T.property
   have h_conj : A = U * T * star U := schur_triangulation A
   have h_trace_invariant : A.trace = T.val.trace := by
-    erw [h_conj, trace_unitary_conj]
+    rw [h_conj, Unitary.coe_star, trace_unitary_conj]
   have h_det_invariant : (NormedSpace.exp A).det = (NormedSpace.exp T.val).det := by
-    erw [h_conj, det_exp_unitary_conj]
+    rw [h_conj, Unitary.coe_star, det_exp_unitary_conj]
   have h_triangular_case : (NormedSpace.exp T.val).det = NormedSpace.exp T.val.trace :=
     det_exp_of_blockTriangular_id h_prop
   rw [h_det_invariant, h_triangular_case, h_trace_invariant]
@@ -229,18 +229,17 @@ end Matrix
 
 namespace NormedSpace
 
-set_option backward.isDefEq.respectTransparency false in
 lemma exp_map_algebraMap {n : Type*} [Fintype n] [DecidableEq n]
     (A : Matrix n n ℝ) :
     (exp A).map (algebraMap ℝ ℂ) = exp (A.map (algebraMap ℝ ℂ)) := by
-  letI : SeminormedRing (Matrix n n ℝ) := Matrix.linftyOpSemiNormedRing
-  letI : NormedRing (Matrix n n ℝ) := Matrix.linftyOpNormedRing
-  letI : NormedAlgebra ℝ (Matrix n n ℝ) := Matrix.linftyOpNormedAlgebra
-  letI : CompleteSpace (Matrix n n ℝ) := inferInstance
-  letI : SeminormedRing (Matrix n n ℂ) := Matrix.linftyOpSemiNormedRing
-  letI : NormedRing (Matrix n n ℂ) := Matrix.linftyOpNormedRing
-  letI : NormedAlgebra ℂ (Matrix n n ℂ) := Matrix.linftyOpNormedAlgebra
-  letI : CompleteSpace (Matrix n n ℂ) := inferInstance
+  let : SeminormedRing (Matrix n n ℝ) := Matrix.linftyOpSemiNormedRing
+  let : NormedRing (Matrix n n ℝ) := Matrix.linftyOpNormedRing
+  let : NormedAlgebra ℝ (Matrix n n ℝ) := Matrix.linftyOpNormedAlgebra
+  let : CompleteSpace (Matrix n n ℝ) := inferInstance
+  let : SeminormedRing (Matrix n n ℂ) := Matrix.linftyOpSemiNormedRing
+  let : NormedRing (Matrix n n ℂ) := Matrix.linftyOpNormedRing
+  let : NormedAlgebra ℂ (Matrix n n ℂ) := Matrix.linftyOpNormedAlgebra
+  let : CompleteSpace (Matrix n n ℂ) := inferInstance
   simp only [exp_eq_tsum ℝ]
   have hs : Summable (fun k => (k.factorial : ℝ)⁻¹ • A ^ k) := by
     exact NormedSpace.expSeries_summable' A
@@ -262,7 +261,7 @@ theorem det_exp_real {n : Type*} [Fintype n] [LinearOrder n]
     (A : Matrix n n ℝ) : (NormedSpace.exp A).det = Real.exp A.trace := by
   let A_ℂ := A.map (algebraMap ℝ ℂ)
   have h_complex : (NormedSpace.exp A_ℂ).det = Complex.exp A_ℂ.trace := by
-    haveI : IsAlgClosed ℂ := Complex.isAlgClosed
+    have : IsAlgClosed ℂ := Complex.isAlgClosed
     rw [Complex.exp_eq_exp_ℂ, ← Matrix.det_exp]
   have h_trace_comm : A_ℂ.trace = (algebraMap ℝ ℂ) A.trace := by
     simp only [A_ℂ, trace, diag_map, map_sum];rfl
@@ -273,9 +272,7 @@ theorem det_exp_real {n : Type*} [Fintype n] [LinearOrder n]
   rw [h_trace_comm] at h_complex
   have h_exp_comm : Complex.exp ((algebraMap ℝ ℂ) A.trace) =
       (algebraMap ℝ ℂ) (Real.exp A.trace) := by
-    erw [← Complex.ofReal_exp]
-    simp_all only [Complex.coe_algebraMap, Algebra.algebraMap_self, RingHom.id_apply,
-      Complex.ofReal_exp, A_ℂ]
+    rw [Complex.coe_algebraMap, ← Complex.ofReal_exp]
   rw [h_exp_comm] at h_complex
   exact Complex.ofReal_injective h_complex
 

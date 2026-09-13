@@ -14,10 +14,8 @@ We define $Y_3$ and show that it is a double point of the cubic.
 
 # References
 
-The main reference for the material in this file is:
-
-- https://arxiv.org/pdf/2107.07926.pdf
-
+* The main reference for the material in this file is https://arxiv.org/pdf/2107.07926.pdf.
+  [ref: Allanach:2021yjy]
 -/
 
 @[expose] public section
@@ -67,9 +65,8 @@ lemma Y₃_val : Y₃.val = Y₃AsCharge := by
 set_option backward.isDefEq.respectTransparency false in
 lemma doublePoint_Y₃_Y₃ (R : MSSMACC.LinSols) :
     cubeTriLin Y₃.val Y₃.val R.val = 0 := by
-  simp only [cubeTriLin, TriLinearSymm.mk₃_toFun_apply_apply, cubeTriLinToFun,
-    MSSMSpecies_numberCharges]
-  rw [Fin.sum_univ_three]
+  simp only [cubeTriLin, TriLinearSymm.mk₃_toFun_apply_apply, cubeTriLinToFun]
+  erw [Fin.sum_univ_three]
   rw [Y₃_val]
   rw [Y₃AsCharge]
   repeat rw [toSMSpecies_toSpecies_inv]
@@ -77,12 +74,12 @@ lemma doublePoint_Y₃_Y₃ (R : MSSMACC.LinSols) :
   simp only [mul_one, Fin.isValue, toSMSpecies_apply, one_mul, mul_neg, neg_mul, neg_neg, mul_zero,
     zero_mul, add_zero, Hd_apply, Fin.reduceFinMk, Hu_apply]
   have hLin := R.linearSol
-  simp only [MSSMACC_numberLinear, MSSMACC_linearACCs, Nat.reduceMul, Fin.isValue,
-    Fin.reduceFinMk] at hLin
-  have h3 := hLin 3
-  simp only [Fin.isValue, Fin.sum_univ_three, Prod.mk_zero_zero, Prod.mk_one_one, LinearMap.coe_mk,
-    AddHom.coe_mk] at h3
+  simp only [MSSMACC_linearACCs] at hLin
+  have h3 := hLin ⟨3, by simp⟩
+  simp only [accYY, LinearMap.coe_mk, AddHom.coe_mk] at h3
+  erw [Fin.sum_univ_three] at h3
+  simp only [Fin.isValue, toSMSpecies_apply, Nat.reduceMul, Hd_apply, Fin.reduceFinMk,
+    Hu_apply] at h3
   linear_combination (norm := ring_nf) 6 * h3
-  simp [Fin.isValue, Prod.mk_zero_zero, Prod.mk_one_one]
 
 end MSSMACC

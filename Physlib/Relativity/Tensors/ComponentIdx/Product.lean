@@ -28,8 +28,7 @@ of component indices for each side of the append.
 
 ## iv. References
 
-There are no known references for the material in this module.
-
+* None.
 -/
 
 @[expose] public section
@@ -66,6 +65,17 @@ def ComponentIdx.prod {n1 n2 : ℕ} {c : Fin n1 → C} {c1 : Fin n2 → C} :
     simp [Fin.forall_fin_add]
   right_inv p := by simp
 
-end Tensor
+@[simp]
+lemma ComponentIdx.prod_symm_natAdd {n1 n2 : ℕ} {c : Fin n1 → C} {c1 : Fin n2 → C}
+    (p : ComponentIdx (S := S) c) (q : ComponentIdx (S := S) c1) (i : Fin n2) :
+    ComponentIdx.prod.symm (p, q) (Fin.natAdd n1 i) =
+      basisIdxCongr (by simp) (q i) := by simp [ComponentIdx.prod]
 
+@[simp]
+lemma ComponentIdx.prod_symm_castAdd {n1 n2 : ℕ} {c : Fin n1 → C} {c1 : Fin n2 → C}
+    (p : ComponentIdx (S := S) c) (q : ComponentIdx (S := S) c1) (i : Fin n1) :
+    ComponentIdx.prod.symm (p, q) (Fin.castAdd n2 i) =
+      basisIdxCongr (by simp) (p i) := by simp [ComponentIdx.prod]
+
+end Tensor
 end TensorSpecies

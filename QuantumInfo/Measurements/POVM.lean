@@ -107,13 +107,14 @@ theorem measurementMap_apply_matrix (Λ : POVM X d) (m : Matrix d d ℂ) :
   rw [LinearMap.sum_apply]
   rfl
 
+set_option backward.isDefEq.respectTransparency false in
 open HermitianMat in
 theorem measurementMap_apply_hermitianMat (Λ : POVM X d) (m : HermitianMat d ℂ) :
   Λ.measurementMap.toHPMap m = ∑ x : X,
     --TODO: Something like `HermitianMat.single` to make this better
     ((m.conj ((Λ.mats x)^(1/2:ℝ)).mat : HermitianMat d ℂ) ⊗ₖ HermitianMat.diagonal ℂ (fun y ↦ ite (x = y) 1 0)) := by
   ext1
-  convert Λ.measurementMap_apply_matrix m.mat
+  convert! Λ.measurementMap_apply_matrix m.mat
   simp only [conj_apply, conjTranspose_mat, HermitianMat.mat_finset_sum,
     kronecker_mat, mat_mk]
   congr!

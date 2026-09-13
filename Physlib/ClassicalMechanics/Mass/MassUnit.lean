@@ -23,6 +23,10 @@ To define specific mass units, we first state the existence of a
 a given mass unit, and then construct all other mass units from it. We choose to state the
 existence of the mass unit of kilograms, and construct all other mass units from that.
 
+## References
+
+* The numerical value used for the nominal solar mass. [ref: nominal_solar_mass_article]
+
 -/
 
 @[expose] public section
@@ -79,9 +83,13 @@ lemma div_self (x : MassUnit) :
 
 lemma div_symm (x y : MassUnit) :
     x / y = (y / x)⁻¹ := NNReal.eq <| by
-  rw [div_eq_val, inv_eq_one_div, div_eq_val]
-  simp only [one_div, NNReal.coe_inv]
-  rw [toReal, inv_div]
+  show x.val / y.val = (y.val / x.val)⁻¹
+  rw [inv_div]
+
+/-- The unit-ratio cocycle at `ℝ≥0` (the un-coerced form of `div_mul_div_coe`). -/
+lemma div_mul_div (x y z : MassUnit) : (x / y) * (y / z) = x / z := NNReal.eq <| by
+  show x.val / y.val * (y.val / z.val) = x.val / z.val
+  rw [div_mul_div_comm, mul_comm x.val y.val, mul_div_mul_left _ _ y.val_ne_zero]
 
 @[simp]
 lemma div_mul_div_coe (x y z : MassUnit) :
@@ -103,6 +111,7 @@ def scale (r : ℝ) (x : MassUnit) (hr : 0 < r := by norm_num) : MassUnit :=
 lemma scale_div_self (x : MassUnit) (r : ℝ) (hr : 0 < r) :
     scale r x hr / x = (⟨r, le_of_lt hr⟩ : ℝ≥0) := by
   simp [scale, div_eq_val]
+  rfl
 
 @[simp]
 lemma self_div_scale (x : MassUnit) (r : ℝ) (hr : 0 < r) :
@@ -118,9 +127,8 @@ lemma scale_one (x : MassUnit) : scale 1 x = x := by
 lemma scale_div_scale (x1 x2 : MassUnit) {r1 r2 : ℝ} (hr1 : 0 < r1) (hr2 : 0 < r2) :
     scale r1 x1 hr1 / scale r2 x2 hr2 = (⟨r1, le_of_lt hr1⟩ / ⟨r2, le_of_lt hr2⟩) * (x1 / x2) := by
   refine NNReal.eq ?_
-  simp [scale, div_eq_val]
-  rw [toReal]
-  field_simp
+  show r1 * x1.val / (r2 * x2.val) = r1 / r2 * (x1.val / x2.val)
+  rw [div_mul_div_comm]
 
 @[simp]
 lemma scale_scale (x : MassUnit) (r1 r2 : ℝ) (hr1 : 0 < r1) (hr2 : 0 < r2) :
@@ -177,7 +185,7 @@ noncomputable def metricTons : MassUnit := scale (1000) kilograms
 noncomputable def longTons : MassUnit := scale (2240) pounds
 
 /-- The mass unit of nominal solar masses (1.988416 × 10 ^ 30 kilograms).
-  See: https://iopscience.iop.org/article/10.3847/0004-6256/152/2/41 -/
+  See: https://iopscience.iop.org/article/10.3847/0004-6256/152/2/41 [ref: nominal_solar_mass_article] -/
 noncomputable def nominalSolarMasses : MassUnit := scale (1.988416e30) kilograms
 
 /-!
@@ -187,7 +195,10 @@ noncomputable def nominalSolarMasses : MassUnit := scale (1.988416e30) kilograms
 -/
 
 lemma pounds_div_ounces : pounds / ounces = (16 : ℝ≥0) := NNReal.eq <| by
-  simp [pounds, ounces]; rw [toReal]; norm_num
+  simp [pounds, ounces]
+  show (0.45359237 : ℝ) / 0.028349523125 = ((16 : ℝ≥0) : ℝ)
+  push_cast
+  norm_num
 
 lemma shortTons_div_kilograms : shortTons / kilograms = (907.18474 : ℝ≥0) := NNReal.eq <| by
   simp [shortTons, pounds]; rw [toReal]; norm_num

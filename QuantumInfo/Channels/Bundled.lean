@@ -150,12 +150,13 @@ theorem funext_mstate [Fintype dIn] [DecidableEq dIn] {Λ₁ Λ₂ : HPMap dIn d
 /-- Hermitian-preserving maps are functions from `HermitianMat`s to `HermitianMat`s. -/
 noncomputable instance instFunLike : FunLike (HPMap dIn dOut ℂ) (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where
   coe Λ ρ := ⟨Λ.map ρ.1, Λ.HP ρ.2⟩
-  coe_injective' x y h := funext_hermitian fun M ↦
+  coe_injective x y h := funext_hermitian fun M ↦
     by simpa using congrFun h M
 
 lemma apply_hermitianMat_eq (Λ : HPMap dIn dOut ℂ) (ρ : HermitianMat dIn ℂ) :
     Λ ρ = ⟨Λ.map ρ.1, Λ.HP ρ.2⟩ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 instance [Fintype dIn] : ContinuousLinearMapClass
     (HPMap dIn dOut ℂ) ℝ (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where
   map_add f x y := HermitianMat.ext <| LinearMap.map_add f.toLinearMap x y
@@ -186,11 +187,12 @@ theorem injective_toHPMap : (PMap.toHPMap (dIn := dIn) (dOut := dOut) (𝕜 := �
 /-- Positive maps are functions from `HermitianMat`s to `HermitianMat`s. -/
 noncomputable instance instFunLike : FunLike (PMap dIn dOut ℂ) (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where
   coe := DFunLike.coe ∘ toHPMap
-  coe_injective' := DFunLike.coe_injective'.comp injective_toHPMap
+  coe_injective := DFunLike.coe_injective.comp injective_toHPMap
 
 lemma apply_hermitianMat_eq (Λ : PMap dIn dOut ℂ) (ρ : HermitianMat dIn ℂ) :
     Λ ρ = ⟨Λ.map ρ.1, Λ.HP ρ.2⟩ := rfl
 
+set_option backward.isDefEq.respectTransparency false in
 set_option synthInstance.maxHeartbeats 40000 in
 instance instLinearMapClass : LinearMapClass (PMap dIn dOut ℂ) ℝ (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where
   map_add f x y := HermitianMat.ext <| LinearMap.map_add f.toLinearMap x y
@@ -200,7 +202,9 @@ instance instContinuousOrderHomClass : ContinuousOrderHomClass (PMap dIn dOut �
     (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where
   map_continuous f := ContinuousMapClass.map_continuous f.toHPMap
   map_monotone f x y h := by
-    simpa using f.pos h
+    have h1 := f.pos h
+    simp_all only [HermitianMat.val_eq_coe, map_sub, ge_iff_le]
+    exact h1
 
 /-- Positive-presering maps also preserve positivity on, specifically, Hermitian matrices. -/
 @[simp]
@@ -238,7 +242,7 @@ theorem injective_toPMap : (PTPMap.toPMap (dIn := dIn) (dOut := dOut) (𝕜 := �
 /-- Positive trace-preserving maps are functions from `HermitianMat`s to `HermitianMat`s. -/
 noncomputable instance instFunLike : FunLike (PTPMap dIn dOut ℂ) (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where
   coe := DFunLike.coe ∘ toPMap
-  coe_injective' := DFunLike.coe_injective'.comp injective_toPMap
+  coe_injective := DFunLike.coe_injective.comp injective_toPMap
 
 lemma apply_hermitianMat_eq_toPMap (Λ : PTPMap dIn dOut ℂ) (ρ : HermitianMat dIn ℂ) :
     Λ ρ = Λ.toPMap ρ := rfl
@@ -251,7 +255,9 @@ instance instHContinuousOrderHomClass : ContinuousOrderHomClass (PTPMap dIn dOut
     (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where
   map_continuous f := ContinuousMapClass.map_continuous f.toPMap
   map_monotone f x y h := by
-    simpa using f.pos h
+    have := f.pos h
+    simp_all only [HermitianMat.val_eq_coe, map_sub, ge_iff_le]
+    exact this
 
 /-- PTP maps also preserve positivity on Hermitian matrices. -/
 @[simp]
@@ -265,7 +271,7 @@ noncomputable instance instMFunLike [DecidableEq dIn] [DecidableEq dOut] :
     (Λ.toHPMap ρ.M) (HermitianMat.zero_le_iff.mpr (Λ.pos ρ.psd)) (by
       rw [HermitianMat.trace_eq_one_iff, ← ρ.tr']
       exact Λ.TP ρ)
-  coe_injective' x y h := injective_toPMap <| PMap.injective_toHPMap <|
+  coe_injective x y h := injective_toPMap <| PMap.injective_toHPMap <|
     HPMap.funext_mstate fun ρ ↦ by
       have := congr($h ρ);
       rwa [MState.ext_iff, HermitianMat.ext_iff] at this
@@ -344,7 +350,7 @@ theorem injective_toPTPMap : (CPTPMap.toPTPMap (dIn := dIn) (dOut := dOut) (𝕜
 /-- `CPTPMap`s are functions from `MState`s to `MState`s. -/
 noncomputable instance instMFunLike [DecidableEq dOut] : FunLike (CPTPMap dIn dOut) (MState dIn) (MState dOut) where
   coe := DFunLike.coe ∘ toPTPMap
-  coe_injective' := DFunLike.coe_injective'.comp injective_toPTPMap
+  coe_injective := DFunLike.coe_injective.comp injective_toPTPMap
 
 lemma apply_mState_eq_toPTPMap [DecidableEq dOut] (Λ : CPTPMap dIn dOut) (ρ : MState dIn) :
     Λ ρ = Λ.toPTPMap ρ := rfl
@@ -358,7 +364,7 @@ lemma apply_mState_eq_toPTPMap [DecidableEq dOut] (Λ : CPTPMap dIn dOut) (ρ : 
 theorem IsTracePreserving (Λ : CPTPMap dIn dOut 𝕜) : Λ.map.IsTracePreserving :=
   Λ.TP
 
-def of_kraus_CPTPMap {κ : Type*} [Fintype κ] [DecidableEq dIn]
+def of_kraus_CPTPMap {κ : Type*} [Fintype κ]
   (M : κ → Matrix dOut dIn 𝕜)
   (hTP : (∑ k, (M k).conjTranspose * (M k)) = 1) : CPTPMap dIn dOut 𝕜 where
   toLinearMap := MatrixMap.of_kraus M M
@@ -382,7 +388,7 @@ theorem injective_toPMap : (PUMap.toPMap (dIn := dIn) (dOut := dOut) (𝕜 := �
 /-- `PUMap`s are functions from `HermitianMat`s to `HermitianMat`s. -/
 noncomputable instance instFunLike : FunLike (PUMap dIn dOut ℂ) (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where
   coe Λ := Λ.toPMap
-  coe_injective' := (DFunLike.coe_injective' (F := PMap dIn dOut ℂ)).comp injective_toPMap
+  coe_injective := (DFunLike.coe_injective (F := PMap dIn dOut ℂ)).comp injective_toPMap
 
 lemma apply_hermitianMat_eq_toPMap (Λ : PUMap dIn dOut ℂ) (ρ : HermitianMat dIn ℂ) :
     Λ ρ = Λ.toPMap ρ := rfl
@@ -395,7 +401,9 @@ instance instHContinuousOrderHomClass : ContinuousOrderHomClass (PUMap dIn dOut 
     (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where
   map_continuous f := ContinuousMapClass.map_continuous f.toPMap
   map_monotone f x y h := by
-    simpa using f.pos h
+    have := f.pos h
+    simp_all only [HermitianMat.val_eq_coe, map_sub, ge_iff_le]
+    exact this
 
 instance instOneHomClass : OneHomClass (PUMap dIn dOut ℂ)
     (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where
@@ -423,7 +431,7 @@ theorem injective_toPMap : (CPMap.toPMap ∘ CPUMap.toCPMap (dIn := dIn) (dOut :
 /-- `CPUMap`s are functions from `HermitianMat`s to `HermitianMat`s. -/
 noncomputable instance instFunLike : FunLike (CPUMap dIn dOut ℂ) (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where
   coe Λ := Λ.toPMap
-  coe_injective' := (DFunLike.coe_injective' (F := PMap dIn dOut ℂ)).comp injective_toPMap
+  coe_injective := (DFunLike.coe_injective (F := PMap dIn dOut ℂ)).comp injective_toPMap
 
 lemma apply_hermitianMat_eq_toPMap (Λ : CPUMap dIn dOut ℂ) (ρ : HermitianMat dIn ℂ) :
     Λ ρ = Λ.toPMap ρ := rfl
@@ -436,7 +444,9 @@ instance instHContinuousOrderHomClass : ContinuousOrderHomClass (CPUMap dIn dOut
     (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where
   map_continuous f := ContinuousMapClass.map_continuous f.toPMap
   map_monotone f x y h := by
-    simpa using f.pos h
+    have := f.pos h
+    simp_all only [HermitianMat.val_eq_coe, map_sub, ge_iff_le]
+    exact this
 
 instance instOneHomClass : OneHomClass (CPUMap dIn dOut ℂ)
     (HermitianMat dIn ℂ) (HermitianMat dOut ℂ) where

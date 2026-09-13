@@ -67,6 +67,7 @@ theorem Dual.trace_eq (M : MatrixMap dIn dOut R) (A : Matrix dIn dIn R) (B : Mat
 --all properties below should provable just from `inner_eq`, since the definition of `dual` itself
 -- is pretty hairy (and maybe could be improved...)
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The dual of a `IsHermitianPreserving` map also `IsHermitianPreserving`. -/
 theorem IsHermitianPreserving.dual {M : MatrixMap dIn dOut ℂ} (h : M.IsHermitianPreserving) :
     M.dual.IsHermitianPreserving := by
@@ -284,8 +285,8 @@ lemma Module.Basis.dualMap_toDualEquiv_symm_comp_toDualEquiv {ι R M : Type*} [F
   ext x f;
   -- Since $b.toDual$ and $b.toDualEquiv.symm$ are inverses, we have $b.toDual (b.toDualEquiv.symm f) = f$.
   have h_inv : b.toDual (b.toDualEquiv.symm f) = f := by
-    convert LinearEquiv.apply_symm_apply b.toDualEquiv f;
-  convert congr_arg ( fun g => g x ) h_inv using 1;
+    convert! LinearEquiv.apply_symm_apply b.toDualEquiv f;
+  convert! congr_arg ( fun g => g x ) h_inv using 1;
   -- By definition of the dual basis, we know that $(b.toDual x) (b.toDualEquiv.symm f) = f x$.
   simp [Module.Basis.toDual];
   ac_rfl
@@ -407,10 +408,8 @@ omit [Fintype dOut] in
 theorem HPMap.ofHermitianMat_linearMap (f : HPMap dIn dOut ℂ) :
     ofHermitianMat (LinearMapClass.linearMap f) = f := by
   ext : 3
-  simp only [map, ofHermitianMat, instFunLike, LinearMap.coe_coe, HermitianMat.val_eq_coe,
-    HermitianMat.mat_mk, LinearMap.coe_mk, AddHom.coe_mk,
-    ← map_smul, ← map_add]
-  simp only [map_add, map_smul, realPart, imaginaryPart, LinearMap.coe_comp, Function.comp_apply]
+  simp only [map, ofHermitianMat, instFunLike, LinearMap.coe_coe, LinearMap.coe_mk, AddHom.coe_mk]
+  simp only [realPart, imaginaryPart, LinearMap.coe_comp, Function.comp_apply]
   simp only [selfAdjointPart,  LinearMap.coe_mk, AddHom.coe_mk,
     HermitianMat.mat_mk,LinearMap.map_smul_of_tower, skewAdjoint.negISMul]
   simp only [Matrix.add_apply, Matrix.smul_apply, smul_eq_mul]

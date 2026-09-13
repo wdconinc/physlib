@@ -37,6 +37,7 @@ variable {M : MatrixMap A B R} {M₂ : MatrixMap B C R}
 def IsTracePreserving (M : MatrixMap A B R) : Prop :=
   ∀ (x : Matrix A A R), (M x).trace = x.trace
 
+set_option backward.isDefEq.respectTransparency false in
 /-- A map is trace preserving iff the partial trace of the Choi matrix is the identity. -/
 theorem IsTracePreserving_iff_trace_choi [DecidableEq A] (M : MatrixMap A B R) : M.IsTracePreserving
     ↔ M.choi_matrix.traceLeft = 1 := by
@@ -365,7 +366,8 @@ theorem id : (id A R).IsCompletelyPositive := by
 theorem add {M₁ M₂ : MatrixMap A B R} (h₁ : M₁.IsCompletelyPositive) (h₂ : M₂.IsCompletelyPositive) :
     (M₁ + M₂).IsCompletelyPositive :=
   fun n _ h ↦ by
-  simpa only [add_kron] using Matrix.PosSemidef.add (h₁ n h) (h₂ n h)
+  simp only [add_kron, LinearMap.add_apply]
+  exact Matrix.PosSemidef.add (h₁ n h) (h₂ n h)
 
 /-- Nonnegative scalings of `IsCompletelyPositive` maps are `IsCompletelyPositive`. -/
 theorem smul {M : MatrixMap A B R} (hM : M.IsCompletelyPositive) {x : R} (hx : 0 ≤ x) :
@@ -422,7 +424,6 @@ theorem kron_kronecker_const {C : Matrix d d R} (h : C.PosSemidef) {h₁ h₂ : 
   simp [Finset.sum_ite, Finset.filter_eq', Finset.filter_and]
   rw [ Finset.sum_eq_single a ]
   · simp_all only [RingHom.id_apply, ↓reduceIte, Finset.mem_univ, Finset.inter_singleton_of_mem, Finset.sum_singleton]
-    simp_all only
     rw [ Finset.sum_eq_single n ]
     · simp_all only [↓reduceIte, Finset.mem_univ, Finset.inter_singleton_of_mem, Finset.sum_singleton]
       ring
@@ -562,6 +563,7 @@ theorem of_kraus_CP (K : κ → Matrix B A 𝕜) : (of_kraus K K).IsCompletelyPo
     apply Classical.decEq);
   exact h_sum_congruence.symm ▸ IsCompletelyPositive.finset_sum h_congruence_CP
 
+set_option backward.isDefEq.respectTransparency false in
 theorem exists_kraus_of_choi_PSD
     (C : Matrix (B × A) (B × A) 𝕜) (hC : C.PosSemidef) :
     ∃ (K : (B × A) → Matrix B A 𝕜), C = (MatrixMap.of_kraus K K).choi_matrix := by
@@ -797,10 +799,12 @@ theorem cp_subunital_kadison_schwarz {M : MatrixMap A B ℂ} [DecidableEq B]
     ext i j
     cases i <;> cases j <;>
       simp [Matrix.fromBlocks, sub_eq_add_neg, add_left_comm, add_comm]
-  letI : Invertible (1 : Matrix B B ℂ) := invertibleOne
-  simpa [sub_nonneg] using
+  let : Invertible (1 : Matrix B B ℂ) := invertibleOne
+  have h1 :=
     (Matrix.PosDef.fromBlocks₁₁ (B := M X) (D := M (Xᴴ * X))
       (hA := (Matrix.PosDef.one : (1 : Matrix B B ℂ).PosDef))).mp hsum
+  simp_all only [inv_one, mul_one, ge_iff_le]
+  exact h1
 
 open scoped MatrixOrder in
 /-- A positive subunital matrix map is contractive on positive inputs. -/
@@ -824,7 +828,7 @@ theorem positive_subunital_norm_apply_le {M : MatrixMap A B ℂ} [DecidableEq B]
   have hMX_le : M X ≤ ‖X‖ • (1 : Matrix B B ℂ) :=
     (show M X ≤ ‖X‖ • M 1 by
       simpa [sub_nonneg, map_sub, map_smul] using
-        (hM (by simpa [sub_nonneg] using hXle :
+        (hM (by exact hXle :
           (‖X‖ • (1 : Matrix A A ℂ) - X).PosSemidef)).nonneg).trans
       (smul_le_smul_of_nonneg_left hM1 (norm_nonneg X))
   have hMX_nn : 0 ≤ M X := (hM (by simpa [Matrix.nonneg_iff_posSemidef] using hX)).nonneg
@@ -910,7 +914,7 @@ variable {dO : ι → Type w} [∀i, Fintype (dO i)] [∀i, DecidableEq (dO i)]
 theorem piProd {Λi : ∀ i, MatrixMap (dI i) (dO i) R} (h₁ : ∀ i, (Λi i).IsCompletelyPositive) :
     IsCompletelyPositive (MatrixMap.piProd Λi) := by
   rw [choi_PSD_iff_CP_map, MatrixMap.choi_matrix_piProd]
-  convert Matrix.PosSemidef.submatrix
+  convert! Matrix.PosSemidef.submatrix
     (Matrix.PosSemidef.piProd (fun i => (choi_PSD_iff_CP_map (Λi i)).1 (h₁ i)))
     (Equiv.arrowProdEquivProdArrow ι dO dI).symm using 1
 

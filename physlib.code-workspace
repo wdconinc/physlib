@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../mathlib4"
+		}
+	],
+	"settings": {
+		"chat.tools.terminal.autoApprove": {
+			"lake": true
+		}
+	}
+}

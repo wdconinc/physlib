@@ -26,6 +26,7 @@ open TensorProduct
 
 namespace realLorentzTensor
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The colors associated with complex representations of SL(2, ℂ) of interest to physics. -/
 inductive Color
   /-- The color associated with contravariant Lorentz vectors. -/
@@ -57,6 +58,10 @@ instance modulesModule (d : ℕ) : ∀ c, Module ℝ (modules d c)
   | Color.down => inferInstance
 
 end realLorentzTensor
+
+TODO "Replace Lorentz.ContrMod and Lorentz.CoMod in the definition of realLorentzTensor
+  directly with Lorentz.Vector and Lorentz.Covector, and
+  representations defined on them."
 
 noncomputable section
 open realLorentzTensor in
@@ -217,7 +222,7 @@ lemma contrT_eq_sum_evalT {n} {d} (c : Fin (n + 1 + 1) → Color) (i j : Fin (n 
 lemma contrT_toField {d} (c : Fin 2 → Color)
     (h : 0 ≠ 1 ∧ (realLorentzTensor d).τ (c 0) = c 1) (t : ℝT(d, c)) :
     (contrT 0 0 1 h t).toField = ∑ (μ : Fin 1 ⊕ Fin d), {t | [μ] [μ]}ᵀ.toField := by
-  rw [contrT_eq_sum_evalT, map_sum, Tensorial.self_toTensor_apply]
+  rw [contrT_eq_sum_evalT, map_sum]
   congr
   ext μ
   simp only [toField_permT]

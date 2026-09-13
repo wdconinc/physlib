@@ -53,10 +53,9 @@ The main definitions and statements are:
 
 ## iv. References
 
-The general formalism of Lorentz tensors and their operations is developed in
-other parts of the library; here we only specialise to the passage from real to
-complex Lorentz tensors.
-
+* None — the general formalism of Lorentz tensors and their operations is
+  developed in other parts of the library; here we only specialise to the
+  passage from real to complex Lorentz tensors.
 -/
 
 @[expose] public section
@@ -84,7 +83,7 @@ def colorToComplex (c : realLorentzTensor.Color) : complexLorentzTensor.Color :=
 
 lemma repDim_colorToComplex {c : realLorentzTensor.Color} :
     complexLorentzTensor.repDim (colorToComplex c) = 4 := by
-  cases c <;> simp [colorToComplex]
+  cases c <;> rfl
 
 /-- `simp` helper: reduce `match c j` after a case split on `c j`
   (avoids dependent `rw` / `Pi.smul_apply`). -/
@@ -109,7 +108,7 @@ lemma colorToComplex_comp_eq_match {n} (c : Fin n → realLorentzTensor.Color) (
       (match c j with
         | .up => complexLorentzTensor.Color.up
         | .down => complexLorentzTensor.Color.down) := by
-  rcases hc : c j with _ | _ <;> simp [colorToComplex, hc, Function.comp_apply]
+  cases hc : c j <;> simp [colorToComplex, hc]
 
 /-- The complexification of the component index of a real Lorentz tensor to
   a complex Lorentz tensor. -/
@@ -169,9 +168,8 @@ lemma toComplex_eq_sum_basis {n} (c : Fin n → realLorentzTensor.Color) (v : �
     toComplex v = ∑ i, (Tensor.basis (S := realLorentzTensor) c).repr v
       (ComponentIdx.complexify.symm i) •
       Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c) i := by
-  simp only [toComplex, LinearMap.coe_mk, AddHom.coe_mk]
   rw [← Equiv.sum_comp ComponentIdx.complexify]
-  simp
+  exact Finset.sum_congr rfl fun i _ => by simp
 
 /-- The representation of `toComplex v` in the complexified basis equals
   the real representation coerced to complex. -/
@@ -180,54 +178,10 @@ lemma toComplex_repr {n} {c : Fin n → realLorentzTensor.Color}
     (Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c)).repr
       (toComplex v) i.complexify =
     ↑((Tensor.basis (S := realLorentzTensor) c).repr v i) := by
-  -- Expand toComplex v in the complexified basis
-  rw [toComplex_eq_sum_basis]
-  -- `repr` commutes with finite sums of tensors; then push the Finsupp evaluation into the sum
-  rw [map_sum]
-  simp only [Finsupp.coe_finsetSum, Finset.sum_apply]
-  -- The sum has only one non-zero term (when k = i.complexify)
-  rw [Fintype.sum_eq_single i.complexify]
-  · -- Case k = i.complexify: show the term equals ↑(repr v i)
-    have hsmul :
-        ((Tensor.basis (S := realLorentzTensor) c).repr v
-            (ComponentIdx.complexify.symm (ComponentIdx.complexify i))) •
-          Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c)
-            (ComponentIdx.complexify i) =
-        (↑((Tensor.basis (S := realLorentzTensor) c).repr v
-            (ComponentIdx.complexify.symm (ComponentIdx.complexify i))) : ℂ) •
-          Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c)
-            (ComponentIdx.complexify i) :=
-      (Complex.coe_smul _ _).symm
-    rw [hsmul]
-    have hm :=
-      LinearEquiv.map_smul
-        (Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c)).repr
-        (↑((Tensor.basis (S := realLorentzTensor) c).repr v
-            (ComponentIdx.complexify.symm (ComponentIdx.complexify i))) : ℂ)
-        (Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c)
-          (ComponentIdx.complexify i))
-    simp_rw [hm]
-    simp only [Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul, Basis.repr_self, Finsupp.single_apply]
-    simp only [Equiv.symm_apply_apply ComponentIdx.complexify, ite_true, mul_one]
-  · -- Case k ≠ i.complexify: show the term equals 0
-    intro k hk
-    have hsmul :
-        ((Tensor.basis (S := realLorentzTensor) c).repr v (ComponentIdx.complexify.symm k)) •
-          Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c) k =
-        (↑((Tensor.basis (S := realLorentzTensor) c).repr v (ComponentIdx.complexify.symm k)) : ℂ) •
-          Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c) k :=
-      (Complex.coe_smul _ _).symm
-    rw [hsmul]
-    have hm :=
-      LinearEquiv.map_smul (Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c)).repr
-        (↑((Tensor.basis (S := realLorentzTensor) c).repr v (ComponentIdx.complexify.symm k)) : ℂ)
-        (Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c) k)
-    simp_rw [hm]
-    simp only [Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul, Basis.repr_self, Finsupp.single_apply]
-    split_ifs with h
-    · exfalso
-      exact hk h
-    · rw [mul_zero]
+  rw [toComplex_eq_sum_basis, map_sum]
+  simp only [← Complex.coe_smul, map_smul, Finsupp.coe_finsetSum, Finset.sum_apply,
+    Finsupp.smul_apply, Basis.repr_self, Finsupp.single_apply, smul_eq_mul, mul_ite, mul_one,
+    mul_zero, Finset.sum_ite_eq', Finset.mem_univ, if_true, Equiv.symm_apply_apply]
 
 /-- `toComplex` sends basis elements to basis elements. -/
 @[simp]
@@ -235,17 +189,8 @@ lemma toComplex_basis {n} {c : Fin n → realLorentzTensor.Color}
     (i : ComponentIdx (S := realLorentzTensor) c) :
     toComplex (c := c) ((Tensor.basis (S := realLorentzTensor) c) i) =
       (Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c)) i.complexify := by
-  classical
   simp only [toComplex, LinearMap.coe_mk, AddHom.coe_mk]
-  rw [Basis.repr_self]
-  simp_rw [Finsupp.single_apply]
-  -- collapse the sum: only the `i`-term survives
-  refine (Fintype.sum_eq_single i ?_).trans ?_
-  · intro j hj
-    have hij : i ≠ j := Ne.symm hj
-    simp [hij]
-  · -- now the remaining term is the `i`-term
-    simp
+  simp [Finsupp.single_apply, ite_smul]
 
 /-- `toComplex` on a pure basis vector. -/
 @[simp]
@@ -254,11 +199,7 @@ lemma toComplex_pure_basisVector {n} {c : Fin n → realLorentzTensor.Color}
     toComplex (c := c) (Pure.basisVector c b |>.toTensor)
       =
     (Pure.basisVector (colorToComplex ∘ c) b.complexify).toTensor := by
-  classical
-  -- rewrite pure basis vector back to tensor basis, use `toComplex_basis`, then rewrite back
-  rw [← Tensor.basis_apply (S := realLorentzTensor) (c := c) b]
-  rw [toComplex_basis (c := c) b]
-  rw [Tensor.basis_apply (S := complexLorentzTensor) (c := (colorToComplex ∘ c)) b.complexify]
+  simp [← Tensor.basis_apply]
 
 lemma toComplex_map_smul {n} (c : Fin n → realLorentzTensor.Color) (r : ℝ) (t : ℝT(3, c)) :
     toComplex (c := c) (r • t) = (Complex.ofReal r) • toComplex (c := c) t :=
@@ -267,26 +208,18 @@ lemma toComplex_map_smul {n} (c : Fin n → realLorentzTensor.Color) (r : ℝ) (
 @[simp]
 lemma toComplex_eq_zero_iff {n} (c : Fin n → realLorentzTensor.Color) (v : ℝT(3, c)) :
     toComplex v = 0 ↔ v = 0 := by
-  rw [toComplex_eq_sum_basis]
-  have h1 : LinearIndependent ℂ
-      (Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c)) :=
-    Basis.linearIndependent _
-  rw [Fintype.linearIndependent_iff] at h1
   constructor
   · intro h
     apply (Tensor.basis (S := realLorentzTensor) c).repr.injective
     ext i
-    have h2 := h1 (fun i => ((Tensor.basis c).repr v) (ComponentIdx.complexify.symm i)) h
-      i.complexify
-    simpa using h2
-  · intro h
-    subst h
+    simpa [h] using (toComplex_repr v i).symm
+  · rintro rfl
     simp
 
 /-- The map `toComplex` is injective. -/
 lemma toComplex_injective {n} (c : Fin n → realLorentzTensor.Color) :
     Function.Injective (toComplex (c := c)) :=
-  (injective_iff_map_eq_zero' toComplex).mpr (fun v => toComplex_eq_zero_iff c v)
+  (injective_iff_map_eq_zero' toComplex).mpr (toComplex_eq_zero_iff c)
 
 open Matrix
 open MatrixGroups
@@ -298,6 +231,7 @@ open Lorentz.SL2C
 ## pure
 -/
 
+set_option backward.isDefEq.respectTransparency false in
 /-- For a given color, the map turning a real Lorentz vector into a complex one. -/
 noncomputable def toComplexVector (c : realLorentzTensor.Color) :
   realLorentzTensor.modules 3 c →ₛₗ[Complex.ofRealHom] complexLorentzTensor.modules
@@ -314,13 +248,11 @@ noncomputable def toComplexVector (c : realLorentzTensor.Color) :
       congr
       funext x
       rw [add_smul]
-      rfl
     | Color.down =>
       simp only [map_add, Finsupp.coe_add, Pi.add_apply, Nat.reduceAdd, ← Finset.sum_add_distrib]
       congr
       funext x
       rw [add_smul]
-      rfl
   map_smul' r v := by
     match c with
     | Color.up =>
@@ -330,7 +262,6 @@ noncomputable def toComplexVector (c : realLorentzTensor.Color) :
       congr
       funext x
       rw [← smul_smul]
-      rfl
     | Color.down =>
       simp only [map_smul, Finsupp.coe_smul, Pi.smul_apply, smul_eq_mul, Nat.reduceAdd,
         Complex.ofRealHom_eq_coe, Complex.coe_smul]
@@ -338,42 +269,26 @@ noncomputable def toComplexVector (c : realLorentzTensor.Color) :
       congr
       funext x
       rw [← smul_smul]
-      rfl
 
 lemma toComplexVector_up_eq_inclCongrRealLorentz (v : Lorentz.ContrMod 3) :
     toComplexVector Color.up v = Lorentz.inclCongrRealLorentz v := by
-  calc
-    toComplexVector Color.up v
-        = ∑ i, v.toFin1dℝ i • Lorentz.complexContrBasis i := by
-          simp [toComplexVector, Lorentz.contrBasis_repr_apply,
-            Lorentz.complexContrBasisFin4, Lorentz.ContrMod.toFin1dℝ_eq_val]
-          rfl
-    _ = ∑ i, v.toFin1dℝ i • Lorentz.inclCongrRealLorentz
-        (Lorentz.ContrMod.stdBasis i) := by
-          simp only [Lorentz.complexContrBasis_of_real]
-    _ = Lorentz.inclCongrRealLorentz
-        (∑ i, v.toFin1dℝ i • Lorentz.ContrMod.stdBasis i) := by
-          rw [map_sum]
-          simp only [LinearMap.map_smulₛₗ, Complex.ofRealHom_eq_coe, Complex.coe_smul]
-    _ = Lorentz.inclCongrRealLorentz v := by
-          rw [← Lorentz.ContrMod.stdBasis_decomp v]
+  trans ∑ i, v.toFin1dℝ i • Lorentz.complexContrBasis i
+  · simp [toComplexVector, Lorentz.contrBasis_repr_apply,
+      Lorentz.complexContrBasisFin4, Lorentz.ContrMod.toFin1dℝ_eq_val]
+  · conv_rhs => rw [Lorentz.ContrMod.stdBasis_decomp v]
+    simp only [map_sum, LinearMap.map_smulₛₗ, Complex.ofRealHom_eq_coe, Complex.coe_smul,
+      Lorentz.complexContrBasis_of_real]
+    rfl
 
 lemma toComplexVector_down_eq_inclCoRealLorentz (v : Lorentz.CoMod 3) :
     toComplexVector Color.down v = Lorentz.inclCoRealLorentz v := by
-  calc
-    toComplexVector Color.down v
-        = ∑ i, v.toFin1dℝ i • Lorentz.complexCoBasis i := by
-          simp [toComplexVector, Lorentz.coBasis_repr_apply, Lorentz.complexCoBasisFin4]
-          rfl
-    _ = ∑ i, v.toFin1dℝ i • Lorentz.inclCoRealLorentz
-        (Lorentz.CoMod.stdBasis i) := by
-          simp only [Lorentz.complexCoBasis_of_real]
-    _ = Lorentz.inclCoRealLorentz
-        (∑ i, v.toFin1dℝ i • Lorentz.CoMod.stdBasis i) := by
-          rw [map_sum]
-          simp only [LinearMap.map_smulₛₗ, Complex.ofRealHom_eq_coe, Complex.coe_smul]
-    _ = Lorentz.inclCoRealLorentz v := by
-          rw [← Lorentz.CoMod.stdBasis_decomp v]
+  trans ∑ i, v.toFin1dℝ i • Lorentz.complexCoBasis i
+  · simp [toComplexVector, Lorentz.coBasis_repr_apply, Lorentz.complexCoBasisFin4]
+    rfl
+  · conv_rhs => rw [Lorentz.CoMod.stdBasis_decomp v]
+    simp only [map_sum, LinearMap.map_smulₛₗ, Complex.ofRealHom_eq_coe, Complex.coe_smul,
+      Lorentz.complexCoBasis_of_real]
+    rfl
 
 /-- The function which turns a real pure tensor into a complex one. -/
 noncomputable def toComplexPure {c : Fin n → Color} (p : Pure realLorentzTensor c) :
@@ -393,10 +308,10 @@ lemma toComplexPure_component {c : Fin n → Color} (p : Pure realLorentzTensor 
   let b (c : Color) : Basis (Fin (complexLorentzTensor.repDim (colorToComplex c))) ℂ
       (complexLorentzTensor.modules (colorToComplex c)) :=
     match colorToComplex c with
-    | Color.upL => Fermion.leftBasis
-    | Color.downL => Fermion.altLeftBasis
-    | Color.upR => Fermion.rightBasis
-    | Color.downR => Fermion.altRightBasis
+    | Color.upL => Fermion.LeftHandedWeyl.basis
+    | Color.downL => Fermion.DualLeftHandedWeyl.basis
+    | Color.upR => Fermion.RightHandedWeyl.basis
+    | Color.downR => Fermion.DualRightHandedWeyl.basis
     | complexLorentzTensor.Color.up => Lorentz.complexContrBasisFin4
     | complexLorentzTensor.Color.down => Lorentz.complexCoBasisFin4
   let b' (c : Color) : Basis (Fin 1 ⊕ Fin 3) ℝ (realLorentzTensor.modules 3 c) :=
@@ -450,10 +365,10 @@ lemma actionP_toComplexPure {n : ℕ} (c : Fin n → Color) (p : Pure realLorent
   simp [Pure.actionP_eq, toComplexPure]
   let b (c : Color) : Representation ℂ _ (complexLorentzTensor.modules (colorToComplex c)) :=
     match colorToComplex c with
-    | Color.upL => Fermion.leftHandedRep
-    | Color.downL => Fermion.altLeftHandedRep
-    | Color.upR => Fermion.rightHandedRep
-    | Color.downR => Fermion.altRightHandedRep
+    | Color.upL => Fermion.LeftHandedWeyl.rep
+    | Color.downL => Fermion.DualLeftHandedWeyl.rep
+    | Color.upR => Fermion.RightHandedWeyl.rep
+    | Color.downR => Fermion.DualRightHandedWeyl.rep
     | complexLorentzTensor.Color.up => Lorentz.ContrℂModule.SL2CRep
     | complexLorentzTensor.Color.down => Lorentz.CoℂModule.SL2CRep
   let b' (c : Color) : Representation ℝ _ (realLorentzTensor.modules 3 c) :=
@@ -467,35 +382,22 @@ lemma actionP_toComplexPure {n : ℕ} (c : Fin n → Color) (p : Pure realLorent
   generalize c i = c at *
   fin_cases c
   · simp_all [P, b, b', colorToComplex]
-    calc
-      (Lorentz.ContrℂModule.SL2CRep Λ) ((toComplexVector Color.up) p)
-          = (Lorentz.ContrℂModule.SL2CRep Λ) (Lorentz.inclCongrRealLorentz p) := by
-            exact congrArg (Lorentz.ContrℂModule.SL2CRep Λ)
-              (toComplexVector_up_eq_inclCongrRealLorentz p)
-      _ = Lorentz.inclCongrRealLorentz ((Lorentz.Contr 3).ρ (toLorentzGroup Λ) p) := by
-        rw [Lorentz.inclCongrRealLorentz_ρ]
-      _ = (toComplexVector Color.up) ((Lorentz.ContrMod.rep (toLorentzGroup Λ)) p) := by
-        exact (toComplexVector_up_eq_inclCongrRealLorentz
-          ((Lorentz.ContrMod.rep (toLorentzGroup Λ)) p)).symm
+    exact ((congrArg (Lorentz.ContrℂModule.SL2CRep Λ)
+      (toComplexVector_up_eq_inclCongrRealLorentz p)).trans
+        (Lorentz.inclCongrRealLorentz_ρ Λ p)).trans
+      (toComplexVector_up_eq_inclCongrRealLorentz _).symm
   · simp_all [P, b, b', colorToComplex]
-    calc
-      (Lorentz.CoℂModule.SL2CRep Λ) ((toComplexVector Color.down) p)
-          = (Lorentz.CoℂModule.SL2CRep Λ) (Lorentz.inclCoRealLorentz p) := by
-            exact congrArg (Lorentz.CoℂModule.SL2CRep Λ)
-              (toComplexVector_down_eq_inclCoRealLorentz p)
-      _ = Lorentz.inclCoRealLorentz ((Lorentz.Co 3).ρ (toLorentzGroup Λ) p) := by
-        rw [Lorentz.inclCoRealLorentz_ρ]
-      _ = (toComplexVector Color.down) ((Lorentz.CoMod.rep (toLorentzGroup Λ)) p) := by
-        exact (toComplexVector_down_eq_inclCoRealLorentz
-          ((Lorentz.CoMod.rep (toLorentzGroup Λ)) p)).symm
+    exact ((congrArg (Lorentz.CoℂModule.SL2CRep Λ)
+      (toComplexVector_down_eq_inclCoRealLorentz p)).trans
+        (Lorentz.inclCoRealLorentz_ρ Λ p)).trans
+      (toComplexVector_down_eq_inclCoRealLorentz _).symm
 
 lemma toComplex_pure {n : ℕ} (c : Fin n → Color) (p : Pure realLorentzTensor c) :
     toComplex p.toTensor = (toComplexPure p).toTensor := by
   apply (Tensor.basis _).repr.injective
   ext φ
   obtain ⟨φ, rfl⟩ := TensorSpecies.Tensor.ComponentIdx.complexify.surjective φ
-  rw [basis_repr_pure, toComplex_repr, toComplexPure_component]
-  simp
+  simp [toComplex_repr, toComplexPure_component]
 
 /-!
 
@@ -506,19 +408,13 @@ Finally we record that `toComplex` is equivariant for the natural action of
 
 -/
 
-set_option backward.isDefEq.respectTransparency false in
 /-- The map `toComplex` is equivariant. -/
 lemma toComplex_equivariant {n} {c : Fin n → realLorentzTensor.Color}
     (v : ℝT(3, c)) (Λ : SL(2, ℂ)) :
     Λ • (toComplex v) = toComplex (Lorentz.SL2C.toLorentzGroup Λ • v) := by
   induction' v using induction_on_pure with p r t h t1 t2
-  · simp only
-    rw [actionT_pure, toComplex_pure, actionT_pure, actionP_toComplexPure, toComplex_pure]
-  · simp
-    rw [← h]
-    change Λ • (r : ℂ) • toComplex t = _
-    rw [actionT_smul]
-    rfl
+  · rw [actionT_pure, toComplex_pure, actionT_pure, actionP_toComplexPure, toComplex_pure]
+  · simpa [← h] using actionT_smul (g := Λ) (r := (r : ℂ)) (t := toComplex t)
   · simp_all
 
 /-!
@@ -526,34 +422,31 @@ lemma toComplex_equivariant {n} {c : Fin n → realLorentzTensor.Color}
 ## C. Compatibility with permutations: `permT`
 
 We first show that complexification is compatible with permutation of tensor
-slots. On colours this is encoded in the `PermCond` predicate, and on tensors
+slots. On colours this is encoded in the `IsReindexing` predicate, and on tensors
 by the operator `permT`.
 
 -/
 
-/-- The `PermCond` condition is preserved under `colorToComplex`. -/
-@[simp] lemma permCond_colorToComplex {n m : ℕ}
+/-- The `IsReindexing` condition is preserved under `colorToComplex`. -/
+@[simp] lemma isReindexing_colorToComplex {n m : ℕ}
     {c : Fin n → realLorentzTensor.Color} {c1 : Fin m → realLorentzTensor.Color}
-    {σ : Fin m → Fin n} (h : PermCond c c1 σ) :
-    PermCond (colorToComplex ∘ c) (colorToComplex ∘ c1) σ := by
-  refine And.intro h.1 ?_
-  intro i
-  simpa [Function.comp_apply] using congrArg colorToComplex (h.2 i)
+    {σ : Fin m → Fin n} (h : IsReindexing c c1 σ) :
+    IsReindexing (colorToComplex ∘ c) (colorToComplex ∘ c1) σ :=
+  ⟨h.1, fun i => congrArg colorToComplex (h.2 i)⟩
 
 /-- `permT` sends basis vectors to basis vectors. -/
 @[simp] lemma permT_basis_real {n m : ℕ}
     {c : Fin n → realLorentzTensor.Color} {c1 : Fin m → realLorentzTensor.Color}
-    {σ : Fin m → Fin n} (h : PermCond c c1 σ)
+    {σ : Fin m → Fin n} (h : IsReindexing c c1 σ)
     (b : ComponentIdx (S := realLorentzTensor) c) :
     permT (S := realLorentzTensor) σ h ((Tensor.basis (S := realLorentzTensor) c) b)
     = (Tensor.basis (S := realLorentzTensor) c1)
       (fun j => b (σ j)) := by
-  classical
   simp [Tensor.basis_apply, permT_pure, Pure.permP_basisVector]
 
 @[simp] lemma permT_basis_complex {n m : ℕ}
     {c : Fin n → complexLorentzTensor.Color} {c1 : Fin m → complexLorentzTensor.Color}
-    {σ : Fin m → Fin n} (h : PermCond c c1 σ)
+    {σ : Fin m → Fin n} (h : IsReindexing c c1 σ)
     (b : ComponentIdx (S := complexLorentzTensor) c) :
     permT (S := complexLorentzTensor) σ h ((Tensor.basis (S := complexLorentzTensor) c) b)
       =
@@ -564,47 +457,27 @@ by the operator `permT`.
           -- if one has `h.2 j : c1 j = c (σ j)`, then replace it with `(h.2 j).symm`
           simpa using congrArg (fun col => complexLorentzTensor.repDim col) (h.2 j))
         (b (σ j))) := by
-  classical
   simp [Tensor.basis_apply, permT_pure, Pure.permP_basisVector, basisIdxCongr_eq_cast]
 
+set_option backward.isDefEq.respectTransparency false in
 /-- The map `toComplex` commutes with permT. -/
 lemma permT_toComplex {n m : ℕ}
     {c : Fin n → realLorentzTensor.Color}
     {c1 : Fin m → realLorentzTensor.Color}
-    {σ : Fin m → Fin n} (h : PermCond c c1 σ) (t : ℝT(3, c)) :
+    {σ : Fin m → Fin n} (h : IsReindexing c c1 σ) (t : ℝT(3, c)) :
     toComplex (permT (S := realLorentzTensor) σ h t)
       =
-    permT (S := complexLorentzTensor) σ (permCond_colorToComplex (c := c) (c1 := c1) h)
+    permT (S := complexLorentzTensor) σ (isReindexing_colorToComplex (c := c) (c1 := c1) h)
       (toComplex (c := c) t) := by
-  classical
-  let h' : PermCond (colorToComplex ∘ c) (colorToComplex ∘ c1) σ :=
-    permCond_colorToComplex (c := c) (c1 := c1) h
-  let P : ℝT(3, c) → Prop := fun t =>
-    toComplex (permT (S := realLorentzTensor) σ h t)
-      =
-    permT (S := complexLorentzTensor) σ h' (toComplex (c := c) t)
-  change P t
-  apply induction_on_basis
-  · intro b
-    dsimp [P, h']
-
-    -- permT on (real/complex) basis + toComplex on basis
-    simp (config := { failIfUnchanged := false })
-      [permT_basis_real, permT_basis_complex, toComplex_basis]
-
-    -- index equality
+  induction t using induction_on_basis with
+  | h b =>
+    simp only [permT_basis_real, toComplex_basis, permT_basis_complex]
     apply congrArg (Tensor.basis (S := complexLorentzTensor) (colorToComplex ∘ c1))
     funext j
     simp [TensorSpecies.Tensor.ComponentIdx.complexify, colorToComplex, Function.comp_apply]
-  · simp [P]
-  · intro r t ht
-    dsimp [P] at ht ⊢
-    refine (by
-      simp [map_smul, ht])
-  · intro t1 t2 h1 h2
-    dsimp [P] at h1 h2 ⊢
-    refine (by
-      simp [map_add, h1, h2])
+  | hzero => simp
+  | hsmul r t ht => simp [map_smul, ht]
+  | hadd t1 t2 h1 h2 => simp [map_add, h1, h2]
 
 /-!
 
@@ -618,30 +491,14 @@ lemma colorToComplex_append {n m : ℕ}
     (c : Fin n → realLorentzTensor.Color) (c1 : Fin m → realLorentzTensor.Color) :
     (colorToComplex ∘ Fin.append c c1) = Fin.append (colorToComplex ∘ c) (colorToComplex ∘ c1) := by
   funext x
-  -- breaking down x : Fin (n+m) into left/right parts
-  refine Fin.addCases (fun i => ?_) (fun j => ?_) x
-  · -- left case: x = castAdd m i
-    -- here `simp` should expand `Fin.append` on castAdd
-    simp [Fin.append, Function.comp_apply]
-  · -- right case: x = natAdd n j
-    simp [Fin.append, Function.comp_apply]
+  refine Fin.addCases (fun i => ?_) (fun j => ?_) x <;> simp [Fin.append]
 
-lemma permCond_prodTColorToComplex {n m : ℕ}
+lemma isReindexing_prodTColorToComplex {n m : ℕ}
     {c : Fin n → realLorentzTensor.Color} {c1 : Fin m → realLorentzTensor.Color} :
-    PermCond (Fin.append (colorToComplex ∘ c) (colorToComplex ∘ c1))
+    IsReindexing (Fin.append (colorToComplex ∘ c) (colorToComplex ∘ c1))
       (colorToComplex ∘ Fin.append c c1)
-      (id : Fin (n + m) → Fin (n + m)) := by
-  -- For `σ = id`, `PermCond.on_id` reduces the goal to pointwise color equality.
-  -- Here that equality is exactly `colorToComplex_append`.
-  apply (PermCond.on_id
-    (c := Fin.append (colorToComplex ∘ c) (colorToComplex ∘ c1))
-    (c1 := colorToComplex ∘ Fin.append c c1)).2
-  intro x
-  -- `colorToComplex_append` states the two color functions are extensionally equal,
-  -- but with the sides reversed, so we use its symmetric form.
-  have hx := congrArg (fun f => f x)
-    (colorToComplex_append (c := c) (c1 := c1)).symm
-  simpa [Function.comp_apply] using hx
+      (id : Fin (n + m) → Fin (n + m)) :=
+  ⟨Function.bijective_id, fun i => (congrFun (colorToComplex_append c c1) i).symm⟩
 
 /-- `prodT` on the complex side, with colors written as `colorToComplex ∘ Fin.append ...`.
 This is `prodT` followed by a cast using `colorToComplex_append`. -/
@@ -650,7 +507,7 @@ noncomputable def prodTColorToComplex {n m : ℕ}
     ℂT(colorToComplex ∘ c) → ℂT(colorToComplex ∘ c1) → ℂT(colorToComplex ∘ Fin.append c c1) :=
   fun x y =>
     permT (S := complexLorentzTensor) (σ := (id : Fin (n + m) → Fin (n + m)))
-      (permCond_prodTColorToComplex (c := c) (c1 := c1))
+      (isReindexing_prodTColorToComplex (c := c) (c1 := c1))
       (prodT (S := complexLorentzTensor) x y)
 
 private lemma cast_componentIdx_apply {n : ℕ} {c c' : Fin n → complexLorentzTensor.Color}
@@ -666,10 +523,10 @@ private lemma cast_componentIdx_eq_fun {n : ℕ}
     (h : c' = c) (f : ComponentIdx (S := complexLorentzTensor) c') :
     cast (congr_arg ComponentIdx h) f =
       (fun x =>
-        Fin.cast (congr_arg (fun col => complexLorentzTensor.repDim (col x)) h) (f x)) := by
-  funext x
-  exact cast_componentIdx_apply (c := c) (c' := c') h f x
+        Fin.cast (congr_arg (fun col => complexLorentzTensor.repDim (col x)) h) (f x)) :=
+  funext fun x => cast_componentIdx_apply h f x
 
+set_option backward.isDefEq.respectTransparency false in
 /-- `complexify` commutes with `prod` of component indices. -/
 @[simp]
 lemma complexify_prod {n m : ℕ}
@@ -683,19 +540,13 @@ lemma complexify_prod {n m : ℕ}
         ComponentIdx.complexify (c := c1) b1)) := by
   ext x
   obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective x
-  cases i with
-  | inl i =>
-    rw [ComponentIdx.complexify_apply]
-    simp [ComponentIdx.prod]
-    erw [basisIdxCongr_eq_cast]
-    simp
-  | inr j =>
+  cases i
+  all_goals
     rw [ComponentIdx.complexify_apply]
     simp [ComponentIdx.prod]
     erw [basisIdxCongr_eq_cast]
     simp
 
-set_option backward.isDefEq.respectTransparency false in
 /-- The map `toComplex` commutes with prodT. -/
 lemma prodT_toComplex {n m : ℕ}
     {c : Fin n → realLorentzTensor.Color}
@@ -705,82 +556,21 @@ lemma prodT_toComplex {n m : ℕ}
       =
     prodTColorToComplex (c := c) (c1 := c1)
       (toComplex (c := c) t) (toComplex (c := c1) t1) := by
-  classical
-  -- Induction on the first tensor using the tensor basis.
-  let P : ℝT(3, c) → Prop := fun t =>
-    ∀ t1 : ℝT(3, c1),
-      toComplex (c := Fin.append c c1) (prodT (S := realLorentzTensor) t t1)
-        =
-      prodTColorToComplex (c := c) (c1 := c1)
-        (toComplex (c := c) t) (toComplex (c := c1) t1)
-  have hP : P t := by
-    -- `induction_on_basis` over the first tensor.
-    apply
-      induction_on_basis
-        (c := c)
-        (P := P)
-        (t := t)
-    · -- basis case for the first tensor and we must show the property for all `t1`
-      intro b t1
-      -- Define the property on the second tensor, with the first fixed to a basis vector.
-      let P1 : ℝT(3, c1) → Prop := fun t1' =>
-        toComplex (c := Fin.append c c1)
-            (prodT (S := realLorentzTensor)
-              ((Tensor.basis (S := realLorentzTensor) c) b) t1')
-          =
-        prodTColorToComplex (c := c) (c1 := c1)
-          (toComplex (c := c) ((Tensor.basis (S := realLorentzTensor) c) b))
-          (toComplex (c := c1) t1')
-      have hP1 : P1 t1 := by
-        -- Induction on the second tensor using the tensor basis.
-        apply
-          induction_on_basis
-            (c := c1)
-            (P := P1)
-            (t := t1)
-        · -- basis case for the second tensor
-          intro b1
-          -- Unfold `P1` and compute both sides explicitly on pure basis tensors.
-          dsimp [P1]
-          simp (config := { failIfUnchanged := false })
-            [prodTColorToComplex,
-            prodT_pure,
-            permT_pure,
-            Pure.prodP_basisVector,
-            Pure.permP_basisVector,
-            Tensor.basis_apply,
-            toComplex_pure_basisVector,
-            colorToComplex_append,
-            basisIdxCongr_eq_cast]
-        · -- zero tensor in the second argument
-          simp [P1, prodTColorToComplex]
-        · -- scalar multiplication in the second argument
-          intro r t1' ht'
-          dsimp [P1] at ht' ⊢
-          refine (by
-            simp [map_smul, ht', prodTColorToComplex])
-        · -- addition in the second argument
-          intro t1' t2' h1 h2
-          dsimp [P1] at h1 h2 ⊢
-          refine (by
-            simp [map_add, h1, h2, prodTColorToComplex])
-      -- Apply the resulting property to `t1`.
-      exact hP1
-    · -- zero tensor in the first argument
-      intro t1
-      simp [prodTColorToComplex]
-    · -- scalar multiplication in the first argument
-      intro r t ht t1
-      dsimp [P] at ht ⊢
-      refine (by
-        simp [map_smul, ht, prodTColorToComplex])
-    · -- addition in the first argument
-      intro t1 t2 h1 h2 t1'
-      dsimp [P] at h1 h2 ⊢
-      refine (by
-        simp [map_add, h1 t1', h2 t1', prodTColorToComplex])
-  -- Apply the resulting property to `t1`.
-  exact hP t1
+  -- Double induction on the tensor basis: first over `t`, then over `t1`. The zero, scalar and
+  -- additive cases follow from linearity of `prodT`, `toComplex` and `prodTColorToComplex`.
+  induction t using induction_on_basis with
+  | h b =>
+    induction t1 using induction_on_basis with
+    | h b1 =>
+      simp [prodTColorToComplex, prodT_pure, permT_pure, Pure.prodP_basisVector,
+        Pure.permP_basisVector, Tensor.basis_apply, toComplex_pure_basisVector,
+        colorToComplex_append, basisIdxCongr_eq_cast]
+    | hzero => simp [prodTColorToComplex]
+    | hsmul r ta hta => simp [map_smul, hta, prodTColorToComplex]
+    | hadd ta tb hta htb => simp [map_add, hta, htb, prodTColorToComplex]
+  | hzero => simp [prodTColorToComplex]
+  | hsmul r ta hta => simp [map_smul, hta, prodTColorToComplex]
+  | hadd ta tb hta htb => simp [map_add, hta, htb, prodTColorToComplex]
 
 /-!
 
@@ -832,17 +622,11 @@ lemma toComplex_contrP_basisVector {n : ℕ} {c : Fin (n + 1 + 1) → realLorent
     rw [contrPCoeff_basis, complexLorentzTensor.contrPCoeff_basis]
     simp only [Function.comp_apply, ComponentIdx.complexify_apply, Nat.reduceAdd, Fin.cast_cast,
       Fin.cast_inj, EmbeddingLike.apply_eq_iff_eq]
-    simp_all only [ne_eq]
-    obtain ⟨left, right⟩ := h
-    split
-    next h => simp_all only [Complex.ofReal_one]
-    next h => simp_all only [Complex.ofReal_zero]
+    split <;> simp_all
   · -- complexify(fun k => b (succSuccAbove k)) = (complexify b) ∘ succSuccAbove
-    rw [Pure.dropPair_basisVector]
-    rw [← Tensor.basis_apply]
-    refine congr_arg _ (funext fun m => ComponentIdx.complexify_comp_succSuccAbove b m)
+    rw [Pure.dropPair_basisVector, ← Tensor.basis_apply]
+    exact congr_arg _ (funext fun m => ComponentIdx.complexify_comp_succSuccAbove b m)
 
-set_option backward.isDefEq.respectTransparency false in
 /-- The map `toComplex` commutes with `contrT`. -/
 lemma contrT_toComplex {n : ℕ}
     {c : Fin (n + 1 + 1) → realLorentzTensor.Color} {i j : Fin (n + 1 + 1)}
@@ -854,68 +638,17 @@ lemma contrT_toComplex {n : ℕ}
           And.intro h.1 (by
             simpa [tau_colorToComplex] using congrArg colorToComplex h.2))
       (toComplex (c := c) t) := by
-  classical
-  -- We prove the statement by induction on the tensor `t` using the tensor basis.
-  -- After contracting two indices, the resulting colour function lives on `Fin n`.
-  let c' : Fin n → realLorentzTensor.Color := c ∘ Fin.succSuccAbove i j
-  have hP :
-      ∀ t : ℝT(3, c),
-        toComplex (c := c') (contrT (S := realLorentzTensor) n i j h t) =
-          contrT (S := complexLorentzTensor) n i j
-            (by
-              -- transport the colour relation along `colorToComplex`
-              simpa [Function.comp_apply] using
-                And.intro h.1
-                  (by
-                    simpa [tau_colorToComplex] using congrArg colorToComplex h.2))
-            (toComplex (c := c) t) := by
-    intro t
-    -- Work with the property as a predicate for `induction_on_basis`.
-    let P : ℝT(3, c) → Prop := fun t =>
-      toComplex (c := c') (contrT (S := realLorentzTensor) n i j h t) =
-        contrT (S := complexLorentzTensor) n i j
-          (by
-            simpa [Function.comp_apply] using
-              And.intro h.1
-                (by
-                  simpa [tau_colorToComplex] using congrArg colorToComplex h.2))
-          (toComplex (c := c) t)
-    have hP' : P t := by
-      -- `induction_on_basis` over the tensor `t`.
-      apply
-        induction_on_basis
-          (c := c)
-          (P := P)
-          (t := t)
-      · -- basis case
-        intro b
-        -- (Tensor.basis c) b = (Pure.basisVector c b).toTensor;
-        -- then equate both sides via toComplex_contrP_basisVector.
-        rw [Tensor.basis_apply (S := realLorentzTensor) c b]
-        show toComplex (c := c')
-            (contrT (S := realLorentzTensor) n i j h ((Pure.basisVector c b).toTensor))
-          = contrT (S := complexLorentzTensor) n i j _
-            (toComplex (c := c) ((Pure.basisVector c b).toTensor))
-        rw [contrT_pure (S := realLorentzTensor) (p := Pure.basisVector c b),
-          toComplex_pure_basisVector (c := c) b,
-          contrT_pure (S := complexLorentzTensor)
-            (p := Pure.basisVector (colorToComplex ∘ c) (ComponentIdx.complexify b))]
-        exact toComplex_contrP_basisVector h b
-      · -- zero tensor
-        dsimp [P]
-        simp
-      · -- scalar multiplication
-        intro r t ht
-        dsimp [P] at ht ⊢
-        refine (by
-          simp [map_smul, ht])
-      · -- addition
-        intro t1 t2 h1 h2
-        dsimp [P] at h1 h2 ⊢
-        refine (by
-          simp [map_add, h1, h2])
-    exact hP'
-  exact hP t
+  induction t using induction_on_basis with
+  | h b =>
+    rw [Tensor.basis_apply (S := realLorentzTensor) c b,
+      contrT_pure (S := realLorentzTensor) (p := Pure.basisVector c b),
+      toComplex_pure_basisVector (c := c) b,
+      contrT_pure (S := complexLorentzTensor)
+        (p := Pure.basisVector (colorToComplex ∘ c) (ComponentIdx.complexify b))]
+    exact toComplex_contrP_basisVector h b
+  | hzero => simp
+  | hsmul r t ht => simp [map_smul, ht]
+  | hadd t1 t2 h1 h2 => simp [map_add, h1, h2]
 
 /-!
 
@@ -982,10 +715,7 @@ lemma toComplex_evalP_basisVector {n : ℕ} {c : Fin (n + 1) → realLorentzTens
           ext j; simp only [Pure.drop, Pure.basisVector, ComponentIdx.complexify_apply,
             Function.comp_apply]
         rw [hdrop']
-        exact (permT_id_self (S := complexLorentzTensor) (c := colorToComplex ∘ (c ∘ i.succAbove))
-          (t := (Pure.basisVector (colorToComplex ∘ (c ∘ i.succAbove))
-            (ComponentIdx.complexify (c := c ∘ i.succAbove) (fun k => b'
-              (i.succAbove k)))).toTensor)).symm
+        exact (permT_id_self _).symm
       · simp [h]
 
 /-- The map `toComplex` commutes with `evalT`. -/
@@ -996,35 +726,17 @@ lemma evalT_toComplex {n : ℕ}
         ((TensorSpecies.Tensor.evalT (S := realLorentzTensor) (c := c) i b) t)
       =
     evalTColorToComplex (c := c) i b (toComplex (c := c) t) := by
-  classical
-  let c' := c ∘ i.succAbove
-  let P : ℝT(3, c) → Prop := fun t =>
-    toComplex (c := c')
-      ((TensorSpecies.Tensor.evalT (S := realLorentzTensor) (c := c) i b) t) =
-    evalTColorToComplex (c := c) i b (toComplex (c := c) t)
-  have hP : ∀ t, P t := by
-    intro t
-    apply induction_on_basis (c := c) (P := P) (t := t)
-    · intro b'
-      rw [Tensor.basis_apply (S := realLorentzTensor) c b']
-      simp only [evalTColorToComplex, P]
-      rw [evalT_pure (S := realLorentzTensor) (p := Pure.basisVector c b'),
-        toComplex_pure_basisVector (c := c) b',
-        evalT_pure (S := complexLorentzTensor)
-          (p := Pure.basisVector (colorToComplex ∘ c) (ComponentIdx.complexify b'))]
-      exact toComplex_evalP_basisVector i b b'
-    · dsimp [P]
-      simp only [evalTColorToComplex, map_zero]
-    · intro r t' ht'
-      dsimp [P] at ht' ⊢
-      rw [LinearMap.map_smul, toComplex_map_smul (c ∘ i.succAbove) r
-        ((evalT (S := realLorentzTensor) i b) t'),
-        ht', toComplex_map_smul (c := c) r t']
-      simp only [evalTColorToComplex, LinearMap.map_smul]
-    · intro t1 t2 h1 h2
-      dsimp [P] at h1 h2 ⊢
-      rw [LinearMap.map_add, map_add, h1, h2]
-      simp only [evalTColorToComplex, LinearMap.map_add]
-  exact hP t
+  induction t using induction_on_basis with
+  | h b' =>
+    rw [Tensor.basis_apply (S := realLorentzTensor) c b']
+    simp only [evalTColorToComplex]
+    rw [evalT_pure (S := realLorentzTensor) (p := Pure.basisVector c b'),
+      toComplex_pure_basisVector (c := c) b',
+      evalT_pure (S := complexLorentzTensor)
+        (p := Pure.basisVector (colorToComplex ∘ c) (ComponentIdx.complexify b'))]
+    exact toComplex_evalP_basisVector i b b'
+  | hzero => simp [evalTColorToComplex]
+  | hsmul r t' ht' => simp [evalTColorToComplex, ht']
+  | hadd t1 t2 h1 h2 => simp [evalTColorToComplex, h1, h2]
 
 end realLorentzTensor

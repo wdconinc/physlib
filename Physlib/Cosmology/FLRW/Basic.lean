@@ -8,6 +8,7 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 public import Physlib.Meta.Linters.Sorry
 public import Physlib.Meta.Informal.Basic
+public import Physlib.Meta.TODO.Basic
 public import Physlib.SpaceAndTime.Time.Derivatives
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Deriv
 /-!
@@ -63,12 +64,10 @@ lemma tendsto_sinh_rx_over_x (r : ℝ) :
 
 lemma limit_S_saddle (r : ℝ) :
     Tendsto (fun k : ℝ => k * Real.sinh (r / k)) atTop (𝓝 r) := by
-  suffices h_sinh_y : Tendsto (fun y => Real.sinh (r * y) / y)
-    (map (fun k => 1 / k) atTop) (𝓝 r) by
-      exact h_sinh_y.congr fun x => by simp [div_eq_mul_inv, mul_comm]
-  have h_deriv : HasDerivAt (fun y => Real.sinh (r * y)) r 0 := by
-    simpa using HasDerivAt.sinh (HasDerivAt.const_mul r (hasDerivAt_id 0))
-  simpa [div_eq_inv_mul] using h_deriv.tendsto_slope_zero_right
+  have hg : Tendsto (fun k : ℝ => 1 / k) atTop (𝓝[≠] 0) := by
+    simpa only [one_div] using tendsto_inv_atTop_nhdsGT_zero.mono_right (nhdsGT_le_nhdsNE 0)
+  exact ((tendsto_sinh_rx_over_x r).comp hg).congr fun k => by
+    simp only [Function.comp_apply, mul_one_div, div_div_eq_mul_div, div_one, mul_comm]
 
 /-- The limit of `S (Sphere k) r` as `k → ∞` is equal to `S (Flat) r`.
 First show that `k * sinh(r / k) = sin(r / k) / (1 / k)` pointwise. -/
@@ -84,15 +83,10 @@ lemma tendsto_sin_rx_over_x (r : ℝ) :
 
 lemma limit_S_sphere(r : ℝ) :
     Tendsto (fun k : ℝ => k * Real.sin (r / k)) atTop (𝓝 r) := by
-  have h_sin_deriv : Filter.Tendsto (fun x : ℝ => Real.sin x / x) (nhdsWithin 0 {0}ᶜ) (nhds 1) := by
-    simpa [div_eq_inv_mul] using Real.hasDerivAt_sin 0 |> HasDerivAt.tendsto_slope_zero
-  by_cases hr : r = 0
-  · simp [hr]
-  · have h_subst : Filter.Tendsto (fun k : ℝ => Real.sin (r / k) / (r / k)) Filter.atTop (𝓝 1) := by
-      refine h_sin_deriv.comp <| tendsto_inf.mpr
-        ⟨tendsto_const_nhds.div_atTop tendsto_id, tendsto_principal.mpr
-          <| eventually_ne_atTop 0 |> Eventually.mono <| by aesop⟩
-    convert h_subst.const_mul r using 2 <;> field_simp
+  have hg : Tendsto (fun k : ℝ => 1 / k) atTop (𝓝[≠] 0) := by
+    simpa only [one_div] using tendsto_inv_atTop_nhdsGT_zero.mono_right (nhdsGT_le_nhdsNE 0)
+  exact ((tendsto_sin_rx_over_x r).comp hg).congr fun k => by
+    simp only [Function.comp_apply, mul_one_div, div_div_eq_mul_div, div_one, mul_comm]
 
 end SpatialGeometry
 
@@ -106,6 +100,10 @@ Semiformal implementation note: It is possible that we should restrict
 -/
 @[sorryful]
 def FLRW : Type := sorry
+
+TODO "Replace the placeholder `FLRW` type with a concrete structure bundling a positive
+  scale factor `a : Time → ℝ` (smooth, or at least twice differentiable) together with an
+  element of `SpatialGeometry`."
 
 namespace FLRW
 
@@ -171,6 +169,17 @@ lemma hubbleConstant_ne_zero {a : Time → ℝ} {t : Time}
     hubbleConstant a t ≠ 0 :=
   div_ne_zero hd_az haz
 
+TODO "Define the Hubble constant `H₀ = H(t₀)`, the present-day value of the Hubble parameter
+  `hubbleConstant`, and the present Hubble radius `R_H = c / H₀`. Keep `parameter` (the
+  time-dependent `H(t)`) distinct from `constant` (the number `H₀`)."
+
+TODO "Express the Hubble parameter as a function of the scale factor, `H(a)`, and of the
+  redshift, `H(z)`, using `a = 1 / (1 + z)` with the normalization `a₀ = 1`; define the
+  reduced Hubble function `E(z) = H(z) / H₀`."
+
+TODO "Prove the change-of-variable relations underlying the age and distance integrals:
+  `∂ₜ a = a * hubbleConstant a`, `dt = − dz / ((1 + z) * H)` and `dχ = c * dz / H`."
+
 /-- The deceleration parameter defined in terms of the scale factor
   as `- (dₜdₜ a) a / (dₜ a)^2`.
 
@@ -199,8 +208,7 @@ lemma decelerationParameter_eq_one_plus_hubbleConstant
     (haz : a t ≠ 0) (hd_az : ∂ₜ a t ≠ 0) :
     decelerationParameter a t =
       -(1 + ∂ₜ (hubbleConstant a) t / (hubbleConstant a t) ^ 2) := by
-  rw [deriv_hubbleConstant ha hd_a haz]
-  simp only [decelerationParameter, hubbleConstant]
+  rw [deriv_hubbleConstant ha hd_a haz, decelerationParameter, hubbleConstant]
   field_simp
   ring
 
@@ -211,8 +219,7 @@ lemma deriv_hubbleConstant_eq_neg_sq_mul
     (haz : a t ≠ 0) (hd_az : ∂ₜ a t ≠ 0) :
     ∂ₜ (hubbleConstant a) t =
       -(hubbleConstant a t) ^ 2 * (1 + decelerationParameter a t) := by
-  rw [deriv_hubbleConstant ha hd_a haz]
-  simp only [hubbleConstant, decelerationParameter]
+  rw [deriv_hubbleConstant ha hd_a haz, hubbleConstant, decelerationParameter]
   field_simp
   ring
 
@@ -223,11 +230,8 @@ lemma deriv_hubbleConstant_neg_iff
     (ha : DifferentiableAt ℝ a t) (hd_a : DifferentiableAt ℝ (∂ₜ a) t)
     (haz : a t ≠ 0) (hd_az : ∂ₜ a t ≠ 0) :
     ∂ₜ (hubbleConstant a) t < 0 ↔ -1 < decelerationParameter a t := by
-  have hH : hubbleConstant a t ≠ 0 := hubbleConstant_ne_zero hd_az haz
-  have hHsq : 0 < (hubbleConstant a t) ^ 2 :=
-    (sq_nonneg _).lt_of_ne (Ne.symm (pow_ne_zero _ hH))
   rw [deriv_hubbleConstant_eq_neg_sq_mul ha hd_a haz hd_az]
-  constructor <;> intro h <;> nlinarith
+  constructor <;> intro h <;> nlinarith [sq_pos_iff.mpr (hubbleConstant_ne_zero hd_az haz)]
 
 /-- There exists a time at which `∂ₜ H < 0` iff there exists a time with `q > -1`.
 
