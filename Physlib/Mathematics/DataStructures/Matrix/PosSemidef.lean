@@ -83,12 +83,12 @@ lemma sum_psdTestVector_mul (g : n → ℝ) (i j : n) (ε : ℝ) :
 /-- The quadratic form of a real positive-semidefinite matrix, written as an iterated sum. -/
 lemma PosSemidef.quadraticForm_nonneg {M : Matrix n n ℝ} (hM : M.PosSemidef) (w : n → ℝ) :
     0 ≤ ∑ k, w k * ∑ l, M k l * w l := by
-  -- `hM.2 w` is `0 ≤ star w ⬝ᵥ (M *ᵥ w)`; over `ℝ` the star is trivial, and `dotProduct`
-  -- and `mulVec` unfold to finite sums.
-  -- NOTE (build phase): if `Matrix.PosSemidef` at this mathlib pin is still the `RCLike`
-  -- version, `hM.2 w` carries an `RCLike.re` around the dot product; the fix is to add the
-  -- `ℝ`-valued `RCLike.re` simp lemma to the set below.
-  simpa [dotProduct, mulVec, Pi.star_apply, star_trivial] using hM.2 w
+  -- At this pin, `Matrix.PosSemidef` is defined via `Finsupp.sum` over `n →₀ ℝ` (not a plain
+  -- `∀ w : n → ℝ` dot product), so `hM.2 w` does not typecheck as the dot-product statement.
+  -- The `[Fintype n]` bridge is `Matrix.PosSemidef.dotProduct_mulVec_nonneg`
+  -- (`Mathlib/LinearAlgebra/Matrix/PosDef.lean`), which is exactly `∀ x : n → R,
+  -- 0 ≤ star x ⬝ᵥ (M *ᵥ x)` — confirmed by reading the pinned mathlib source directly.
+  simpa [dotProduct, mulVec, Pi.star_apply, star_trivial] using hM.dotProduct_mulVec_nonneg w
 
 /-- Nonnegativity of the quadratic form of a real positive-semidefinite matrix on the test
 vector `e i + ε • e j`, expanded as a quadratic polynomial in `ε`. -/
@@ -125,9 +125,9 @@ Stated multiplied out, without a division, so that it applies with no field side
 lemma PosSemidef.two_mul_abs_apply_le {M : Matrix n n ℝ} (hM : M.PosSemidef) (i j : n) :
     2 * |M i j| ≤ M i i + M j j := by
   have hsymm : M j i = M i j := by
-    -- `Matrix.IsHermitian.apply` is `star (M j i) = M i j`; over `ℝ` the star is trivial.
-    -- NOTE (build phase): if the argument order of `IsHermitian.apply` is the other way
-    -- round at this pin, use `hM.1.apply j i`.
+    -- `Matrix.IsHermitian.apply (h) (i j) : star (A j i) = A i j` — confirmed against the
+    -- pinned mathlib source (`Mathlib/LinearAlgebra/Matrix/Hermitian.lean`); over `ℝ` the
+    -- star is trivial, so `hM.1.apply i j` is exactly `M j i = M i j`, the stated goal.
     simpa using hM.1.apply i j
   have hplus := hM.quadraticForm_psdTestVector i j 1
   have hminus := hM.quadraticForm_psdTestVector i j (-1)
