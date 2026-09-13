@@ -7,6 +7,7 @@ module
 
 public import Physlib.Particles.Parton.GPD.Moments
 public import Physlib.Particles.Parton.GPD.DoubleDistribution
+public import Physlib.Meta.Linters.Sorry
 /-!
 
 # Polynomiality of GPD Moments from the Double-Distribution Representation
@@ -84,6 +85,7 @@ def dtMoment (dt : DTerm Flavor) (i : Flavor) (m : ℕ) (t : ℝ) : ℝ :=
 
 This is the formal content of the `α`-symmetry of `F`, and it is what makes the moment
 polynomial *even* in `ξ`. -/
+@[sorryful]
 lemma ddMoment_eq_zero_of_odd (dd : DoubleDistribution Flavor) (i : Flavor) (m k : ℕ)
     (t : ℝ) (hk : Odd k) :
     ddMoment dd i m k t = 0 := by
@@ -101,6 +103,7 @@ lemma ddMoment_eq_zero_of_odd (dd : DoubleDistribution Flavor) (i : Flavor) (m k
 /-- Even monomial moments of a D-term vanish, by its oddness in `u`.
 
 This is what confines the D-term to the moments of even literature index. -/
+@[sorryful]
 lemma dtMoment_eq_zero_of_even (dt : DTerm Flavor) (i : Flavor) (m : ℕ) (t : ℝ)
     (hm : Even m) :
     dtMoment dt i m t = 0 := by
@@ -180,6 +183,7 @@ lemma momentPolynomial_eval (dd : DoubleDistribution Flavor) (dt : DTerm Flavor)
 /-- **The analytic core.** The `n`-th moment of a GPD built from a double distribution and
 a D-term is the explicit sum of `(β, α)` moments and the D-term moment, for physical
 skewness `|ξ| ≤ 1`. -/
+@[sorryful]
 theorem mellinMomentGpd_ofDoubleDistribution
     (dd : DoubleDistribution Flavor) (dt : DTerm Flavor)
     (n : ℕ) (i : Flavor) (xi t : ℝ) (hxi : |xi| ≤ 1) :
