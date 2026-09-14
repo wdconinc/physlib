@@ -67,16 +67,21 @@ directly. See `NOTES.md` of `task/frontier-open-targets`.
   Partial DGLAP Knowledge*, arXiv:2401.12013.
 * E. Moffat *et al.*, *Shedding light on shadow generalized parton distributions*,
   Phys. Rev. D **108** (2023) 036027 (arXiv:2303.12006).
-* N. Chouika, C. Mezrag, H. Moutarde and J. Rodríguez-Quintero, *Covariant Extension of
-  the GPD overlap representation at low Fock states* (arXiv:1711.05108), for the
-  reduction of the ERBL-region extension to an incomplete-data Radon inversion.
-* J. Boman and E. T. Quinto, Duke Math. J. **55** (1987) 943, for the uniqueness theorem
-  that reduction appeals to.
 * M. Diehl and D. Yu. Ivanov, *Dispersion representations for hard exclusive reactions*
   (arXiv:0712.3533).
 
-Bibliographic data was taken from public listings rather than from the articles
-themselves.
+The first two entries were checked against public listings. The following two are
+**recalled and unverified** — neither was retrieved or checked when this file was
+written, and they should be confirmed before being relied on:
+
+* N. Chouika, C. Mezrag, H. Moutarde and J. Rodríguez-Quintero, *Covariant Extension of
+  the GPD overlap representation at low Fock states* (arXiv:1711.05108), recalled as
+  reducing the ERBL-region extension to an incomplete-data Radon inversion.
+* J. Boman and E. T. Quinto, Duke Math. J. **55** (1987) 943, recalled as the uniqueness
+  theorem for the Radon transform with incomplete data that such a reduction appeals to.
+
+No equation number is attributed to any of these, and bibliographic data throughout was
+taken from listings rather than from the articles themselves.
 
 -/
 
@@ -135,10 +140,12 @@ theorem dd_eq_of_agreeOnLowSkewnessDglap {M₁ M₂ : Model Flavor}
   --   2. On the DGLAP region the D-term piece is absent
   --      (`gpdOfDTerm_eq_zero_of_inDglapRegion`), so the Radon transform of
   --      `F₁ - F₂` vanishes on every line `x = β + αξ` meeting that region.
-  --   3. Conclude `F₁ = F₂` a.e. by the Boman-Quinto uniqueness theorem for the Radon
-  --      transform with incomplete data (Duke Math. J. 55 (1987) 943), applied as in
-  --      arXiv:1711.05108: a distribution supported in the rhombus whose line integrals
+  --   3. Conclude `F₁ = F₂` a.e. from a uniqueness theorem for the Radon transform with
+  --      incomplete data: a distribution supported in the rhombus whose line integrals
   --      vanish over an open set of lines meeting every point of the rhombus is zero.
+  --      UNVERIFIED ATTRIBUTION: this is recalled as Boman-Quinto, Duke Math. J. 55
+  --      (1987) 943, applied in this setting as in arXiv:1711.05108. Neither reference
+  --      was retrieved or checked; confirm both before relying on this step.
   --   4. Upgrade a.e. equality to the pointwise statement, which needs a continuity or
   --      regularity field on `DoubleDistribution` that does not currently exist -- the
   --      structure carries support, `α`-symmetry and integrability only. Adding it is a
