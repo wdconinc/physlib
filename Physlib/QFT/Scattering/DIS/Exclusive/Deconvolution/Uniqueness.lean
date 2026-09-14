@@ -150,8 +150,9 @@ theorem dd_eq_of_agreeOnLowSkewnessDglap {M₁ M₂ : Model Flavor}
   --      regularity field on `DoubleDistribution` that does not currently exist -- the
   --      structure carries support, `α`-symmetry and integrability only. Adding it is a
   --      prerequisite, and is noted as such rather than silently assumed.
-  -- Mathlib v4.33 has no Radon transform and no Boman-Quinto theorem, so step 3 is not a
-  -- matter of finding the right lemma name: the analysis would have to be built.
+  -- Mathlib v4.33 has no Radon transform at all, let alone an incomplete-data uniqueness
+  -- result for one, so step 3 is not a matter of finding the right lemma name: the
+  -- analysis would have to be built. (That much is checked; the attribution above is not.)
   sorry
 
 /-- **Uniqueness up to a D-term (arXiv:2401.12013), in the form quoted in the
