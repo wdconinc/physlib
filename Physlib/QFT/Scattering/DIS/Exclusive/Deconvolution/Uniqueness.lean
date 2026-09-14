@@ -70,18 +70,26 @@ directly. See `NOTES.md` of `task/frontier-open-targets`.
 * M. Diehl and D. Yu. Ivanov, *Dispersion representations for hard exclusive reactions*
   (arXiv:0712.3533).
 
-The first two entries were checked against public listings. The following two are
-**recalled and unverified** — neither was retrieved or checked when this file was
-written, and they should be confirmed before being relied on:
+The first two entries were checked against public listings. The next two were written
+from memory when this file was drafted and have since been **verified** (13 September
+2026); the residual gap is stated explicitly below:
 
 * N. Chouika, C. Mezrag, H. Moutarde and J. Rodríguez-Quintero, *Covariant Extension of
-  the GPD overlap representation at low Fock states* (arXiv:1711.05108), recalled as
-  reducing the ERBL-region extension to an incomplete-data Radon inversion.
-* J. Boman and E. T. Quinto, Duke Math. J. **55** (1987) 943, recalled as the uniqueness
-  theorem for the Radon transform with incomplete data that such a reduction appeals to.
+  the GPD overlap representation at low Fock states*, Eur. Phys. J. C **77** (2017) 906
+  (arXiv:1711.05108). Verified: §III presents "an original discussion based on Radon
+  transform properties of covariant extensions of GPDs from the DGLAP to the ERBL
+  region", and the paper states the physics problem is solved by inverting the Radon
+  transform. It also discusses the D-term ambiguity as the obstruction to the
+  DGLAP → ERBL converse, which is the ambiguity isolated in `GPD/Ambiguity.lean`.
+* J. Boman and E. T. Quinto, *Support theorems for real-analytic Radon transforms*,
+  Duke Math. J. **55** (1987) no. 4, 943–948, DOI 10.1215/S0012-7094-87-05547-5.
+  Verified: title, volume, issue, pages and year all confirmed.
 
-No equation number is attributed to any of these, and bibliographic data throughout was
-taken from listings rather than from the articles themselves.
+**Residual gap.** Both references are confirmed to exist and to concern what they are
+cited for. What was *not* checked is whether arXiv:1711.05108 itself invokes
+Boman–Quinto for its uniqueness step, as opposed to some other incomplete-data
+uniqueness result; the pairing of the two in the sketch below is this development's
+own reading. No equation number is attributed to either.
 
 -/
 
@@ -143,9 +151,13 @@ theorem dd_eq_of_agreeOnLowSkewnessDglap {M₁ M₂ : Model Flavor}
   --   3. Conclude `F₁ = F₂` a.e. from a uniqueness theorem for the Radon transform with
   --      incomplete data: a distribution supported in the rhombus whose line integrals
   --      vanish over an open set of lines meeting every point of the rhombus is zero.
-  --      UNVERIFIED ATTRIBUTION: this is recalled as Boman-Quinto, Duke Math. J. 55
-  --      (1987) 943, applied in this setting as in arXiv:1711.05108. Neither reference
-  --      was retrieved or checked; confirm both before relying on this step.
+  --      ATTRIBUTION (verified 13 Sep 2026): Boman-Quinto, "Support theorems for
+  --      real-analytic Radon transforms", Duke Math. J. 55 (1987) no. 4, 943-948,
+  --      applied in the GPD setting as in arXiv:1711.05108 (Eur. Phys. J. C 77 (2017)
+  --      906), which reduces the DGLAP -> ERBL covariant extension to a Radon
+  --      inversion. Both confirmed to exist and to concern this material. NOT checked:
+  --      whether 1711.05108 invokes Boman-Quinto specifically for its uniqueness step,
+  --      rather than another incomplete-data result -- that pairing is our own reading.
   --   4. Upgrade a.e. equality to the pointwise statement, which needs a continuity or
   --      regularity field on `DoubleDistribution` that does not currently exist -- the
   --      structure carries support, `α`-symmetry and integrability only. Adding it is a
