@@ -82,8 +82,12 @@ from memory when this file was drafted and have since been **verified** (13 Sept
   transform. It also discusses the D-term ambiguity as the obstruction to the
   DGLAP → ERBL converse, which is the ambiguity isolated in `GPD/Ambiguity.lean`.
 * J. Boman and E. T. Quinto, *Support theorems for real-analytic Radon transforms*,
-  Duke Math. J. **55** (1987) no. 4, 943–948, DOI 10.1215/S0012-7094-87-05547-5.
-  Verified: title, volume, issue, pages and year all confirmed.
+  Duke Math. J. **55** (1987) no. 4, DOI 10.1215/S0012-7094-87-05547-5.
+  Verified against the Crossref record for that DOI: title, both author names,
+  journal, volume 55, issue 4 and year 1987 all confirmed. The page range often
+  quoted for this article (943–948) is **not** confirmed — the Crossref record
+  carries no page field, and no retrieved source stated it — so it is omitted here
+  rather than asserted.
 
 **Residual gap.** Both references are confirmed to exist and to concern what they are
 cited for. What was *not* checked is whether arXiv:1711.05108 itself invokes
