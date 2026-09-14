@@ -252,10 +252,8 @@ theorem isShadow_of_moments_eq_zero {K : ComptonCoefficient}
     (hne : ∃ i x xi t, S.H i x xi t ≠ 0)
     (hfwd : ∀ i x t, S.H i x 0 t = 0)
     (hmom : ∀ n i t, F.moment n S.H i t = 0) :
-    IsShadow K S where
-  nontrivial := hne
-  forwardVanishing := hfwd
-  inKernel := fun i => F.cff_eq_zero_of_moments_eq_zero S.H i (fun n t => hmom n i t)
+    IsShadow K S :=
+  ⟨hne, hfwd, fun i => F.cff_eq_zero_of_moments_eq_zero S.H i (fun n t => hmom n i t)⟩
 
 /-!
 
