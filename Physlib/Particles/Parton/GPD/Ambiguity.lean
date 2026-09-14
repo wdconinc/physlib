@@ -117,17 +117,28 @@ at `ξ = 0`. -/
 def gpdOfDTerm (dt : DTerm Flavor) : Gpd Flavor :=
   gpdOfDoubleDistribution (DoubleDistribution.zero Flavor) dt
 
-/-- The explicit pointwise form of `gpdOfDTerm`. -/
-lemma gpdOfDTerm_apply (dt : DTerm Flavor) (i : Flavor) (x xi t : ℝ) :
-    gpdOfDTerm dt i x xi t = if xi = 0 then 0 else (xi / |xi|) * dt.D i (x / xi) t := by
-  by_cases h : xi = 0
-  · simp [gpdOfDTerm, gpdOfDoubleDistribution, h]
-  · simp [gpdOfDTerm, gpdOfDoubleDistribution, h]
+/-- The induced GPD at nonzero skewness, with the skewness branch already resolved.
 
-/-- A pure D-term has vanishing forward limit, so it is invisible to collinear PDF data. -/
-lemma gpdOfDTerm_forward (dt : DTerm Flavor) (i : Flavor) (x t : ℝ) :
+The companion of `gpdOfDoubleDistribution_zero_skewness`; both exist so that downstream
+proofs never have to rewrite inside the `if`. -/
+lemma gpdOfDoubleDistribution_ne_zero_skewness (dd : DoubleDistribution Flavor)
+    (dt : DTerm Flavor) (i : Flavor) (x xi t : ℝ) (hxi : xi ≠ 0) :
+    gpdOfDoubleDistribution dd dt i x xi t
+      = (|xi|)⁻¹ * (∫ β : ℝ, dd.F i β ((x - β) / xi) t)
+        + (xi / |xi|) * dt.D i (x / xi) t := by
+  simp [gpdOfDoubleDistribution, hxi]
+
+/-- A pure D-term has vanishing forward limit, so it is invisible to collinear PDF data
+and, more generally, to any determination made at zero skewness. -/
+lemma gpdOfDTerm_zero_skewness (dt : DTerm Flavor) (i : Flavor) (x t : ℝ) :
     gpdOfDTerm dt i x 0 t = 0 := by
-  rw [gpdOfDTerm_apply, if_pos rfl]
+  simp [gpdOfDTerm, gpdOfDoubleDistribution]
+
+/-- The explicit pointwise form of `gpdOfDTerm` at nonzero skewness. -/
+lemma gpdOfDTerm_ne_zero_skewness (dt : DTerm Flavor) (i : Flavor) (x xi t : ℝ)
+    (hxi : xi ≠ 0) :
+    gpdOfDTerm dt i x xi t = (xi / |xi|) * dt.D i (x / xi) t := by
+  simp [gpdOfDTerm, gpdOfDoubleDistribution, hxi]
 
 /-- **The D-term ambiguity lives in the ERBL region.** A pure D-term vanishes identically
 on the DGLAP region `|ξ| < |x| ≤ 1`, at every skewness.
@@ -138,23 +149,22 @@ precise content of the qualifier "up to a D-term" in arXiv:2401.12013. -/
 theorem gpdOfDTerm_eq_zero_of_inDglapRegion (dt : DTerm Flavor) (i : Flavor) (x xi t : ℝ)
     (h : InDglapRegion x xi) :
     gpdOfDTerm dt i x xi t = 0 := by
-  rw [gpdOfDTerm_apply]
   by_cases hxi : xi = 0
-  · simp [hxi]
+  · rw [hxi, gpdOfDTerm_zero_skewness]
   · have hxipos : 0 < |xi| := abs_pos.mpr hxi
     have hone : 1 < |x / xi| := by
       rw [abs_div]
       exact (one_lt_div hxipos).mpr h.1
-    rw [if_neg hxi, dt.support i (x / xi) t hone, mul_zero]
+    rw [gpdOfDTerm_ne_zero_skewness dt i x xi t hxi, dt.support i (x / xi) t hone,
+      mul_zero]
 
 /-- A D-term that vanishes identically induces the zero GPD. -/
 lemma gpdOfDTerm_eq_zero_of_dTerm_eq_zero (dt : DTerm Flavor)
     (h : ∀ i u t, dt.D i u t = 0) (i : Flavor) (x xi t : ℝ) :
     gpdOfDTerm dt i x xi t = 0 := by
-  rw [gpdOfDTerm_apply]
   by_cases hxi : xi = 0
-  · simp [hxi]
-  · rw [if_neg hxi, h, mul_zero]
+  · rw [hxi, gpdOfDTerm_zero_skewness]
+  · rw [gpdOfDTerm_ne_zero_skewness dt i x xi t hxi, h, mul_zero]
 
 /-!
 
@@ -191,8 +201,11 @@ def admitsDoubleDistribution_zero (Flavor : Type) :
   dtH := DTerm.zero Flavor
   reprH := fun i x xi t => by
     by_cases h : xi = 0
-    · simp [Model.zero, gpdOfDoubleDistribution, h]
-    · simp [Model.zero, gpdOfDoubleDistribution, h]
+    · rw [h, Model.zero_H, gpdOfDoubleDistribution_zero_skewness]
+      simp
+    · rw [Model.zero_H,
+        gpdOfDoubleDistribution_ne_zero_skewness _ _ i x xi t h]
+      simp
 
 /-- **Two models with the same double distribution differ by exactly one D-term.**
 
@@ -206,11 +219,16 @@ theorem sub_eq_gpdOfDTerm_of_dd_eq {M₁ M₂ : Model Flavor}
     (hF : ∀ i β α t, R₁.ddH.F i β α t = R₂.ddH.F i β α t)
     (i : Flavor) (x xi t : ℝ) :
     M₁.H i x xi t = M₂.H i x xi t + gpdOfDTerm (DTerm.sub R₁.dtH R₂.dtH) i x xi t := by
-  rw [R₁.reprH, R₂.reprH, gpdOfDTerm_apply]
   by_cases hxi : xi = 0
-  · subst hxi
-    simp only [gpdOfDoubleDistribution, if_pos rfl, add_zero, hF]
-  · simp only [gpdOfDoubleDistribution, if_neg hxi, DTerm.sub_D, hF]
+  · rw [hxi, R₁.reprH, R₂.reprH, gpdOfDTerm_zero_skewness, add_zero,
+      gpdOfDoubleDistribution_zero_skewness, gpdOfDoubleDistribution_zero_skewness]
+    simp only [hF]
+  · rw [R₁.reprH, R₂.reprH,
+      gpdOfDTerm_ne_zero_skewness (DTerm.sub R₁.dtH R₂.dtH) i x xi t hxi,
+      gpdOfDoubleDistribution_ne_zero_skewness R₁.ddH R₁.dtH i x xi t hxi,
+      gpdOfDoubleDistribution_ne_zero_skewness R₂.ddH R₂.dtH i x xi t hxi,
+      DTerm.sub_D]
+    simp only [hF]
     ring
 
 end GPD
