@@ -142,7 +142,7 @@ structure MsbarPositivityHypotheses (fPhys fMsbar : Pdf Flavor)
   correction_dominated : ∀ i x mu, R.Mem x mu → Δ i x mu ≤ fPhys i x mu
 
 /-- **MS-bar positivity, conditionally.** -/
-theorem msbar_nonneg {fPhys fMsbar : Pdf Flavor} {Δ : Flavor → ℝ → ℝ → ℝ}
+lemma msbar_nonneg {fPhys fMsbar : Pdf Flavor} {Δ : Flavor → ℝ → ℝ → ℝ}
     {R : PerturbativeRegion} (h : MsbarPositivityHypotheses fPhys fMsbar Δ R)
     (i : Flavor) (x mu : ℝ) (hmem : R.Mem x mu) :
     0 ≤ fMsbar i x mu := by
