@@ -174,7 +174,7 @@ lemma gpdOfDoubleDistribution_eq_zero_of_one_lt_abs
         rw [mul_sub, mul_one, hmul2]
       have hnn2 : 0 ≤ |(x - β) / xi| * (1 - |xi|) := mul_nonneg (abs_nonneg _) (by linarith)
       have htri : |x| ≤ |β| + |x - β| := by
-        have h0 : |β + (x - β)| ≤ |β| + |x - β| := abs_add _ _
+        have h0 : |β + (x - β)| ≤ |β| + |x - β| := abs_add_le _ _
         have hxe : β + (x - β) = x := by ring
         rw [hxe] at h0
         exact h0

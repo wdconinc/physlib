@@ -153,7 +153,7 @@ def momentPolynomial (dd : DoubleDistribution Flavor) (dt : DTerm Flavor)
 lemma momentPolynomial_coeff (dd : DoubleDistribution Flavor) (dt : DTerm Flavor)
     (n : ℕ) (i : Flavor) (t : ℝ) (k : ℕ) :
     (momentPolynomial dd dt n i t).coeff k = momentCoeff dd dt n i k t := by
-  rw [momentPolynomial, Polynomial.finset_sum_coeff]
+  rw [momentPolynomial, Polynomial.finsetSum_coeff]
   simp only [Polynomial.coeff_C_mul, Polynomial.coeff_X_pow, mul_ite, mul_one, mul_zero]
   rw [Finset.sum_ite_eq (Finset.range (n + 2)) k (fun j => momentCoeff dd dt n i j t)]
   by_cases hk : k < n + 2
@@ -178,7 +178,7 @@ lemma momentPolynomial_eval (dd : DoubleDistribution Flavor) (dt : DTerm Flavor)
     (n : ℕ) (i : Flavor) (t : ℝ) (xi : ℝ) :
     (momentPolynomial dd dt n i t).eval xi
       = ∑ k ∈ Finset.range (n + 2), momentCoeff dd dt n i k t * xi ^ k := by
-  simp [momentPolynomial, Polynomial.eval_finset_sum]
+  simp [momentPolynomial, Polynomial.eval_finsetSum]
 
 /-- **The analytic core.** The `n`-th moment of a GPD built from a double distribution and
 a D-term is the explicit sum of `(β, α)` moments and the D-term moment, for physical
