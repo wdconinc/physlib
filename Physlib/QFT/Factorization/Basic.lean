@@ -6,6 +6,8 @@ Authors: Joseph Tooby-Smith
 module
 
 public import Physlib.QFT.Factorization.Convolution.Basic
+public import Physlib.QFT.Factorization.Convolution.Collinear
+public import Physlib.QFT.Factorization.Convolution.Mellin
 public import Physlib.QFT.Factorization.Convolution.Properties
 public import Physlib.QFT.Factorization.DIS.HardKernel
 public import Physlib.QFT.Factorization.DIS.LO
