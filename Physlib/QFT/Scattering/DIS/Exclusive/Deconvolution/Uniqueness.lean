@@ -156,7 +156,7 @@ theorem dd_eq_of_agreeOnLowSkewnessDglap {M₁ M₂ : Model Flavor}
   --      incomplete data: a distribution supported in the rhombus whose line integrals
   --      vanish over an open set of lines meeting every point of the rhombus is zero.
   --      ATTRIBUTION (verified 13 Sep 2026): Boman-Quinto, "Support theorems for
-  --      real-analytic Radon transforms", Duke Math. J. 55 (1987) no. 4, 943-948,
+  --      real-analytic Radon transforms", Duke Math. J. 55 (1987) no. 4,
   --      applied in the GPD setting as in arXiv:1711.05108 (Eur. Phys. J. C 77 (2017)
   --      906), which reduces the DGLAP -> ERBL covariant extension to a Radon
   --      inversion. Both confirmed to exist and to concern this material. NOT checked:
