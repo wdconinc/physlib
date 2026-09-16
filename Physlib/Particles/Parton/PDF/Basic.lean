@@ -35,7 +35,14 @@ abbrev Pdf (Flavor : Type) : Type := Flavor → ℝ → ℝ → ℝ
 def mellinMoment (f : Pdf Flavor) (n : ℕ) (i : Flavor) (Q2 : ℝ) : ℝ :=
   ∫ x in Set.Icc (0 : ℝ) 1, x ^ n * f i x Q2
 
-/-- Structural assumptions for a collinear PDF object. -/
+/-- Structural assumptions for a collinear PDF object.
+
+The `nonneg` field is derivable, not fundamental. Positivity of a leading-twist parton density
+is a consequence of positive semidefiniteness of the parton spin-density matrix, and for any
+density built through that route it is a theorem: see `PDF.pdfOfSpinDensity_nonneg` and
+`PDF.assumptions_pdfOfSpinDensity` in `Physlib/Particles/Parton/PDF/Positivity.lean`, where the
+remaining three fields are exactly what has to be supplied. The field is kept here so that
+existing users of `Assumptions` are unaffected. -/
 structure Assumptions (f : Pdf Flavor) : Prop where
   support : ∀ i x Q2, x < 0 ∨ 1 < x → f i x Q2 = 0
   nonneg : ∀ i x Q2, 0 ≤ x → x ≤ 1 → 0 ≤ f i x Q2
