@@ -54,7 +54,7 @@ TMD Handbook, arXiv:2304.03302, §2.
 so that no discrete-symmetry input is needed to state them. Parity invariance of the strong
 interaction makes the two aligned diagonal entries equal and the two anti-aligned ones equal;
 under that hypothesis, which is `IsParityInvariant` below, `f1` and `g1` collapse to the
-familiar single-nucleon-helicity expressions `q_{+/+} ± q_{-/+}` (`f1_eq_of_parityInvariant`,
+familiar single-nucleon-helicity expressions `q_{+/+} ± q_{−/+}` (`f1_eq_of_parityInvariant`,
 `g1_eq_of_parityInvariant`). The Soffer bound below does *not* use parity.
 
 ## Caveats
@@ -226,13 +226,13 @@ def IsParityInvariant (ρ : SpinDensity) : Prop :=
   ρ.mat idxMM idxMM = ρ.mat idxPP idxPP ∧ ρ.mat idxMP idxMP = ρ.mat idxPM idxPM
 
 /-- Under parity invariance the helicity-averaged `f₁` reduces to the familiar
-single-nucleon-helicity expression `q_{+/+} + q_{-/+}`. -/
+single-nucleon-helicity expression `q_{+/+} + q_{−/+}`. -/
 lemma f1_eq_of_parityInvariant (ρ : SpinDensity) (h : IsParityInvariant ρ) :
     f1 ρ = ρ.mat idxPP idxPP + ρ.mat idxPM idxPM := by
   rw [f1_def, h.1, h.2]; ring
 
 /-- Under parity invariance the helicity-averaged `g₁` reduces to the familiar
-single-nucleon-helicity expression `q_{+/+} - q_{-/+}`. -/
+single-nucleon-helicity expression `q_{+/+} - q_{−/+}`. -/
 lemma g1_eq_of_parityInvariant (ρ : SpinDensity) (h : IsParityInvariant ρ) :
     g1 ρ = ρ.mat idxPP idxPP - ρ.mat idxPM idxPM := by
   rw [g1_def, h.1, h.2]; ring
