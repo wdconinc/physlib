@@ -187,8 +187,7 @@ lemma q_sq_mul_pTransverse_self (g : Bilin V) (K : DisKinematics V)
     exact pTransverse_orthogonal_q g K hQ2
   have hppT : g K.p (pTransverse g K)
       = g K.p K.p - g K.p K.q / g K.q K.q * g K.p K.q := by
-    simp only [pTransverse, map_sub, map_smul, LinearMap.sub_apply, LinearMap.smul_apply,
-      smul_eq_mul]
+    simp only [pTransverse, map_sub, map_smul, smul_eq_mul]
   have hc : g K.p K.q / g K.q K.q * g K.q K.q = g K.p K.q := by
     rw [div_eq_mul_inv, mul_assoc, inv_mul_cancel₀ hQ2, mul_one]
   have hT : g (pTransverse g K) (pTransverse g K)
