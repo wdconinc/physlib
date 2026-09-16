@@ -34,12 +34,20 @@ public import Physlib.QFT.Scattering.DIS.SIDIS.Basic
 public import Physlib.QFT.Scattering.DIS.Inference.Basic
 public import Physlib.QFT.Scattering.DIS.Inference.Unfolding
 public import Physlib.QFT.Scattering.DIS.PVES.Basic
+public import Physlib.QFT.Scattering.DIS.Inference.JointHelicity
+public import Physlib.QFT.Scattering.DIS.Inference.ExclusiveJoint
+public import Physlib.QFT.Scattering.DIS.Inference.Conjectures
 /-!
 
 # Deep Inelastic Scattering (Stages 1-14)
 
 This file exports the Stage 1-14 DIS
 kinematics/tensor/PDF/factorization/evolution/TMD/GPD/unified/examples/
-polarized/power-corrections/SIDIS/inference API.
+polarized/power-corrections/SIDIS/inference API, together with the
+exclusive (DVCS/DVMP) and SIDIS-asymmetry subtrees.
+
+Imports are listed in dependency order rather than alphabetically, which
+is the existing convention in this file; only `Physlib.lean` is required
+to be sorted (see `scripts/check_file_imports.lean`).
 
 -/
