@@ -248,7 +248,11 @@ lemma dglapOperator_const_mul [Fintype Flavor]
         = c • ∫ z in Set.Icc (0 : ℝ) 1, dglapIntegrand P f i j x Q2 z :=
       MeasureTheory.integral_smul _ _
     simp only [Convolution.convolveAt, hpt]
-    simpa [smul_eq_mul] using hsmul
+    -- The preceding `simp only` unfolds `convolveAt`, so the goal now speaks of
+    -- `Convolution.integrand (collinearKernel ...) ...`, whereas `hsmul` is stated in
+    -- terms of `dglapIntegrand`. Those are the same by definition of `dglapIntegrand`,
+    -- so unfold it here too and the two sides meet.
+    simpa [smul_eq_mul, dglapIntegrand] using hsmul
   simp only [dglapOperator, hchan]
   rw [Finset.mul_sum]
 
