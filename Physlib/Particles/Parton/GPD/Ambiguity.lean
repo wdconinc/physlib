@@ -99,7 +99,15 @@ def DTerm.sub (d₁ d₂ : DTerm Flavor) : DTerm Flavor where
     rw [d₁.odd i u t, d₂.odd i u t]
     ring
   momentIntegrable := fun i m t => by
-    simpa [mul_sub] using (d₁.momentIntegrable i m t).sub (d₂.momentIntegrable i m t)
+    -- `Integrable.sub` yields the POINTWISE function `f - g`, while the goal (after
+    -- `mul_sub`) is a lambda whose body is a subtraction. Those are definitionally
+    -- equal via `Pi.sub`, but `simpa` closes only at reducible transparency, so it
+    -- failed here -- and because this field proof then carried metavariables, the
+    -- whole of `DTerm.sub` was rejected by the kernel, which in turn broke the `rfl`
+    -- in `DTerm.sub_D`. All three reported errors have this one cause.
+    have h := (d₁.momentIntegrable i m t).sub (d₂.momentIntegrable i m t)
+    simp only [mul_sub]
+    exact h
 
 @[simp]
 lemma DTerm.sub_D (d₁ d₂ : DTerm Flavor) (i : Flavor) (u t : ℝ) :
