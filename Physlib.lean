@@ -492,12 +492,6 @@ public import Physlib.Relativity.Special.TwinParadox.Basic
 public import Physlib.Relativity.SpeedOfLight
 public import Physlib.Relativity.Tensors.Basic
 public import Physlib.Relativity.Tensors.ComplexTensor.Basic
-public import Physlib.Relativity.Tensors.ComplexTensor.Dirac.Basic
-public import Physlib.Relativity.Tensors.ComplexTensor.Dirac.Contraction
-public import Physlib.Relativity.Tensors.ComplexTensor.Dirac.Metric
-public import Physlib.Relativity.Tensors.ComplexTensor.Dirac.Modules
-public import Physlib.Relativity.Tensors.ComplexTensor.Dirac.Two
-public import Physlib.Relativity.Tensors.ComplexTensor.Dirac.Unit
 public import Physlib.Relativity.Tensors.ComplexTensor.Lemmas
 public import Physlib.Relativity.Tensors.ComplexTensor.Matrix.Pre
 public import Physlib.Relativity.Tensors.ComplexTensor.Metrics.Basic
