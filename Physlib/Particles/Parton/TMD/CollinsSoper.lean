@@ -130,7 +130,14 @@ theorem csKernel_sub_hasDerivAt_zero (S T : TmdRgSystem Flavor) (gammaCusp : ℝ
     (i : Flavor) (x bT mu : ℝ) (hmu : 0 < mu) :
     HasDerivAt (fun m => S.csKernel i x bT m - T.csKernel i x bT m) 0 mu := by
   have h := (hS.csKernel_muDeriv i x bT mu hmu).sub (hT.csKernel_muDeriv i x bT mu hmu)
-  simpa using h
+  -- `simpa` normalises the derivative to `0` but then closes only at reducible
+  -- transparency, which cannot bridge two things here: `HasDerivAt.sub` yields the
+  -- pointwise function `f - g` rather than `fun m => f m - g m`, and it routes the
+  -- module instance through `RCLike.toInnerProductSpaceReal` where the goal uses
+  -- `Semiring.toModule`. Both differences are definitional, so normalise the
+  -- derivative first and let `exact` unfold at default transparency.
+  simp only [sub_self] at h
+  exact h
 
 /-- **Universality of the Collins-Soper kernel, with its boundary condition explicit.**
 Two RG systems sharing a cusp anomalous dimension and agreeing at one positive scale
