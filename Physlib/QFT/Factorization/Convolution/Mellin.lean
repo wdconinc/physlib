@@ -141,7 +141,7 @@ lemma mellinDis_finsetSum {ι : Type*} (s : Finset ι) (g : ι → ℝ → ℝ) 
     funext x
     rw [Complex.ofReal_sum, Finset.mul_sum]
   simp only [mellinDis]
-  rw [hfun, MeasureTheory.integral_finset_sum s h]
+  rw [hfun, MeasureTheory.integral_finsetSum s h]
 
 /-!
 
@@ -171,10 +171,10 @@ lemma mellinDis_natCast_add_one_eq_ofReal (f : ℝ → ℝ) (n : ℕ) :
       = ((∫ x in Set.Ioc (0 : ℝ) 1, x ^ n * f x : ℝ) : ℂ) := by
   rw [mellinDis_natCast_add_one]
   -- TODO(task/e1-mellin-convolution): the lemma pulling `Complex.ofReal` out of a Bochner
-  -- integral is `MeasureTheory.integral_ofReal` (it is unconditional, both sides being `0` off
+  -- integral is `integral_ofReal` (it is unconditional, both sides being `0` off
   -- the integrable case); at some mathlib versions it is stated for `RCLike` and may need to be
   -- reached as `RCLike.ofReal_integral` or with the target field supplied explicitly.
-  exact MeasureTheory.integral_ofReal
+  exact integral_ofReal
 
 /-- **Bridge to the repository's integer moments.** `mellinMoment f n` is
 `∫_{[0,1]} x ^ n * f x dx`, so it is the Mellin transform at index `n + 1`, *not* at index `n`.
@@ -228,7 +228,7 @@ lemma integral_mellinIntegrand_eq (C f : ℝ → ℝ) (N : ℂ) (x : ℝ) :
   -- TODO(task/e1-mellin-convolution): `MeasureTheory.integral_const_mul` is the `RCLike`-valued
   -- lemma `∫ a, r * f a = r * ∫ a, f a`; if it is unavailable at this pin the same step is
   -- `MeasureTheory.integral_smul` after `← smul_eq_mul`.
-  rw [MeasureTheory.integral_const_mul, MeasureTheory.integral_ofReal,
+  rw [MeasureTheory.integral_const_mul, integral_complex_ofReal,
     convolveAt_eq_integral_Ioc]
 
 /-- The Mellin transform of a collinear convolution as an iterated integral. Unconditional. -/
