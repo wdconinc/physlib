@@ -11,8 +11,18 @@ public import Physlib.Meta.Linters.Sorry
 
 # Polarized Sum Rules
 
+## i. Overview
+
 This module states the polarized DIS sum rules as what they are: identities for the first
 moments `Γ₁(Q²) = ∫₀¹ dx g₁(x, Q²)` and `Γ₂(Q²) = ∫₀¹ dx g₂(x, Q²)`.
+
+**Moment convention.** `firstMomentG1` and `firstMomentG2` carry weight `x⁰`: they are
+plain integrals over `[0, 1]`. In terms of `Physlib.Particles.Parton.PDF.mellinMoment`,
+where `mellinMoment f n = ∫₀¹ dx xⁿ f`, that is `n = 0`. In terms of the literature's
+`n`-th moment `∫₀¹ dx xⁿ⁻¹ g`, it is `n = 1`. Every statement below uses the weight-`x⁰`
+convention and no other.
+
+## ii. Key results
 
 - `BjorkenSumRule` — the proton-neutron non-singlet identity, with the nucleon axial
   charge ratio `g_A/g_V` and the perturbative correction series as explicit inputs rather
@@ -30,11 +40,13 @@ moments `Γ₁(Q²) = ∫₀¹ dx g₁(x, Q²)` and `Γ₂(Q²) = ∫₀¹ dx g�
   still `@[sorryful]` below, so the sum rule is proved conditionally on that step, not
   unconditionally.
 
-**Moment convention.** `firstMomentG1` and `firstMomentG2` carry weight `x⁰`: they are
-plain integrals over `[0, 1]`. In terms of `Physlib.Particles.Parton.PDF.mellinMoment`,
-where `mellinMoment f n = ∫₀¹ dx xⁿ f`, that is `n = 0`. In terms of the literature's
-`n`-th moment `∫₀¹ dx xⁿ⁻¹ g`, it is `n = 1`. Every statement below uses the weight-`x⁰`
-convention and no other.
+## iii. Table of contents
+
+- A. Bjorken sum rule
+- B. Ellis-Jaffe sum rule
+- C. Burkhardt-Cottingham sum rule
+- D. Wandzura-Wilczek relation
+- E. Remaining targets, not yet formalized here
 
 ## References
 
@@ -55,7 +67,7 @@ namespace Scattering
 namespace DIS
 namespace Polarized
 
-/-! ## Bjorken sum rule -/
+/-! ## A. Bjorken sum rule -/
 
 /-- The Bjorken sum rule for a proton/neutron pair of polarized structure functions.
 
@@ -87,7 +99,7 @@ lemma abs_gAOverGV_eq_of_bjorken
   rw [eq_div_iff hCorr, h]
   ring
 
-/-! ## Ellis-Jaffe sum rule -/
+/-! ## B. Ellis-Jaffe sum rule -/
 
 /-- The Ellis-Jaffe sum rule for the proton.
 
@@ -129,7 +141,7 @@ lemma ellisJaffe_prediction
   rw [hEJ.moment_decomposition Q2, hEJ.strange_unpolarized Q2]
   ring
 
-/-! ## Burkhardt-Cottingham sum rule -/
+/-! ## C. Burkhardt-Cottingham sum rule -/
 
 /-- The Burkhardt-Cottingham sum rule, `∫₀¹ dx g₂(x, Q²) = 0` at every scale.
 
@@ -140,7 +152,7 @@ structure BurkhardtCottingham (G : StructureFunctions) : Prop where
   /-- The vanishing of the first moment of `g₂`, at every scale. -/
   bc : ∀ Q2, firstMomentG2 G Q2 = 0
 
-/-! ## Wandzura-Wilczek relation -/
+/-! ## D. Wandzura-Wilczek relation -/
 
 /-- The Wandzura-Wilczek (twist-2) expression for `g₂` in terms of `g₁`:
 
@@ -278,7 +290,7 @@ theorem burkhardtCottingham_wandzuraWilczek
   have h := firstMoment_g2WW_eq_zero G Q2 (hWW Q2)
   simpa [firstMomentG2, wandzuraWilczek] using h
 
-/-! ## Remaining targets
+/-! ## E. Remaining targets
 
 Two statements in this family are deliberately absent.
 
