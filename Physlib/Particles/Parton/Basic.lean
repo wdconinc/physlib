@@ -9,6 +9,8 @@ public import Physlib.Particles.Parton.PDF.Basic
 public import Physlib.Particles.Parton.PDF.Positivity
 public import Physlib.Particles.Parton.TMD.Reduction
 public import Physlib.Particles.Parton.GPD.Moments
+public import Physlib.Particles.Parton.GPD.DoubleDistribution
+public import Physlib.Particles.Parton.GPD.Polynomiality
 public import Physlib.Particles.Parton.Unified.Consistency
 /-!
 
