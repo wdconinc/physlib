@@ -97,8 +97,7 @@ lemma colorFactorsOf_suN_eq_from_representation_of_contracts (nC nF : ℝ)
   calc
     colorFactorsOf (SUN nC) nF
         = colorFactorsOfData (sunNormalizedData nC) nF := by
-          simpa [instHasNormalizedGeneratorDataSUN] using
-            (colorFactorsOf_eq_colorFactorsOfData (G := SUN nC) (nF := nF))
+          exact colorFactorsOf_eq_colorFactorsOfData (G := SUN nC) (nF := nF)
     _ = suNColorFactors nC nF := by
       rfl
 

@@ -135,7 +135,7 @@ lemma beta0Of_eq_beta0_from_derivation
   (_hDeriv : CasimirDerivationAssumptions (HasNormalizedGeneratorData.data (G := G))) :
     beta0Of G nF =
       beta0 ((colorInvariantsOf (HasNormalizedGeneratorData.data (G := G))).toColorFactors nF) := by
-  simpa using beta0Of_eq_beta0OfData G nF
+  exact beta0Of_eq_beta0OfData G nF
 
 /-- Two-loop coefficient extracted from a derivation package agrees with class-level extraction. -/
 lemma beta1Of_eq_beta1_from_derivation
@@ -144,7 +144,7 @@ lemma beta1Of_eq_beta1_from_derivation
   (_hDeriv : CasimirDerivationAssumptions (HasNormalizedGeneratorData.data (G := G))) :
     beta1Of G nF =
       beta1 ((colorInvariantsOf (HasNormalizedGeneratorData.data (G := G))).toColorFactors nF) := by
-  simpa using beta1Of_eq_beta1OfData G nF
+  exact beta1Of_eq_beta1OfData G nF
 
 end RepresentationColor
 end QCD
