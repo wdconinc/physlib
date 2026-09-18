@@ -164,7 +164,7 @@ This is the precise answer to "what is the weakest `correction_bounded` that mak
 conclusion provable": the weakest one is the conclusion itself, transported across the
 scheme-change relation. Any genuinely weaker hypothesis must therefore constrain
 something other than the correction — see `correction_dominated_of_lower_bound`. -/
-theorem msbar_nonneg_iff_correction_dominated {fPhys fMsbar : Pdf Flavor}
+lemma msbar_nonneg_iff_correction_dominated {fPhys fMsbar : Pdf Flavor}
     {Δ : Flavor → ℝ → ℝ → ℝ} {R : PerturbativeRegion}
     (hchange : ∀ i x mu, R.Mem x mu → fMsbar i x mu = fPhys i x mu - Δ i x mu) :
     (∀ i x mu, R.Mem x mu → 0 ≤ fMsbar i x mu)
@@ -182,7 +182,7 @@ theorem msbar_nonneg_iff_correction_dominated {fPhys fMsbar : Pdf Flavor}
 /-- Wherever the physical distribution vanishes, the hypothesis forces a *sign* condition
 on the correction — a condition perturbation theory does not supply, since the sign of a
 scheme-change correction is not fixed order by order. -/
-theorem correction_nonpos_of_phys_eq_zero {fPhys fMsbar : Pdf Flavor}
+lemma correction_nonpos_of_phys_eq_zero {fPhys fMsbar : Pdf Flavor}
     {Δ : Flavor → ℝ → ℝ → ℝ} {R : PerturbativeRegion}
     (h : MsbarPositivityHypotheses fPhys fMsbar Δ R)
     (i : Flavor) (x mu : ℝ) (hmem : R.Mem x mu) (hzero : fPhys i x mu = 0) :
@@ -201,7 +201,7 @@ statement, which is where the MS-bar negativity discussion in the literature liv
 Since `ε` is arbitrary, this rules out every hypothesis of the form "the correction is
 of order `α_s^k` with a bounded coefficient", at any `k`: such a hypothesis bounds `Δ`
 absolutely and says nothing about `fPhys`. -/
-theorem uniform_bound_insufficient (ε : ℝ) (hε : 0 < ε) (hε1 : ε < 1) :
+lemma uniform_bound_insufficient (ε : ℝ) (hε : 0 < ε) (hε1 : ε < 1) :
     ∃ (fPhys : Pdf Unit) (Δ : Unit → ℝ → ℝ → ℝ) (x mu : ℝ),
       (∀ i y m, 0 ≤ y → y ≤ 1 → 0 ≤ fPhys i y m) ∧
       (∀ i y m, |Δ i y m| ≤ ε) ∧
@@ -233,7 +233,7 @@ bounded below by `fmin` on the region and the correction is bounded by `a * Cmax
 
 Note what is being assumed: a property of `fPhys`, not a smallness property of `Δ`
 alone. -/
-theorem correction_dominated_of_lower_bound {fPhys : Pdf Flavor} {Δ : Flavor → ℝ → ℝ → ℝ}
+lemma correction_dominated_of_lower_bound {fPhys : Pdf Flavor} {Δ : Flavor → ℝ → ℝ → ℝ}
     {a Cmax fmin : ℝ} {R : PerturbativeRegion}
     (hC : CouplingBoundedCorrection Δ a Cmax R)
     (hfmin : ∀ i x mu, R.Mem x mu → fmin ≤ fPhys i x mu)
@@ -252,7 +252,7 @@ of `correction_dominated_of_lower_bound` can be met.
 
 This is the formal statement of where MS-bar positivity is genuinely at risk: not at
 large coupling, but wherever the distribution approaches zero. -/
-theorem coupling_bound_degenerate_at_zero {a Cmax fmin : ℝ} (hCmax : 0 < Cmax)
+lemma coupling_bound_degenerate_at_zero {a Cmax fmin : ℝ} (hCmax : 0 < Cmax)
     (hfmin : fmin ≤ 0) (hsmall : a * Cmax ≤ fmin) :
     a ≤ 0 := by
   by_contra hpos
