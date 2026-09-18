@@ -109,10 +109,10 @@ lemma qcdRunningCouplingFromRepresentation_suN_eq_of_contracts
     qcdRunningCouplingFromRepresentation (QCD.SUN nC) nF lambdaQCD2
       = qcdRunningCoupling (QCD.suNColorFactors nC nF) lambdaQCD2 := by
   funext Q2
-  simpa [qcdRunningCouplingFromRepresentation, qcdRunningCouplingOf, qcdRunningCoupling] using
-    congrArg (fun cf => QCD.oneLoopAlphaS cf Q2 lambdaQCD2)
-      (QCD.RepresentationColor.colorFactorsOf_suN_eq_from_representation_of_contracts
-        (nC := nC) (nF := nF) hContracts)
+  simp only [qcdRunningCouplingFromRepresentation, qcdRunningCouplingOf, qcdRunningCoupling]
+  exact congrArg (fun cf => QCD.oneLoopAlphaS cf Q2 lambdaQCD2)
+    (QCD.RepresentationColor.colorFactorsOf_suN_eq_from_representation_of_contracts
+      (nC := nC) (nF := nF) hContracts)
 
 /-- Canonical `SU(Nc)` corollary of the running-coupling bridge. -/
 lemma qcdRunningCouplingFromRepresentation_suN_eq
