@@ -329,7 +329,7 @@ lemma continuous_totalChiSq (X : Experiment E m) (data sigma : Fin m → ℝ) :
   have h : totalChiSq X data sigma
       = fun f => ∑ a : Fin m, chiSq (predict X f a) (data a) (sigma a) := rfl
   rw [h]
-  refine continuous_finset_sum _ fun a _ => ?_
+  refine continuous_finsetSum _ fun a _ => ?_
   simp only [chiSq, predict]
   exact (((X a).continuous.sub continuous_const).pow 2).div_const _
 
