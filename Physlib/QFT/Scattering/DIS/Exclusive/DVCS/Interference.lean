@@ -136,7 +136,7 @@ lemma beamSpinAsymmetry_eq_projectedRatio_of_harmonicDecomposition
         = (2 * D.inter xi t Q2) *
             SIDIS.Asymmetries.Harmonics.projectedMoment
               P SIDIS.Asymmetries.Harmonics.sinPhiDiff SIDIS.Asymmetries.Harmonics.sinPhiDiff := by
-              simpa [interferenceAngularObservable] using hScale
+              exact hScale
       _ = D.inter xi t Q2 := by
               rw [hOrth.sinPhiDiff_self]
               ring
@@ -146,7 +146,7 @@ lemma beamSpinAsymmetry_eq_projectedRatio_of_harmonicDecomposition
           SIDIS.Asymmetries.Harmonics.oneWeight
           (totalAngularObservable D xi t Q2)
         = totalObservable D xi t Q2 := by
-    simpa [totalAngularObservable] using hOrth.oneWeight_const (totalObservable D xi t Q2)
+    exact hOrth.oneWeight_const (totalObservable D xi t Q2)
   simp [beamSpinAsymmetry, hNum, hDen]
 
 /-- Projected-ratio theorem for beam-spin asymmetry interface. -/

@@ -204,7 +204,7 @@ lemma qcdDglap_rhs_def [Fintype Flavor]
     (f : Physlib.Particles.Parton.PDF.Pdf Flavor)
     (i : Flavor) (x τ : ℝ) :
     dglapRhsLogScale P (qcdRunningCoupling cf lambdaQCD2) f i x τ
-      = qcdRunningCoupling cf lambdaQCD2 (Real.exp τ)
+      = qcdRunningCoupling cf lambdaQCD2 (Real.exp τ) / (2 * Real.pi)
           * dglapOperator P f i x (Real.exp τ) :=
   rfl
 

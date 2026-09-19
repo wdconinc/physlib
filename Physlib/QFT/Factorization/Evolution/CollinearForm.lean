@@ -59,18 +59,18 @@ variable {Flavor : Type}
 -/
 
 /-- A splitting-kernel family has collinear (scaling) form with coefficient functions `p` when
-every flavor channel is the collinear kernel of `p i j`, i.e.
-`P i j x z = z⁻¹ * p i j (x / z)` on the support `x ≤ z`, `0 < z`, and `0` elsewhere. -/
+each channel's kernel data is `p i j` itself, scale by scale.
+
+Note the reading of `SplittingKernel`'s two real arguments: they are the momentum-fraction
+ratio `y = x / z` and the scale `Q2`, *not* the pair `(x, z)`. The collinear structure in
+`(x, z)` -- the `z⁻¹` Jacobian and the `x ≤ z` support -- is supplied by `dglapOperator`,
+which wraps the data in `Convolution.collinearKernel`. This definition previously read
+`P i j x z = collinearKernel (p i j) x z`, which belongs to the earlier interpretation under
+which the kernel data was itself the two-variable kernel; that is no longer what
+`dglapOperator` does. -/
 def IsCollinearSplittingKernel (P : SplittingKernel Flavor)
     (p : Flavor → Flavor → ℝ → ℝ) : Prop :=
-  ∀ i j x z, P i j x z = Convolution.collinearKernel (p i j) x z
-
-/-- Each channel of a collinear splitting-kernel family is a collinear kernel. -/
-lemma isCollinearKernel_of_isCollinearSplittingKernel
-    {P : SplittingKernel Flavor} {p : Flavor → Flavor → ℝ → ℝ}
-    (h : IsCollinearSplittingKernel P p) (i j : Flavor) :
-    Convolution.IsCollinearKernel (fun x z => P i j x z) (p i j) :=
-  fun x z => h i j x z
+  ∀ i j y Q2, P i j y Q2 = p i j y
 
 /-!
 
@@ -89,7 +89,8 @@ lemma dglapOperator_eq_sum_collinear [Fintype Flavor]
           (fun z => f j z Q2) x := by
   simp only [dglapOperator]
   refine Finset.sum_congr rfl (fun j _ => ?_)
-  exact (isCollinearKernel_of_isCollinearSplittingKernel h i j).convolveAt_eq _ x
+  have hfun : (fun y => P i j y Q2) = p i j := funext fun y => h i j y Q2
+  rw [hfun]
 
 /-!
 

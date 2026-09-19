@@ -116,14 +116,16 @@ lemma siversAsymmetry_eq_projectedRatio_of_harmonicDecomposition
           (siversAngularObservable F x zHad Q2 pT)
         = (2 * F.FUT_sivers x zHad Q2 pT) *
             Harmonics.projectedMoment P Harmonics.sinPhiDiff Harmonics.sinPhiDiff := by
-              simpa [siversAngularObservable] using hScale
+              -- `simpa` closes at reducible transparency and cannot unfold the `def`;
+              -- `exact` elaborates at default transparency and can.
+              exact hScale
       _ = F.FUT_sivers x zHad Q2 pT := by
               rw [hOrth.sinPhiDiff_self]
               ring
   have hDen :
       Harmonics.projectedMoment P Harmonics.oneWeight
         (unpolarizedAngularObservable F x zHad Q2 pT) = F.FUU x zHad Q2 pT := by
-    simpa [unpolarizedAngularObservable] using hOrth.oneWeight_const (F.FUU x zHad Q2 pT)
+    exact hOrth.oneWeight_const (F.FUU x zHad Q2 pT)
   simp [siversAsymmetry, hNum, hDen]
 
 /-- Projection assumptions needed to identify projected Collins moments with model entries. -/
@@ -173,14 +175,14 @@ lemma collinsAsymmetry_eq_projectedRatio_of_harmonicDecomposition
           (collinsAngularObservable F x zHad Q2 pT)
         = (2 * F.FUT_collins x zHad Q2 pT) *
             Harmonics.projectedMoment P Harmonics.sinPhiSum Harmonics.sinPhiSum := by
-              simpa [collinsAngularObservable] using hScale
+              exact hScale
       _ = F.FUT_collins x zHad Q2 pT := by
               rw [hOrth.sinPhiSum_self]
               ring
   have hDen :
       Harmonics.projectedMoment P Harmonics.oneWeight
         (unpolarizedAngularObservable F x zHad Q2 pT) = F.FUU x zHad Q2 pT := by
-    simpa [unpolarizedAngularObservable] using hOrth.oneWeight_const (F.FUU x zHad Q2 pT)
+    exact hOrth.oneWeight_const (F.FUU x zHad Q2 pT)
   simp [collinsAsymmetry, hNum, hDen]
 
 /-- Sivers projection theorem: asymmetry equals the corresponding projected-moment ratio. -/
