@@ -259,32 +259,58 @@ coefficient function.
 
 This is the one place where the collinear form of the kernel is used, and it is the sanity check
 on the definition: with any other power of `z` in the kernel the factorization fails. -/
-@[sorryful]
 lemma integral_mellinIntegrand_of_mem (C f : ℝ → ℝ) (N : ℂ) {z : ℝ}
     (hz0 : 0 < z) (hz1 : z ≤ 1) (hC : MellinDisConvergent C N) :
     (∫ x in Set.Ioc (0 : ℝ) 1, mellinIntegrand C f N x z)
       = (z : ℂ) ^ (N - 1) * (f z : ℂ) * mellinDis C N := by
-  -- TODO(task/e1-mellin-convolution): this is the change-of-variables step and it is not proved.
-  -- The intended argument, in four steps:
-  --   1. On `(0,1]` the kernel's indicator restricts the domain: since `z ≤ 1`, the integrand
-  --      vanishes on `Set.Ioc z 1`, so the integral equals
-  --      `∫ x in Set.Ioc 0 z, x ^ (N - 1) * (z⁻¹ * C (x / z) * f z)`
-  --      (`collinearKernel_of_lt`, plus a set-restriction lemma such as
-  --      `MeasureTheory.setIntegral_eq_of_subset_of_forall_diff_eq_zero`, or `Set.indicator` and
-  --      `MeasureTheory.setIntegral_indicator` with `Set.Ioc_inter_Ioc`).
-  --   2. Substitute `x = z * u`. Via `intervalIntegral.integral_of_le` (both domains are `Ioc`
-  --      with ordered endpoints) and `intervalIntegral.integral_comp_mul_left` for `z ≠ 0`, this
-  --      is `z • ∫ u in Set.Ioc 0 1, (z * u) ^ (N - 1) * (z⁻¹ * C u * f z)`.
-  --   3. Factor the complex power: `((z * u : ℝ) : ℂ) ^ (N - 1) = z ^ (N - 1) * u ^ (N - 1)` for
-  --      `0 ≤ z`, `0 ≤ u` (`Complex.mul_cpow_ofReal_nonneg`, name unchecked). The explicit `z`
-  --      from the substitution cancels the kernel's `z⁻¹` (`mul_inv_cancel₀ hz0.ne'`), which is
-  --      the content of the theorem.
-  --   4. Pull the constants `z ^ (N - 1) * f z` out of the `u`-integral
-  --      (`MeasureTheory.integral_const_mul`), leaving `mellinDis C N`.
-  -- `hC` is needed in step 2 only to know the substituted integrand is integrable, so that the
-  -- change-of-variables lemma is not applied to a divergent integral; if the route above turns
-  -- out not to need it, drop the hypothesis rather than leaving it unused.
-  sorry
+  -- (1) The kernel's indicator restricts the domain: for `z < x` the kernel vanishes, so on
+  -- `Ioc 0 1` the integrand is supported in `Ioc 0 z` (which sits inside `Ioc 0 1` as `z ≤ 1`).
+  have hmeasz : MeasurableSet (Set.Ioc (0 : ℝ) z) := measurableSet_Ioc
+  have hinter : Set.Ioc (0 : ℝ) 1 ∩ Set.Ioc (0 : ℝ) z = Set.Ioc (0 : ℝ) z := by
+    rw [Set.Ioc_inter_Ioc, max_self, min_eq_right hz1]
+  have step1 : (∫ x in Set.Ioc (0 : ℝ) 1, mellinIntegrand C f N x z)
+      = ∫ x in Set.Ioc (0 : ℝ) z, mellinIntegrand C f N x z := by
+    rw [← hinter, ← MeasureTheory.setIntegral_indicator hmeasz]
+    refine MeasureTheory.setIntegral_congr_fun measurableSet_Ioc fun x hxmem => ?_
+    by_cases hx : x ∈ Set.Ioc (0 : ℝ) z
+    · simp [Set.indicator_of_mem, hx]
+    · -- `x` is in `Ioc 0 1` but not in `Ioc 0 z`, and `0 < x`, so `z < x`
+      have hzx : z < x := by
+        by_contra h
+        exact hx ⟨hxmem.1, not_lt.1 h⟩
+      simp [Set.indicator_of_notMem, hx, mellinIntegrand, integrand,
+        collinearKernel_of_lt C hzx]
+  -- (2) Substitute `x = z * u`, via the interval integral.
+  have hz' : z ≠ 0 := ne_of_gt hz0
+  have step2 : (∫ x in Set.Ioc (0 : ℝ) z, mellinIntegrand C f N x z)
+      = z • ∫ u in Set.Ioc (0 : ℝ) 1, mellinIntegrand C f N (z * u) z := by
+    have hcv := intervalIntegral.integral_comp_mul_left
+      (a := (0 : ℝ)) (b := 1) (c := z) (f := fun x => mellinIntegrand C f N x z) hz'
+    rw [mul_zero, mul_one] at hcv
+    rw [← intervalIntegral.integral_of_le hz0.le, ← intervalIntegral.integral_of_le zero_le_one,
+      hcv, smul_smul, mul_inv_cancel₀ hz', one_smul]
+  -- (3) On `Ioc 0 1` the substituted integrand factorises, and the explicit `z` from the
+  -- substitution cancels the kernel's `z⁻¹` -- which is the content of the theorem.
+  have step3 : ∀ u ∈ Set.Ioc (0 : ℝ) 1,
+      mellinIntegrand C f N (z * u) z
+        = (z : ℂ) ^ (N - 1) * (f z : ℂ) * ((z : ℂ))⁻¹ * ((u : ℂ) ^ (N - 1) * (C u : ℂ)) := by
+    intro u hu
+    have hu0 : (0 : ℝ) < u := hu.1
+    have hzu : z * u ≤ z := by nlinarith [hu.2, hz0]
+    have hdiv : z * u / z = u := by field_simp
+    simp only [mellinIntegrand, integrand, collinearKernel_of_mem C hz0 hzu, hdiv,
+      Complex.ofReal_mul, Complex.ofReal_inv]
+    rw [Complex.mul_cpow_ofReal_nonneg hz0.le hu0.le]
+    ring
+  rw [step1, step2, MeasureTheory.setIntegral_congr_fun measurableSet_Ioc step3]
+  -- (4) Pull the constants out; what is left is exactly `mellinDis C N`.
+  rw [MeasureTheory.integral_const_mul]
+  simp only [mellinDis]
+  -- the `z` from the substitution cancels the kernel's `z⁻¹`. Note the scalar is a REAL
+  -- number acting on `ℂ`, so `smul_eq_mul` does not apply; `Complex.real_smul` does.
+  rw [Complex.real_smul]
+  have hzC : (z : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hz'
+  field_simp
 
 /-- **The Mellin convolution theorem.** On the strip where both transforms converge absolutely
 and the two-variable integrand is jointly integrable, the Mellin transform of the collinear
