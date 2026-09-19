@@ -70,15 +70,28 @@ Requirements:
 
   - description: "The key data structure `TemperatureUnit`, a choice of temperature scale carrying a positive scale factor, is defined."
     done: true
-    location: "Physlib/Thermodynamics/Temperature/TemperatureUnits.lean (TemperatureUnit, val_ne_zero, val_pos, Inhabited TemperatureUnit)"
+    location: >
+      Physlib/Thermodynamics/Temperature/TemperatureUnits.lean (TemperatureUnit);
+      Physlib/Units/PositiveRealUnit.lean
+      (PositiveRealUnitCore, PositiveRealUnitCore.val_ne_zero, PositiveRealUnitCore.pos,
+      PositiveRealUnitCore.instInhabited)
 
   - description: "The API contains the ratio of two temperature units as a nonnegative real, with its positivity and its reflexivity, symmetry and composition properties."
     done: true
-    location: "Physlib/Thermodynamics/Temperature/TemperatureUnits.lean (HDiv TemperatureUnit TemperatureUnit ℝ≥0, div_eq_val, div_ne_zero, div_pos, div_self, div_symm, div_mul_div, div_mul_div_coe)"
+    location: >
+      Physlib/Units/PositiveRealUnit.lean
+      (PositiveRealUnitCore.instHDiv, PositiveRealUnitCore.div_eq_val,
+      PositiveRealUnitCore.div_ne_zero, PositiveRealUnitCore.div_pos,
+      PositiveRealUnitCore.div_self, PositiveRealUnitCore.div_symm,
+      PositiveRealUnitCore.div_mul_div, PositiveRealUnitCore.div_mul_div_coe)
 
   - description: "The API contains the rescaling of a temperature unit by a positive real, with the ratios it induces and its composition law."
     done: true
-    location: "Physlib/Thermodynamics/Temperature/TemperatureUnits.lean (scale, scale_div_self, self_div_scale, scale_one, scale_div_scale, scale_scale)"
+    location: >
+      Physlib/Units/PositiveRealUnit.lean
+      (PositiveRealUnitCore.scale, PositiveRealUnitCore.scale_div_self,
+      PositiveRealUnitCore.self_div_scale, PositiveRealUnitCore.scale_one,
+      PositiveRealUnitCore.scale_div_scale, PositiveRealUnitCore.scale_scale)
 
   - description: "The API contains kelvin as the reference temperature unit, together with the units obtained from it by rescaling."
     done: true

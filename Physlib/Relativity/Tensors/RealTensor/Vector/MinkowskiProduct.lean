@@ -172,6 +172,29 @@ lemma minkowskiProduct_self_le_timeComponent_sq {d : ℕ} (p : Vector d) :
   rw [minkowskiProduct_self_eq_timeComponent_spatialPart]
   simp
 
+/-- `⟪u, u⟫ₘ = (u⁰)² - ‖u_spatial‖²`. -/
+lemma minkowskiProduct_self_eq_sq_sub {d : ℕ} (u : Vector d) :
+    ⟪u, u⟫ₘ = u.timeComponent ^ 2 - ‖u.spatialPart‖ ^ 2 := by
+  rw [minkowskiProduct_self_eq_timeComponent_spatialPart, Real.norm_eq_abs, sq_abs]
+
+/-- `⟪u + v, u + v⟫ₘ = ⟪u, u⟫ₘ + 2 ⟪u, v⟫ₘ + ⟪v, v⟫ₘ`. -/
+lemma minkowskiProduct_add_self {d : ℕ} (u v : Vector d) :
+    ⟪u + v, u + v⟫ₘ = ⟪u, u⟫ₘ + 2 * ⟪u, v⟫ₘ + ⟪v, v⟫ₘ := by
+  simp only [map_add, _root_.add_apply]
+  rw [minkowskiProduct_symm v u]
+  ring
+
+/-- `⟪μ • u, μ • u⟫ₘ = μ² ⟪u, u⟫ₘ`. -/
+lemma minkowskiProduct_smul_self {d : ℕ} (μ : ℝ) (u : Vector d) :
+    ⟪μ • u, μ • u⟫ₘ = μ ^ 2 * ⟪u, u⟫ₘ := by
+  simp only [map_smul, _root_.smul_apply, smul_eq_mul]
+  ring
+
+/-- `√⟪μ • u, μ • u⟫ₘ = μ √⟪u, u⟫ₘ` for `μ ≥ 0`. -/
+lemma sqrt_minkowskiProduct_smul_self {d : ℕ} {μ : ℝ} (hμ : 0 ≤ μ) (u : Vector d) :
+    √⟪μ • u, μ • u⟫ₘ = μ * √⟪u, u⟫ₘ := by
+  rw [minkowskiProduct_smul_self, Real.sqrt_mul (sq_nonneg μ), Real.sqrt_sq hμ]
+
 @[simp]
 lemma minkowskiProduct_basis_left {d : ℕ} (μ : Fin 1 ⊕ Fin d) (p : Vector d) :
     ⟪basis μ, p⟫ₘ = minkowskiMatrix μ μ * p μ := by

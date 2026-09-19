@@ -31,12 +31,13 @@ small oscillations of the pendulum.
 The equivalence carries the whole solution theory of the oscillator over to the small
 oscillations. Every choice of initial angle and initial angular velocity determines a smooth
 small-angle motion, unique among the smooth solutions of the linearized equation of motion,
-with the closed form `cos (ω t) x₀ + (sin (ω t)/ω) v₀`; released from rest at the angle `θ₀`
-it is the cosine `θ₀ cos (ω t)`. Every small-angle motion is periodic with the small-angle
-period `2π √(ℓ/g)`, in which neither the mass of the bob nor the amplitude of the swing
-appears: within the linearization the pendulum is isochronous. The linearization is not exact,
-and the final section measures what it discards: the torque differs from its linearization
-`-m g ℓ θ` by exactly `m g ℓ (θ - sin θ)`, of norm at most `m g ℓ ‖θ‖³/6`, so every
+with the closed form `cos (ω t) x₀ + (sin (ω t)/ω) v₀`. Every small-angle motion is periodic
+with the small-angle period `2π √(ℓ/g)`, in which neither the mass of the bob nor the amplitude
+of the swing appears: within the linearization the pendulum is isochronous. The small-angle
+motion released from rest at a given angle, the cosine `θ₀ cos (ω t)`, and its properties are
+recorded in the companion module `SimplePendulum/ReleasedFromRest.lean`. The linearization is
+not exact, and the final section measures what it discards: the torque differs from its
+linearization `-m g ℓ θ` by exactly `m g ℓ (θ - sin θ)`, of norm at most `m g ℓ ‖θ‖³/6`, so every
 small-angle motion solves the equation of motion of the pendulum itself up to a residual
 cubically small in the angle.
 
@@ -64,16 +65,11 @@ cubically small in the angle.
 - `SimplePendulum.linearized_unique`: a smooth solution of the linearized equation of motion
   with the initial data of `IC` is `smallAngleTrajectory IC`. Together with the previous point,
   this is the existence and uniqueness of the small-angle motions.
-- `SimplePendulum.releasedFromRest` is the small-angle motion released from rest at angle
-  `θ₀`, the cosine `θ₀ cos (ω t)`; `releasedFromRest_eq` identifies it with the small-angle
-  trajectory of the initial conditions with initial angle `θ₀` and zero initial angular
-  velocity.
 - `SimplePendulum.smallAnglePeriod` is the period of the small oscillations, the period of the
   associated harmonic oscillator: `2π/ω` (`smallAnglePeriod_eq_two_pi_div_ω`), with closed
   form `2π √(ℓ/g)` (`smallAnglePeriod_eq`). Every small-angle trajectory is periodic with this
-  period (`smallAngleTrajectory_periodic`, `releasedFromRest_periodic`), and along each the
-  energy of the associated oscillator is the constant fixed by the initial data
-  (`smallAngleTrajectory_energy`).
+  period (`smallAngleTrajectory_periodic`), and along each the energy of the associated
+  oscillator is the constant fixed by the initial data (`smallAngleTrajectory_energy`).
 - `SimplePendulum.torque_sub_toHarmonicOscillator_force` computes the exact difference between
   the torque and the force of the associated oscillator: the term `m g ℓ (θ - sin θ)` the
   linearization discards. Its norm is at most `m g ℓ ‖θ‖³/6`
@@ -99,7 +95,6 @@ cubically small in the angle.
 - C. Small-angle trajectories
   - C.1. The trajectory of given initial conditions
   - C.2. Existence and uniqueness
-  - C.3. Release from rest
 - D. The small-angle period
   - D.1. The period and its closed form
   - D.2. Periodicity and the energy of the small-angle motions
@@ -383,52 +378,6 @@ lemma linearized_unique (IC : HarmonicOscillator.InitialConditions)
 
 /-!
 
-### C.3. Release from rest
-
-The classical small-angle experiment: the pendulum is displaced to an angle `θ₀` and released
-from rest. Its small-angle motion is the cosine `θ₀ cos (ω t)`, the small-angle trajectory of
-the initial conditions with initial angle `θ₀` and zero initial angular velocity; it starts at
-the angle `θ₀` with vanishing angular velocity, and satisfies the linearized equation of
-motion.
-
--/
-
-/-- The small-angle motion of the pendulum released from rest at initial angle `θ₀`: the
-  cosine `θ₀ cos (ω t)` of angular frequency `ω`. -/
-noncomputable def releasedFromRest (θ₀ : ℝ) : Time → EuclideanSpace ℝ (Fin 1) :=
-  fun t => Real.cos (S.ω * t.val) • EuclideanSpace.single (0 : Fin 1) θ₀
-
-/-- The motion released from rest at angle `θ₀` is the small-angle trajectory of the initial
-  conditions with initial angle `θ₀` and zero initial angular velocity. -/
-lemma releasedFromRest_eq (θ₀ : ℝ) :
-    S.releasedFromRest θ₀ = S.smallAngleTrajectory ⟨EuclideanSpace.single 0 θ₀, 0⟩ := by
-  funext t
-  ext i
-  simp [releasedFromRest, smallAngleTrajectory,
-    HarmonicOscillator.InitialConditions.trajectory, toHarmonicOscillator_ω]
-
-/-- At time `0` the motion released from rest at angle `θ₀` is at the angle `θ₀`. -/
-@[simp]
-lemma releasedFromRest_at_zero (θ₀ : ℝ) :
-    S.releasedFromRest θ₀ 0 = EuclideanSpace.single 0 θ₀ := by
-  simp [releasedFromRest]
-
-/-- The motion released from rest at angle `θ₀` is genuinely released from rest: its angular
-  velocity at time `0` vanishes. -/
-@[simp]
-lemma releasedFromRest_velocity_at_zero (θ₀ : ℝ) : ∂ₜ (S.releasedFromRest θ₀) 0 = 0 := by
-  rw [S.releasedFromRest_eq θ₀]
-  exact S.smallAngleTrajectory_velocity_at_zero ⟨EuclideanSpace.single 0 θ₀, 0⟩
-
-/-- The motion released from rest at angle `θ₀` satisfies the linearized equation of
-  motion. -/
-lemma releasedFromRest_linearizedEquationOfMotion (θ₀ : ℝ) :
-    S.LinearizedEquationOfMotion (S.releasedFromRest θ₀) := by
-  rw [S.releasedFromRest_eq θ₀]
-  exact S.smallAngleTrajectory_linearizedEquationOfMotion ⟨EuclideanSpace.single 0 θ₀, 0⟩
-
-/-!
-
 ## D. The small-angle period
 
 The associated harmonic oscillator completes one oscillation in the time `2π/ω`, and its
@@ -487,13 +436,6 @@ value fixed by the initial data.
 lemma smallAngleTrajectory_periodic (IC : HarmonicOscillator.InitialConditions) :
     Function.Periodic (S.smallAngleTrajectory IC) (S.smallAnglePeriod : Time) :=
   HarmonicOscillator.trajectory_periodic S.toHarmonicOscillator IC
-
-/-- The motion released from rest at angle `θ₀` is periodic with the small-angle period: after
-  each time `2π √(ℓ/g)` the motion returns to the angle `θ₀` with zero angular velocity. -/
-lemma releasedFromRest_periodic (θ₀ : ℝ) :
-    Function.Periodic (S.releasedFromRest θ₀) (S.smallAnglePeriod : Time) := by
-  rw [S.releasedFromRest_eq θ₀]
-  exact S.smallAngleTrajectory_periodic ⟨EuclideanSpace.single 0 θ₀, 0⟩
 
 /-- Along a small-angle trajectory the energy of the associated harmonic oscillator is the
   constant `½ (I ‖v₀‖² + m g ℓ ‖IC.x₀‖²)` fixed by the initial data: the rotational kinetic term

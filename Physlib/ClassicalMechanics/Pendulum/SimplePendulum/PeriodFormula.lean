@@ -43,7 +43,10 @@ theorem the formula is named for, and its formalization — the quarter period a
 time, the quadrature of the energy first integral, the substitution, and their assembly, on top
 of the uniqueness of solutions and the time-reversal symmetry of the equation of motion
 (formalized in the companion module `SimplePendulum/Solution.lean`) — is not yet carried out;
-the `TODO` after the definition lists the milestones. Until then
+the `TODO` after the definition lists the milestones. The pointwise energy first integral itself,
+`θ̇² = (2g/ℓ)(cos θ - cos θ₀)`, is now proved in the companion module
+`SimplePendulum/ReleasedFromRest.lean`; turning it into the quarter period as a definite integral
+remains open, along with the rest of the milestones below. Until then
 `periodFormula` is a definition, and the statements about it are statements about the elliptic
 integral.
 
@@ -140,14 +143,22 @@ TODO "Prove that `periodFormula θ₀` is the period of the motion of the simple
   symmetry of the equation of motion, so that the motion released from rest is even in time and
   its period is four times the time of descent to the bottom — are formalized in a companion
   module, `SimplePendulum/Solution.lean` (`SimplePendulum.equationOfMotion_unique`,
-  `SimplePendulum.releasedFromRest_even`); remaining here:
-  (3) the quarter period as the first hitting time of `θ = 0` by the motion released from rest;
-  (4) the quadrature of the energy first integral on the descent, `θ̇² = (2g/ℓ)(cos θ - cos θ₀)`,
-  giving the quarter period as `√(ℓ/(2g)) ∫ θ in 0..θ₀, (cos θ - cos θ₀)^(-1/2)`;
+  `SimplePendulum.releasedFromRest_even`). The pointwise half of milestone 4, the energy first
+  integral `θ̇² = (2g/ℓ)(cos θ - cos θ₀)`, is formalized in a further companion module,
+  `SimplePendulum/ReleasedFromRest.lean`
+  (`SimplePendulum.sq_deriv_eq_of_isSolution_of_deriv_zero'`); remaining:
+  (3) the quarter period as the first hitting time of `θ = 0` by the motion released from rest,
+  which needs the monotonicity of the descent from `θ₀` to `0` — not yet formalized — as an
+  input;
+  (4) turning the pointwise energy first integral above into the quarter period as a definite
+  integral, `√(ℓ/(2g)) ∫ θ in 0..θ₀, (cos θ - cos θ₀)^(-1/2)`, by a change of variables from time
+  to the angle along the (monotonic) descent;
   (5) the substitution `sin (θ/2) = sin (θ₀/2) sin φ`, which transforms that integral into
-  `√(ℓ/g) completeEllipticK (sin² (θ₀/2))`;
+  `√(ℓ/g) completeEllipticK (sin² (θ₀/2))`, including the justification that the resulting
+  improper integral, singular at `θ = θ₀`, converges;
   (6) the assembly of (1)–(5) into the theorem that the motion released from rest at `θ₀` is
-  periodic with period `periodFormula θ₀`."
+  periodic with period `periodFormula θ₀`, which needs the motion to be defined for all time —
+  only local existence (`SimplePendulum.exists_local_solution`) is formalized so far."
 
 /-- The period formula is even in the amplitude, `periodFormula (-θ₀) = periodFormula θ₀`: its
   parameter `sin² (θ₀/2)` is even in `θ₀`. -/

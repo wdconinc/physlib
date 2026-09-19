@@ -6,6 +6,7 @@ Authors: Nicolas Rouquette
 module
 
 public import Physlib.Units.UnitSystem
+public import Physlib.Units.PositiveRealUnit
 public import Physlib.Units.ISQDimensionBase
 /-!
 
@@ -24,8 +25,8 @@ temperature, amount of substance and luminous intensity. Four of the correspondi
 unit types already exist (`LengthUnit`, `MassUnit`, `TimeUnit`, `TemperatureUnit`); the
 remaining three — `CurrentUnit`, `AmountUnit`, `LuminousIntensityUnit` — are introduced
 here. They follow the `LengthUnit` convention of a positive-real magnitude and support
-rescaling; the remaining unit-ratio relation API can be filled in later and, following
-PhysLib's layout, they would ultimately live under the relevant physics directories.
+rescaling and unit-ratio laws through `PositiveRealUnitCore`. Following PhysLib's
+layout, these types may ultimately live under the relevant physics directories.
 
 `SIUnitChoices := UnitSystem ISQDimensionBase` is then the typed SI unit choice, and
 `SIUnitChoices.SI` is the coherent SI choice (metre, kilogram, second, ampere, kelvin,
@@ -53,58 +54,16 @@ structure CurrentUnit where
   val : ℝ
   property : 0 < val
 
+instance : PositiveRealUnitCore CurrentUnit where
+  val := CurrentUnit.val
+  pos := CurrentUnit.property
+  ofVal := fun r hr => ⟨r, hr⟩
+  val_ofVal := by intros; rfl
+  ofVal_val := by intro x; cases x; rfl
+
 namespace CurrentUnit
 
-@[simp]
-lemma val_ne_zero (x : CurrentUnit) : x.val ≠ 0 := Ne.symm (ne_of_lt x.property)
-
-lemma val_pos (x : CurrentUnit) : 0 < x.val := x.property
-
-instance : Inhabited CurrentUnit where
-  default := ⟨1, by norm_num⟩
-
-noncomputable instance : HDiv CurrentUnit CurrentUnit ℝ≥0 where
-  hDiv x t := ⟨x.val / t.val, div_nonneg x.val_pos.le t.val_pos.le⟩
-
-lemma div_eq_val (x y : CurrentUnit) :
-    x / y = (⟨x.val / y.val, div_nonneg x.val_pos.le y.val_pos.le⟩ : ℝ≥0) := rfl
-
-/-- Scale a unit of electric current by a positive real factor. -/
-def scale (r : ℝ) (x : CurrentUnit) (hr : 0 < r := by norm_num) : CurrentUnit :=
-  ⟨r * x.val, mul_pos hr x.val_pos⟩
-
-@[simp]
-lemma scale_div_self (x : CurrentUnit) (r : ℝ) (hr : 0 < r) :
-    scale r x hr / x = (⟨r, le_of_lt hr⟩ : ℝ≥0) := by
-  simp [scale, div_eq_val]
-  rfl
-
-@[simp]
-lemma self_div_scale (x : CurrentUnit) (r : ℝ) (hr : 0 < r) :
-    x / scale r x hr =
-      (⟨1 / r, _root_.div_nonneg (by simp) (le_of_lt hr)⟩ : ℝ≥0) := by
-  simp [scale, div_eq_val]
-  field_simp
-
-@[simp]
-lemma scale_one (x : CurrentUnit) : scale 1 x = x := by
-  simp [scale]
-
-@[simp]
-lemma scale_div_scale
-    (x1 x2 : CurrentUnit) {r1 r2 : ℝ} (hr1 : 0 < r1) (hr2 : 0 < r2) :
-    scale r1 x1 hr1 / scale r2 x2 hr2 =
-      (⟨r1, le_of_lt hr1⟩ / ⟨r2, le_of_lt hr2⟩) * (x1 / x2) := by
-  refine NNReal.eq ?_
-  show r1 * x1.val / (r2 * x2.val) = r1 / r2 * (x1.val / x2.val)
-  rw [div_mul_div_comm]
-
-@[simp]
-lemma scale_scale (x : CurrentUnit) (r1 r2 : ℝ) (hr1 : 0 < r1) (hr2 : 0 < r2) :
-    scale r1 (scale r2 x hr2) hr1 =
-      scale (r1 * r2) x (mul_pos hr1 hr2) := by
-  simp [scale]
-  ring
+open PositiveRealUnitCore
 
 /-- The SI coherent unit of electric current, the ampere. -/
 def amperes : CurrentUnit := ⟨1, by norm_num⟩
@@ -122,58 +81,16 @@ structure AmountUnit where
   val : ℝ
   property : 0 < val
 
+instance : PositiveRealUnitCore AmountUnit where
+  val := AmountUnit.val
+  pos := AmountUnit.property
+  ofVal := fun r hr => ⟨r, hr⟩
+  val_ofVal := by intros; rfl
+  ofVal_val := by intro x; cases x; rfl
+
 namespace AmountUnit
 
-@[simp]
-lemma val_ne_zero (x : AmountUnit) : x.val ≠ 0 := Ne.symm (ne_of_lt x.property)
-
-lemma val_pos (x : AmountUnit) : 0 < x.val := x.property
-
-instance : Inhabited AmountUnit where
-  default := ⟨1, by norm_num⟩
-
-noncomputable instance : HDiv AmountUnit AmountUnit ℝ≥0 where
-  hDiv x t := ⟨x.val / t.val, div_nonneg x.val_pos.le t.val_pos.le⟩
-
-lemma div_eq_val (x y : AmountUnit) :
-    x / y = (⟨x.val / y.val, div_nonneg x.val_pos.le y.val_pos.le⟩ : ℝ≥0) := rfl
-
-/-- Scale a unit of amount of substance by a positive real factor. -/
-def scale (r : ℝ) (x : AmountUnit) (hr : 0 < r := by norm_num) : AmountUnit :=
-  ⟨r * x.val, mul_pos hr x.val_pos⟩
-
-@[simp]
-lemma scale_div_self (x : AmountUnit) (r : ℝ) (hr : 0 < r) :
-    scale r x hr / x = (⟨r, le_of_lt hr⟩ : ℝ≥0) := by
-  simp [scale, div_eq_val]
-  rfl
-
-@[simp]
-lemma self_div_scale (x : AmountUnit) (r : ℝ) (hr : 0 < r) :
-    x / scale r x hr =
-      (⟨1 / r, _root_.div_nonneg (by simp) (le_of_lt hr)⟩ : ℝ≥0) := by
-  simp [scale, div_eq_val]
-  field_simp
-
-@[simp]
-lemma scale_one (x : AmountUnit) : scale 1 x = x := by
-  simp [scale]
-
-@[simp]
-lemma scale_div_scale
-    (x1 x2 : AmountUnit) {r1 r2 : ℝ} (hr1 : 0 < r1) (hr2 : 0 < r2) :
-    scale r1 x1 hr1 / scale r2 x2 hr2 =
-      (⟨r1, le_of_lt hr1⟩ / ⟨r2, le_of_lt hr2⟩) * (x1 / x2) := by
-  refine NNReal.eq ?_
-  show r1 * x1.val / (r2 * x2.val) = r1 / r2 * (x1.val / x2.val)
-  rw [div_mul_div_comm]
-
-@[simp]
-lemma scale_scale (x : AmountUnit) (r1 r2 : ℝ) (hr1 : 0 < r1) (hr2 : 0 < r2) :
-    scale r1 (scale r2 x hr2) hr1 =
-      scale (r1 * r2) x (mul_pos hr1 hr2) := by
-  simp [scale]
-  ring
+open PositiveRealUnitCore
 
 /-- The SI coherent unit of amount of substance, the mole. -/
 def moles : AmountUnit := ⟨1, by norm_num⟩
@@ -187,65 +104,16 @@ structure LuminousIntensityUnit where
   val : ℝ
   property : 0 < val
 
+instance : PositiveRealUnitCore LuminousIntensityUnit where
+  val := LuminousIntensityUnit.val
+  pos := LuminousIntensityUnit.property
+  ofVal := fun r hr => ⟨r, hr⟩
+  val_ofVal := by intros; rfl
+  ofVal_val := by intro x; cases x; rfl
+
 namespace LuminousIntensityUnit
 
-@[simp]
-lemma val_ne_zero (x : LuminousIntensityUnit) : x.val ≠ 0 := Ne.symm (ne_of_lt x.property)
-
-lemma val_pos (x : LuminousIntensityUnit) : 0 < x.val := x.property
-
-instance : Inhabited LuminousIntensityUnit where
-  default := ⟨1, by norm_num⟩
-
-noncomputable instance : HDiv LuminousIntensityUnit LuminousIntensityUnit ℝ≥0 where
-  hDiv x t := ⟨x.val / t.val, div_nonneg x.val_pos.le t.val_pos.le⟩
-
-lemma div_eq_val (x y : LuminousIntensityUnit) :
-    x / y = (⟨x.val / y.val, div_nonneg x.val_pos.le y.val_pos.le⟩ : ℝ≥0) := rfl
-
-/-- Scale a unit of luminous intensity by a positive real factor. -/
-def scale
-    (r : ℝ) (x : LuminousIntensityUnit) (hr : 0 < r := by norm_num) :
-    LuminousIntensityUnit :=
-  ⟨r * x.val, mul_pos hr x.val_pos⟩
-
-@[simp]
-lemma scale_div_self (x : LuminousIntensityUnit) (r : ℝ) (hr : 0 < r) :
-    scale r x hr / x = (⟨r, le_of_lt hr⟩ : ℝ≥0) := by
-  simp [scale, div_eq_val]
-  rfl
-
-@[simp]
-lemma self_div_scale (x : LuminousIntensityUnit) (r : ℝ) (hr : 0 < r) :
-    x / scale r x hr =
-      (⟨1 / r, _root_.div_nonneg (by simp) (le_of_lt hr)⟩ : ℝ≥0) := by
-  simp [scale, div_eq_val]
-  field_simp
-
-@[simp]
-lemma scale_one (x : LuminousIntensityUnit) : scale 1 x = x := by
-  simp [scale]
-
-@[simp]
-lemma scale_div_scale
-    (x1 x2 : LuminousIntensityUnit)
-    {r1 r2 : ℝ}
-    (hr1 : 0 < r1) (hr2 : 0 < r2) :
-    scale r1 x1 hr1 / scale r2 x2 hr2 =
-      (⟨r1, le_of_lt hr1⟩ / ⟨r2, le_of_lt hr2⟩) * (x1 / x2) := by
-  refine NNReal.eq ?_
-  show r1 * x1.val / (r2 * x2.val) = r1 / r2 * (x1.val / x2.val)
-  rw [div_mul_div_comm]
-
-@[simp]
-lemma scale_scale
-    (x : LuminousIntensityUnit)
-    (r1 r2 : ℝ)
-    (hr1 : 0 < r1) (hr2 : 0 < r2) :
-    scale r1 (scale r2 x hr2) hr1 =
-      scale (r1 * r2) x (mul_pos hr1 hr2) := by
-  simp [scale]
-  ring
+open PositiveRealUnitCore
 
 /-- The SI coherent unit of luminous intensity, the candela. -/
 def candelas : LuminousIntensityUnit := ⟨1, by norm_num⟩
@@ -273,11 +141,11 @@ noncomputable instance : UnitMagnitudeCatalog ISQDimensionBase where
   mag {b} :=
     match b with
     | .length | .mass | .time | .current | .temperature | .amount | .luminousIntensity =>
-        fun u => ⟨u.val, u.val_pos.le⟩
+        fun u => ⟨u.val, u.property.le⟩
   mag_pos {b} :=
     match b with
     | .length | .mass | .time | .current | .temperature | .amount | .luminousIntensity =>
-        fun u => NNReal.coe_pos.mp u.val_pos
+        fun u => NNReal.coe_pos.mp u.property
 
 /-!
 

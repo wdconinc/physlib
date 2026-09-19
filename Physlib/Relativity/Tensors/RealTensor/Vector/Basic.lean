@@ -450,6 +450,22 @@ lemma inner_basis {d : ℕ} (p : Lorentz.Vector d) (μ : Fin 1 ⊕ Fin d) :
     ⟪p, Lorentz.Vector.basis μ⟫_ℝ = p μ := by
   simp [inner_eq_sum]
 
+/-- A vector with zero time component and zero spatial part is zero. -/
+lemma eq_zero_of_timeComponent_of_spatialPart {d : ℕ} {u : Vector d} (h0 : u.timeComponent = 0)
+    (hs : u.spatialPart = 0) : u = 0 := by
+  refine ext_of_apply fun i => ?_
+  rcases i with i | i
+  · fin_cases i
+    exact h0
+  · have := congrArg (fun x : EuclideanSpace ℝ (Fin d) => x i) hs
+    simpa [spatialPart_apply_eq_toCoord] using this
+
+/-- The spatial components of a vector whose spatial part has zero norm vanish. -/
+lemma apply_inr_eq_zero_of_norm_spatialPart {d : ℕ} {u : Vector d} (h : ‖u.spatialPart‖ = 0)
+    (i : Fin d) : u (Sum.inr i) = 0 := by
+  have := congrArg (fun x : EuclideanSpace ℝ (Fin d) => x i) (norm_eq_zero.mp h)
+  simpa [spatialPart_apply_eq_toCoord] using this
+
 end Vector
 
 end Lorentz

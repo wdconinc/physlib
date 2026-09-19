@@ -118,6 +118,9 @@ lemma ξ_nonneg : 0 ≤ Q.ξ i := (Q.ξ_pos i).le
 @[simp]
 lemma ξ_ne_zero : Q.ξ i ≠ 0 := (Q.ξ_pos i).ne'
 
+/-- The characteristic length is nonzero as a complex number. -/
+lemma ξ_ofReal_ne_zero : ((Q.ξ i : ℝ) : ℂ) ≠ 0 := by exact_mod_cast Q.ξ_ne_zero i
+
 lemma ξ_sq : (Q.ξ i) ^ 2 = ℏ / (Q.m * Q.ω i) := by rw [Q.ξ_eq]; field_simp; simp [← mul_rotate]
 
 lemma ξ_inv : (Q.ξ i)⁻¹ = √Q.m * √(Q.ω i) / √ℏ := by simp [ξ_eq]
