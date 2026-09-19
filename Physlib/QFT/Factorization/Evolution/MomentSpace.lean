@@ -140,17 +140,85 @@ constant `K T = (sup over that interval of |S.alphaS (exp τ)| / (2 * π)) * ‖
 finite because `S.alphaS_continuous` and `Real.continuous_exp` give continuity of
 `τ ↦ S.alphaS (exp τ)` and a continuous function on a compact interval is bounded
 (`IsCompact.exists_isMaxOn`). Then mathlib's Gronwall-based ODE uniqueness result
-(`ODE_solution_unique`, in `Mathlib/Analysis/ODE/Gronwall.lean`, in whichever form the
-pinned revision provides — its interval-restricted variants take
-`HasDerivWithinAt` hypotheses, obtained here from `HasDerivAt.hasDerivWithinAt`) gives
-`F = G` on that interval. Since `T` is arbitrary, `F = G` on `ℝ`. Note that the componentwise
-`IsMomentSolution` must first be converted to the vector-valued `HasDerivAt F ...` form,
-which is `hasDerivAt_pi` (name unverified). -/
+gives `F = G` on that interval.
+
+Checked against the pinned mathlib (2026-09-19), so the following are facts rather than
+guesses, and the proof below is built on them:
+
+* The right theorem is `ODE_solution_unique_of_mem_Icc`
+  (`Mathlib/Analysis/ODE/ExistUnique.lean`), whose Lipschitz hypothesis is restricted to
+  the interval, `∀ t ∈ Ioo a b, LipschitzOnWith K (v t) (s t)`.
+* `ODE_solution_unique_univ` does **not** apply, and this is not a matter of convenience:
+  it demands a single `K` valid for every `t`, whereas `alphaS ∘ exp` is only continuous,
+  not bounded on `ℝ`. Hence the compact-interval detour.
+* `hasDerivAt_pi` is the correct name for the componentwise-to-vector conversion
+  (`Mathlib/Analysis/Calculus/Deriv/Prod.lean`); the earlier note flagged it unverified.
+* The pi-norm lemmas wanted here are the *unprimed* `pi_norm_le_iff_of_nonneg` and
+  `norm_le_pi_norm`. The primed spellings are the multiplicative `to_additive` sources and
+  fail with a stuck `SeminormedGroup` instance. -/
 @[sorryful]
 lemma momentSolution_unique {ι : Type} [Fintype ι] (S : DglapMomentSystem ι) (N : ℂ)
     {F G : ℝ → ι → ℂ} (hF : IsMomentSolution S N F) (hG : IsMomentSolution S N G)
     (τ0 : ℝ) (h0 : F τ0 = G τ0) (τ : ℝ) :
     F τ = G τ := by
+  classical
+  set v : ℝ → (ι → ℂ) → (ι → ℂ) := fun t X => momentRhs S N t X with hvdef
+  -- the componentwise hypothesis is the vector-valued one, via `hasDerivAt_pi`
+  have hFd : ∀ t, HasDerivAt F (v t (F t)) t := fun t => hasDerivAt_pi.2 (fun i => hF i t)
+  have hGd : ∀ t, HasDerivAt G (v t (G t)) t := fun t => hasDerivAt_pi.2 (fun i => hG i t)
+  -- a compact interval containing both times in its interior
+  set a : ℝ := min τ0 τ - 1 with hadef
+  set b : ℝ := max τ0 τ + 1 with hbdef
+  have hmin : min τ0 τ ≤ max τ0 τ := min_le_max
+  have hτ0 : τ0 ∈ Set.Ioo a b :=
+    ⟨by simp only [hadef]; have := min_le_left τ0 τ; linarith,
+     by simp only [hbdef]; have := le_max_left τ0 τ; linarith⟩
+  have hτ : τ ∈ Set.Ioo a b :=
+    ⟨by simp only [hadef]; have := min_le_right τ0 τ; linarith,
+     by simp only [hbdef]; have := le_max_right τ0 τ; linarith⟩
+  -- the coupling is continuous, hence bounded on the compact interval
+  have hcont : ContinuousOn (fun t => |S.alphaS (Real.exp t)| / (2 * Real.pi))
+      (Set.Icc a b) :=
+    (((continuous_abs.comp (S.alphaS_continuous.comp Real.continuous_exp)).div_const _)).continuousOn
+  have hne : (Set.Icc a b).Nonempty := Set.nonempty_Icc.mpr (le_of_lt (hτ0.1.trans hτ0.2))
+  obtain ⟨tm, htm, hmax⟩ := isCompact_Icc.exists_isMaxOn hne hcont
+  set M : ℝ := |S.alphaS (Real.exp tm)| / (2 * Real.pi) with hMdef
+  have hM0 : 0 ≤ M := by positivity
+  -- a finite bound on the anomalous-dimension matrix
+  set Γ : ℝ := ∑ i : ι, ∑ j : ι, ‖S.gamma N i j‖ with hGdef
+  have hΓ0 : 0 ≤ Γ := Finset.sum_nonneg fun _ _ => Finset.sum_nonneg fun _ _ => norm_nonneg _
+  refine ODE_solution_unique_of_mem_Icc (K := ⟨M * Γ, by positivity⟩)
+    (s := fun _ => Set.univ) ?_ hτ0
+    (fun t _ => (hFd t).continuousAt.continuousWithinAt)
+    (fun t _ => hFd t) (fun _ _ => Set.mem_univ _)
+    (fun t _ => (hGd t).continuousAt.continuousWithinAt)
+    (fun t _ => hGd t) (fun _ _ => Set.mem_univ _) h0 (Set.mem_Icc_of_Ioo hτ)
+  -- the vector field is Lipschitz on the interval, with the constant just built
+  intro t ht
+  refine LipschitzOnWith.of_dist_le_mul fun X _ Y _ => ?_
+  have hcoef : |S.alphaS (Real.exp t)| / (2 * Real.pi) ≤ M :=
+    hmax (Set.mem_Icc_of_Ioo ht)
+  simp only [dist_eq_norm] at *
+  -- the bound is `↑K * ‖X - Y‖`; `positivity` cannot see through the `set` locals in `K`
+  refine (pi_norm_le_iff_of_nonneg
+    (mul_nonneg (NNReal.coe_nonneg _) (norm_nonneg (X - Y)))).2 fun i => ?_
+  -- The one remaining gap, and it is purely the componentwise estimate:
+  --
+  --   ‖momentRhs S N t X i - momentRhs S N t Y i‖
+  --     = |αs (exp t) / (2π)| * ‖∑ j, γ N i j * (X j - Y j)‖
+  --     ≤ M * (∑ j, ‖γ N i j‖) * ‖X - Y‖   ≤   M * Γ * ‖X - Y‖,
+  --
+  -- by `norm_sum_le`, then `norm_le_pi_norm _ j` on each factor `‖X j - Y j‖`, then
+  -- `hcoef` on the scalar and `Finset.single_le_sum` to pass from the `i`-th row sum to
+  -- the full double sum `Γ`. Everything it needs is already in context (`hcoef`, `hM0`,
+  -- `hΓ0`). What defeated the attempts here was the rewriting, not the mathematics: the
+  -- `simp only [momentRhs, ...]` normal form and `gcongr`'s choice of side goals did not
+  -- line up, and this wants to be done by hand with explicit `calc` steps rather than by
+  -- `gcongr`.
+  --
+  -- Everything ABOVE this point is compiler-verified, including the application of
+  -- `ODE_solution_unique_of_mem_Icc` itself, so the shape of the argument is settled and
+  -- only this inequality is open.
   sorry
 
 /-- Global existence for the moment-space system.
