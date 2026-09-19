@@ -156,7 +156,6 @@ guesses, and the proof below is built on them:
 * The pi-norm lemmas wanted here are the *unprimed* `pi_norm_le_iff_of_nonneg` and
   `norm_le_pi_norm`. The primed spellings are the multiplicative `to_additive` sources and
   fail with a stuck `SeminormedGroup` instance. -/
-@[sorryful]
 lemma momentSolution_unique {ι : Type} [Fintype ι] (S : DglapMomentSystem ι) (N : ℂ)
     {F G : ℝ → ι → ℂ} (hF : IsMomentSolution S N F) (hG : IsMomentSolution S N G)
     (τ0 : ℝ) (h0 : F τ0 = G τ0) (τ : ℝ) :
@@ -202,24 +201,40 @@ lemma momentSolution_unique {ι : Type} [Fintype ι] (S : DglapMomentSystem ι) 
   -- the bound is `↑K * ‖X - Y‖`; `positivity` cannot see through the `set` locals in `K`
   refine (pi_norm_le_iff_of_nonneg
     (mul_nonneg (NNReal.coe_nonneg _) (norm_nonneg (X - Y)))).2 fun i => ?_
-  -- The one remaining gap, and it is purely the componentwise estimate:
-  --
-  --   ‖momentRhs S N t X i - momentRhs S N t Y i‖
-  --     = |αs (exp t) / (2π)| * ‖∑ j, γ N i j * (X j - Y j)‖
-  --     ≤ M * (∑ j, ‖γ N i j‖) * ‖X - Y‖   ≤   M * Γ * ‖X - Y‖,
-  --
-  -- by `norm_sum_le`, then `norm_le_pi_norm _ j` on each factor `‖X j - Y j‖`, then
-  -- `hcoef` on the scalar and `Finset.single_le_sum` to pass from the `i`-th row sum to
-  -- the full double sum `Γ`. Everything it needs is already in context (`hcoef`, `hM0`,
-  -- `hΓ0`). What defeated the attempts here was the rewriting, not the mathematics: the
-  -- `simp only [momentRhs, ...]` normal form and `gcongr`'s choice of side goals did not
-  -- line up, and this wants to be done by hand with explicit `calc` steps rather than by
-  -- `gcongr`.
-  --
-  -- Everything ABOVE this point is compiler-verified, including the application of
-  -- `ODE_solution_unique_of_mem_Icc` itself, so the shape of the argument is settled and
-  -- only this inequality is open.
-  sorry
+  -- The componentwise estimate. Done with explicit `calc` steps: `gcongr` picks side goals
+  -- that do not line up with `momentRhs`'s normal form here.
+  rw [Pi.sub_apply]
+  have hc : ‖((S.alphaS (Real.exp t) / (2 * Real.pi) : ℝ) : ℂ)‖ ≤ M := by
+    rw [Complex.norm_real, Real.norm_eq_abs, abs_div,
+      abs_of_pos (by positivity : (0 : ℝ) < 2 * Real.pi)]
+    exact hcoef
+  have hdiff : momentRhs S N t X i - momentRhs S N t Y i
+      = ((S.alphaS (Real.exp t) / (2 * Real.pi) : ℝ) : ℂ)
+          * ∑ j, S.gamma N i j * (X j - Y j) := by
+    simp only [momentRhs, Finset.mul_sum, ← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl fun j _ => by ring
+  have hrow : ‖∑ j, S.gamma N i j * (X j - Y j)‖
+      ≤ (∑ j, ‖S.gamma N i j‖) * ‖X - Y‖ := by
+    calc ‖∑ j, S.gamma N i j * (X j - Y j)‖
+        ≤ ∑ j, ‖S.gamma N i j * (X j - Y j)‖ := norm_sum_le _ _
+      _ ≤ ∑ j, ‖S.gamma N i j‖ * ‖X - Y‖ := by
+          refine Finset.sum_le_sum fun j _ => ?_
+          rw [norm_mul]
+          refine mul_le_mul_of_nonneg_left ?_ (norm_nonneg _)
+          simpa using norm_le_pi_norm (X - Y) j
+      _ = (∑ j, ‖S.gamma N i j‖) * ‖X - Y‖ := by rw [Finset.sum_mul]
+  have hrowΓ : (∑ j, ‖S.gamma N i j‖) ≤ Γ :=
+    Finset.single_le_sum (f := fun i' : ι => ∑ j : ι, ‖S.gamma N i' j‖)
+      (fun _ _ => Finset.sum_nonneg fun _ _ => norm_nonneg _) (Finset.mem_univ i)
+  calc ‖momentRhs S N t X i - momentRhs S N t Y i‖
+      = ‖((S.alphaS (Real.exp t) / (2 * Real.pi) : ℝ) : ℂ)‖
+          * ‖∑ j, S.gamma N i j * (X j - Y j)‖ := by rw [hdiff, norm_mul]
+    _ ≤ M * ((∑ j, ‖S.gamma N i j‖) * ‖X - Y‖) :=
+        mul_le_mul hc hrow (norm_nonneg _) hM0
+    _ ≤ M * (Γ * ‖X - Y‖) :=
+        mul_le_mul_of_nonneg_left
+          (mul_le_mul_of_nonneg_right hrowΓ (norm_nonneg _)) hM0
+    _ = M * Γ * ‖X - Y‖ := by ring
 
 /-- Global existence for the moment-space system.
 
