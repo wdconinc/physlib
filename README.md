@@ -119,8 +119,8 @@ before the merge. Both are filed with full diagnoses:
 - [#15](https://github.com/wdconinc/physlib/issues/15) — `QFT/PerturbationTheory/FeynmanDiagrams/TopologyEnumeration.lean`, 14 errors from 5 causes, 4 of them mechanical
 
 Note that both counts are floors rather than totals: Lake stops at a failing module and elaboration
-stops at the first error in a declaration, so more may surface as these clear. Everything else is
-green — style, spelling and the Python linters pass, and the root import list is complete.
+stops at the first error in a declaration, so more may surface as these clear. Outside those two files,
+spelling and the Python linters pass, and the root import list is complete.
 
 ## Requirements of the project
 
