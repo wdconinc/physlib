@@ -9,6 +9,15 @@ public import Mathlib
 public import Physlib.Relativity.MinkowskiMatrix
 public import Physlib.Mathematics.KroneckerDelta.Basic
 
+/-!
+# The Levi-Civita symbol
+
+The rank-4 Levi-Civita symbol in 3+1 dimensions, defined as a generalized Kronecker
+delta so that its contraction identities follow from the determinant formula in
+`Physlib.Mathematics.KroneckerDelta.Basic` rather than from case analysis on
+permutations.
+-/
+
 @[expose] public section
 
 open Matrix KroneckerDelta

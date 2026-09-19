@@ -731,7 +731,8 @@ private lemma laplace_castSucc_term' (μ ν : Fin n → ι) (i : Fin n) :
           simp [Fin.last]; omega
         rw [← pow_add, hsum]
         exact Odd.neg_one_pow (by use n - 1; omega)
-      have hpow' := congrArg (fun t : ℤ => t * Matrix.det (fun (p q : Fin n) => δℤ (μ p) (ν q))) hpow
+      have hpow' := congrArg
+        (fun t : ℤ => t * Matrix.det (fun (p q : Fin n) => δℤ (μ p) (ν q))) hpow
       simpa [mul_assoc] using hpow'
     simpa [kroneckerDelta] using hminor
   · intro l _ hl; simp [kroneckerDelta, Ne.symm hl]
@@ -960,7 +961,7 @@ encoded intrinsically by `ι`, and the full-rank condition is `Fintype.card ι =
 
 So this theorem is the main contraction law to use in downstream files. -/
 theorem generalizedKroneckerDelta_contraction (k n : ℕ) (hk : k ≤ n)
-  (hfull : Fintype.card ι = n)
+    (hfull : Fintype.card ι = n)
     (lam : Fin (n - k) → ι) (ω : Fin (n - k) → ι) :
     (∑ μ : Fin k → ι,
       generalizedKroneckerDelta

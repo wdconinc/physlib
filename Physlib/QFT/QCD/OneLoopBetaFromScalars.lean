@@ -54,7 +54,8 @@ lemma primitivePoleAssumptions_of_unitMasterPoles
     (hgCoeff : w.gluonCoeff = (5 / 3) * cf.cA)
     (hGhostCoeff : w.ghostCoeff = 2 * cf.cA)
     (hqCoeff : w.quarkCoeff = -(4 / 3) * cf.tF * cf.nF) :
-    PrimitivePoleAssumptions cf (primitivePolesOfMasters w gluonMaster ghostMaster quarkMaster) := by
+    PrimitivePoleAssumptions cf
+      (primitivePolesOfMasters w gluonMaster ghostMaster quarkMaster) := by
   refine {
     gluon_eq := ?_
     ghost_eq := ?_

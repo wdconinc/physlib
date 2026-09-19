@@ -33,7 +33,8 @@ structure CasimirDerivationAssumptions (D : NormalizedGeneratorData) : Type wher
   traceIdentity : Prop
   /-- Target statement for the fundamental Casimir operator, e.g. `\sum_a T^a T^a = C_F I`. -/
   fundamentalIdentity : Prop
-  /-- Target statement for the adjoint Casimir operator, e.g. `f^{acd} f^{bcd} = C_A \delta^{ab}`. -/
+  /-- Target statement for the adjoint Casimir operator,
+  e.g. `f^{acd} f^{bcd} = C_A \\delta^{ab}`. -/
   adjointIdentity : Prop
   /-- Proof of the trace identity target. -/
   hTraceIdentity : traceIdentity

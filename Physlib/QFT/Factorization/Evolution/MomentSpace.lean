@@ -178,7 +178,8 @@ lemma momentSolution_unique {ι : Type} [Fintype ι] (S : DglapMomentSystem ι) 
   -- the coupling is continuous, hence bounded on the compact interval
   have hcont : ContinuousOn (fun t => |S.alphaS (Real.exp t)| / (2 * Real.pi))
       (Set.Icc a b) :=
-    (((continuous_abs.comp (S.alphaS_continuous.comp Real.continuous_exp)).div_const _)).continuousOn
+    (((continuous_abs.comp
+      (S.alphaS_continuous.comp Real.continuous_exp)).div_const _)).continuousOn
   have hne : (Set.Icc a b).Nonempty := Set.nonempty_Icc.mpr (le_of_lt (hτ0.1.trans hτ0.2))
   obtain ⟨tm, htm, hmax⟩ := isCompact_Icc.exists_isMaxOn hne hcont
   set M : ℝ := |S.alphaS (Real.exp tm)| / (2 * Real.pi) with hMdef

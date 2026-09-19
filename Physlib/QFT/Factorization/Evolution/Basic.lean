@@ -46,7 +46,8 @@ a coupled system of integro-differential equations, one per flavor channel.
   this module was corrected the factor `1 / (2 * π)` was absent altogether.
 - The last two real arguments of `SplittingKernel` are the momentum-fraction ratio
   `y = x / z` and the scale `Q2`; they are *not* the pair `(x, z)`. The collinear structure
-  in `(x, z)` — the Jacobian and the support restriction — is supplied by `Convolution.collinearKernel`,
+  in `(x, z)` — the Jacobian and the support restriction — is supplied by
+  `Convolution.collinearKernel`,
   not by the kernel data. This differs from the earlier reading of the same type, under
   which `dglapOperator` was the general integral operator on `[0, 1]` with no Jacobian and
   no support restriction.
@@ -105,7 +106,8 @@ def dglapIntegrand
     (P : SplittingKernel Flavor)
     (f : Physlib.Particles.Parton.PDF.Pdf Flavor)
     (i j : Flavor) (x Q2 z : ℝ) : ℝ :=
-  Convolution.integrand (Convolution.collinearKernel (fun y => P i j y Q2)) (fun z' => f j z' Q2) x z
+  Convolution.integrand (Convolution.collinearKernel (fun y => P i j y Q2))
+    (fun z' => f j z' Q2) x z
 
 /-- The DGLAP convolution operator acting on flavor channel `i`:
 
@@ -121,7 +123,8 @@ def dglapOperator [Fintype Flavor]
     (P : SplittingKernel Flavor)
     (f : Physlib.Particles.Parton.PDF.Pdf Flavor)
     (i : Flavor) (x Q2 : ℝ) : ℝ :=
-  ∑ j, Convolution.convolveAt (Convolution.collinearKernel (fun y => P i j y Q2)) (fun z => f j z Q2) x
+  ∑ j, Convolution.convolveAt (Convolution.collinearKernel (fun y => P i j y Q2))
+    (fun z => f j z Q2) x
 
 /-- The DGLAP operator in terms of its named integrand. -/
 lemma dglapOperator_eq_sum_integral [Fintype Flavor]
@@ -138,7 +141,8 @@ lemma dglapOperator_zero_kernel [Fintype Flavor]
     (i : Flavor) (x Q2 : ℝ) :
     dglapOperator (fun _ _ _ _ => 0) f i x Q2 = 0 := by
   have h : ∀ j : Flavor,
-      Convolution.convolveAt (Convolution.collinearKernel (fun _ => (0 : ℝ))) (fun z => f j z Q2) x = 0 := by
+      Convolution.convolveAt (Convolution.collinearKernel (fun _ => (0 : ℝ)))
+        (fun z => f j z Q2) x = 0 := by
     intro j
     refine Convolution.convolveAt_eq_zero_of_integrand_zero _ _ _ ?_
     intro z

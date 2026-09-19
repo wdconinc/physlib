@@ -127,7 +127,8 @@ lemma toSelfAdjointMap_apply_pauliBasis'_inl (M : SL(2, ℂ)) :
 def toMatrix : SL(2, ℂ) →* Matrix (Fin 1 ⊕ Fin 3) (Fin 1 ⊕ Fin 3) ℝ where
   toFun M := LinearMap.toMatrix PauliMatrix.pauliBasis' PauliMatrix.pauliBasis' (toSelfAdjointMap M)
   map_one' := by
-    change LinearMap.toMatrix PauliMatrix.pauliBasis' PauliMatrix.pauliBasis' (toSelfAdjointMap 1) = 1
+    change LinearMap.toMatrix PauliMatrix.pauliBasis' PauliMatrix.pauliBasis'
+      (toSelfAdjointMap 1) = 1
     have hId : toSelfAdjointMap (1 : SL(2, ℂ)) = 1 := by
       ext A
       simp [toSelfAdjointMap]

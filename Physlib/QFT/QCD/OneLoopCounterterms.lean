@@ -63,7 +63,8 @@ def msLikeDataOfMaster
   couplingPole := Renormalization.poleCoeff (weightedExpansion w.zGCoeff I)
   hCouplingPole := rfl
 
-/-- The coupling pole extracted from a weighted master integral is the weight times the master pole. -/
+/-- The coupling pole extracted from a weighted master integral is the weight times
+the master pole. -/
 lemma couplingPole_eq_weight_mul_masterPole
     (scheme : RenormalizationScheme)
     (w : CountertermWeights)

@@ -120,7 +120,7 @@ structure YangMillsGaugeData
 
 /-- Extract `ColorInvariants` from Yang-Mills gauge data. -/
 def yMColorInvariants
-  {L M : Type*}
+    {L M : Type*}
     (D : YangMillsGaugeData L M) : ColorInvariants where
   cF := D.cF
   cA := D.cA
@@ -131,7 +131,7 @@ def yMColorInvariants
 This is the bridge between the generic gauge-theory layer and the existing
 color-factor derivation infrastructure. -/
 def yMNormalizedGeneratorData
-  {L M : Type*}
+    {L M : Type*}
     (D : YangMillsGaugeData L M) : NormalizedGeneratorData where
   AdjIndex := D.AdjBasis
   FundIndex := D.FundBasis
@@ -151,19 +151,19 @@ def yMNormalizedGeneratorData
 /-- `NormalizedGeneratorData` extracted from a `YangMillsGaugeData` instance
 (non-instance version to avoid inadvertent typeclass diamonds). -/
 def normalizedGeneratorDataOfYM
-  {L M : Type*}
+    {L M : Type*}
     (D : YangMillsGaugeData L M) : NormalizedGeneratorData :=
   yMNormalizedGeneratorData D
 
 /-- Color factors derived from Yang-Mills gauge data. -/
 def yMColorFactors
-  {L M : Type*}
+    {L M : Type*}
     (D : YangMillsGaugeData L M) (nF : ℝ) : ColorFactors :=
   (yMColorInvariants D).toColorFactors nF
 
 /-- One-loop beta coefficient derived from Yang-Mills gauge data. -/
 def yMBeta0
-  {L M : Type*}
+    {L M : Type*}
     (D : YangMillsGaugeData L M) (nF : ℝ) : ℝ :=
   beta0 (yMColorFactors D nF)
 
@@ -310,7 +310,8 @@ lemma suNYangMillsGaugeData_two_eq_su2 :
     suNYangMillsGaugeData, su2YangMillsGaugeData]
   norm_num
 
-/-- SU(3) color factors from the generic Yang-Mills pipeline: `C_F = 4/3`, `C_A = 3`, `T_F = 1/2`. -/
+/-- SU(3) color factors from the generic Yang-Mills pipeline:
+`C_F = 4/3`, `C_A = 3`, `T_F = 1/2`. -/
 lemma su3YMColorFactors_explicit (nF : ℝ) :
     yMColorFactors (suNYangMillsGaugeData 3 (by norm_num)) nF =
       { nF := nF, cF := 4 / 3, cA := 3, tF := 1 / 2 } := by

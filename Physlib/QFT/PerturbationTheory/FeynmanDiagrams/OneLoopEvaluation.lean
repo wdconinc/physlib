@@ -125,8 +125,7 @@ lemma evaluateGaugeBosonSelfEnergyDiagram
     {rules : GaugeFeynmanRules}
     {diag : GaugeBosonSelfEnergyDiagram rules}
     (data : GaugeBosonSelfEnergyLoopIntegralData diag) :
-    data.integrand.evaluate = gaugeBosonSelfEnergyMaster :=
-by
+    data.integrand.evaluate = gaugeBosonSelfEnergyMaster := by
   have hReduce : data.tensorIntegrand.scalarIntegrand.evaluate = gaugeBosonSelfEnergyMaster := by
     simpa [RankTwoTensorIntegrand.reduce_scalarMaster] using data.hTensorReduction
   simpa [data.hScalarIntegrand] using hReduce
@@ -136,8 +135,7 @@ lemma evaluateGhostSelfEnergyDiagram
     {rules : GaugeFeynmanRules}
     {diag : GhostSelfEnergyDiagram rules}
     (data : GhostSelfEnergyLoopIntegralData diag) :
-    data.integrand.evaluate = ghostSelfEnergyMaster :=
-by
+    data.integrand.evaluate = ghostSelfEnergyMaster := by
   have hReduce : data.tensorIntegrand.scalarIntegrand.evaluate = ghostSelfEnergyMaster := by
     simpa [RankTwoTensorIntegrand.reduce_scalarMaster] using data.hTensorReduction
   simpa [data.hScalarIntegrand] using hReduce
@@ -147,8 +145,7 @@ lemma evaluateFermionSelfEnergyDiagram
     {rules : GaugeFeynmanRules}
     {diag : FermionSelfEnergyDiagram rules}
     (data : FermionSelfEnergyLoopIntegralData diag) :
-    data.integrand.evaluate = fermionSelfEnergyMaster :=
-by
+    data.integrand.evaluate = fermionSelfEnergyMaster := by
   have hReduce : data.tensorIntegrand.scalarIntegrand.evaluate = fermionSelfEnergyMaster := by
     simpa [RankTwoTensorIntegrand.reduce_scalarMaster] using data.hTensorReduction
   simpa [data.hScalarIntegrand] using hReduce

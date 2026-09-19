@@ -217,9 +217,12 @@ public import Physlib.Particles.NeutrinoPhysics.Basic
 public import Physlib.Particles.Parton.Basic
 public import Physlib.Particles.Parton.GPD.Ambiguity
 public import Physlib.Particles.Parton.GPD.Basic
+public import Physlib.Particles.Parton.GPD.DoubleDistribution
 public import Physlib.Particles.Parton.GPD.Moments
+public import Physlib.Particles.Parton.GPD.Polynomiality
 public import Physlib.Particles.Parton.PDF.Basic
 public import Physlib.Particles.Parton.PDF.MsbarPositivity
+public import Physlib.Particles.Parton.PDF.Positivity
 public import Physlib.Particles.Parton.TMD.Basic
 public import Physlib.Particles.Parton.TMD.CollinsSoper
 public import Physlib.Particles.Parton.TMD.Reduction
@@ -280,6 +283,7 @@ public import Physlib.QFT.Factorization.DIS.LO
 public import Physlib.QFT.Factorization.Evolution.Basic
 public import Physlib.QFT.Factorization.Evolution.CollinearForm
 public import Physlib.QFT.Factorization.Evolution.Consistency
+public import Physlib.QFT.Factorization.Evolution.MomentSpace
 public import Physlib.QFT.Factorization.Evolution.QCDCore
 public import Physlib.QFT.Factorization.Evolution.Solutions
 public import Physlib.QFT.Factorization.HigherOrder.Basic
@@ -390,6 +394,7 @@ public import Physlib.QFT.Scattering.DIS.Inference.Conjectures
 public import Physlib.QFT.Scattering.DIS.Inference.ExclusiveJoint
 public import Physlib.QFT.Scattering.DIS.Inference.Gluon
 public import Physlib.QFT.Scattering.DIS.Inference.Helicity
+public import Physlib.QFT.Scattering.DIS.Inference.Identifiability
 public import Physlib.QFT.Scattering.DIS.Inference.JointHelicity
 public import Physlib.QFT.Scattering.DIS.Inference.Unfolding
 public import Physlib.QFT.Scattering.DIS.Kinematics.AccessMethods
@@ -404,6 +409,7 @@ public import Physlib.QFT.Scattering.DIS.PVES.Interference.Basic
 public import Physlib.QFT.Scattering.DIS.PVES.Processes.EE
 public import Physlib.QFT.Scattering.DIS.PVES.Processes.EP
 public import Physlib.QFT.Scattering.DIS.Polarized.Basic
+public import Physlib.QFT.Scattering.DIS.Polarized.SumRules
 public import Physlib.QFT.Scattering.DIS.SIDIS.Asymmetries.Basic
 public import Physlib.QFT.Scattering.DIS.SIDIS.Asymmetries.Harmonics
 public import Physlib.QFT.Scattering.DIS.SIDIS.Basic

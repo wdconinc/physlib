@@ -520,7 +520,8 @@ private lemma dyadicPiece_subset (k : ℕ) : dyadicPiece k ⊆ Set.Ioc (0 : ℝ)
 
 /-- Past index `i`, every later piece lies at or below `1/(i+2)`, the open left endpoint of
 piece `i`; so the pieces are pairwise disjoint. -/
-private lemma dyadicPiece_disjoint : Pairwise fun i j => Disjoint (dyadicPiece i) (dyadicPiece j) := by
+private lemma dyadicPiece_disjoint :
+    Pairwise fun i j => Disjoint (dyadicPiece i) (dyadicPiece j) := by
   have key : ∀ i j : ℕ, i < j → Disjoint (dyadicPiece i) (dyadicPiece j) := by
     intro i j hij
     refine Set.disjoint_left.mpr ?_
