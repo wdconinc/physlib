@@ -5,6 +5,7 @@ Authors: Joseph Tooby-Smith
 -/
 module
 
+public import Mathlib.Logic.Equiv.Defs
 public import Physlib.QFT.PerturbationTheory.FeynmanDiagrams.FiniteSearch
 
 /-!
@@ -87,6 +88,7 @@ def TopologyGraph.permuteExternalLegs
     (List.ofFn (fun i : Fin graph.externalNodeCount =>
       graph.externalLegs.get (Fin.cast h.symm (σ i))))
 
+open scoped List in
 /-- Crossing equivalence between graphs: internal topology data agrees and the
 external legs differ only by permutation. -/
 def TopologyGraph.IsCrossingEquivalent
@@ -123,7 +125,8 @@ theorem TopologyGraph.permuteExternalLegs_refl
     graph.permuteExternalLegs (Equiv.refl _) h = graph := by
   cases graph with
   | mk diagramId externalNodeCount externalLegs interactionNodes internalEdgeKinds symmetryFactor =>
-      cases h
+      simp only [TopologyGraph.hasWellFormedExternalLegs] at h
+      subst h
       simp [TopologyGraph.permuteExternalLegs, TopologyGraph.withExternalLegs]
 
 theorem TopologyGraph.isCrossingEquivalent_refl (graph : TopologyGraph) :
@@ -176,9 +179,9 @@ def TopologyConstraint.estimatedLoopOrder (constraint : TopologyConstraint) : �
   constraint.internalEdgeCount + 1 - constraint.interactionNodeCount
 
 /-- Enumerate all quadruples `(a, b, c, d)` of natural numbers with `a + b + c + d = n`. -/
-private def splitQuadruples (n : ℕ) : List (ℕ × ℕ × ℕ × ℕ) :=
-  (List.range (n + 1)).bind (fun a =>
-  (List.range (n - a + 1)).bind (fun b =>
+def splitQuadruples (n : ℕ) : List (ℕ × ℕ × ℕ × ℕ) :=
+  (List.range (n + 1)).flatMap (fun a =>
+  (List.range (n - a + 1)).flatMap (fun b =>
   (List.range (n - a - b + 1)).map (fun c =>
     (a, b, c, n - a - b - c))))
 
@@ -190,9 +193,9 @@ def generateConstraintRowsFromBudget
     (externalNodeCount : ℕ)
     (budget : TopologyOrderBudget) : List TopologyConstraint :=
   let rawRows : List TopologyConstraint :=
-    (List.range (budget.maxInteractionNodeCount + 1)).bind (fun iN =>
-    (List.range (budget.maxInternalEdgeCount + 1)).bind (fun iE =>
-    (splitQuadruples iN).bind (fun nodeCounts =>
+    (List.range (budget.maxInteractionNodeCount + 1)).flatMap (fun iN =>
+    (List.range (budget.maxInternalEdgeCount + 1)).flatMap (fun iE =>
+    (splitQuadruples iN).flatMap (fun nodeCounts =>
     (splitQuadruples iE).map (fun edgeCounts =>
       let (gI, ghI, fI, ctI) := nodeCounts
       let (gP, ghP, fP, ctE) := edgeCounts
@@ -210,12 +213,6 @@ def generateConstraintRowsFromBudget
         fermionPropagatorCount := fP,
         countertermEdgeCount := ctE }))))
   rawRows.mapIdx (fun idx row => { row with diagramId := idx + 1 })
-
-/-- External-leg metadata is well formed when it is omitted or when it has one
-entry per external node. -/
-def TheoryDescriptor.hasWellFormedExternalLegs (descriptor : TheoryDescriptor) : Bool :=
-  descriptor.externalLegs.isEmpty ||
-    descriptor.externalLegs.length = descriptor.externalNodeCount
 
 /-- Theory descriptor for topology enumeration.
 The interface captures the interaction alphabet, admissibility policy, and order budget
@@ -243,6 +240,12 @@ structure TheoryDescriptor where
   /-- Optional hand-curated candidate rows.  Leave empty to derive the search space
   automatically from `orderBudget` via `generateConstraintRowsFromBudget`. -/
   constraintRows : List TopologyConstraint := []
+
+/-- External-leg metadata is well formed when it is omitted or when it has one
+entry per external node. -/
+def TheoryDescriptor.hasWellFormedExternalLegs (descriptor : TheoryDescriptor) : Bool :=
+  descriptor.externalLegs.isEmpty ||
+    descriptor.externalLegs.length = descriptor.externalNodeCount
 
 /-- Check row-internal node and edge count consistency. -/
 def TopologyConstraint.isCountConsistent (constraint : TopologyConstraint) : Bool :=
@@ -459,7 +462,8 @@ theorem enumerateClassBlocks_map_fst {α β : Type} [DecidableEq α]
     (classify : β → Option α)
     (candidates : List β) :
     (enumerateClassBlocks classOrder classify candidates).map Prod.fst = classOrder := by
-  simp [enumerateClassBlocks]
+  simp only [enumerateClassBlocks, List.map_map]
+  exact List.map_id'' (fun _ => rfl) _
 
 /-!
 Compatibility naming map (transition phase):
