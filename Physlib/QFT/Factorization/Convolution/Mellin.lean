@@ -320,7 +320,6 @@ convolution is the product of the transforms:
 This is the identity behind evolution in moment space: applied to the DGLAP splitting kernels it
 turns the integro-differential evolution equation into an ordinary differential equation in the
 scale for each `N`, with the anomalous dimensions `M[P] (N)` as coefficients. -/
-@[sorryful]
 theorem mellinDis_convolveAt (C f : ℝ → ℝ) (N : ℂ)
     (h : MellinConvolutionAssumptions C f N) :
     mellinDis (convolveAt (collinearKernel C) f) N = mellinDis C N * mellinDis f N := by
@@ -348,7 +347,6 @@ theorem mellinDis_convolveAt (C f : ℝ → ℝ) (N : ℂ)
 both convolutions satisfy the hypotheses of the convolution theorem at `N`. (Commutativity of
 `⊗` itself is a statement about the convolution before transforming and needs an injectivity
 argument in `N`, which is not available here; see the module docstring on analyticity.) -/
-@[sorryful]
 theorem mellinDis_convolveAt_comm (C f : ℝ → ℝ) (N : ℂ)
     (h₁ : MellinConvolutionAssumptions C f N) (h₂ : MellinConvolutionAssumptions f C N) :
     mellinDis (convolveAt (collinearKernel C) f) N
@@ -360,7 +358,6 @@ real integrals, with no complex analysis in the statement:
 `∫_{(0,1]} x ^ n (C ⊗ f) (x) dx = (∫_{(0,1]} u ^ n C u du) * (∫_{(0,1]} z ^ n f z dz)`.
 This is the form used by the sum rules (`n = 0` for number, `n = 1` for momentum) and by DGLAP in
 moment space. -/
-@[sorryful]
 theorem moment_convolveAt (C f : ℝ → ℝ) (n : ℕ)
     (h : MellinConvolutionAssumptions C f ((n : ℂ) + 1)) :
     (∫ x in Set.Ioc (0 : ℝ) 1, x ^ n * convolveAt (collinearKernel C) f x)
@@ -373,7 +370,6 @@ theorem moment_convolveAt (C f : ℝ → ℝ) (n : ℕ)
 /-- The natural-moment convolution theorem in terms of the repository's `mellinMoment`, which is
 the form the sum-rule and evolution interfaces consume. Note the index shift: `mellinMoment ... n`
 appears against the weight `x ^ n`, i.e. at Mellin index `n + 1`. -/
-@[sorryful]
 theorem mellinMoment_convolveAt {Flavor : Type} (C : ℝ → ℝ)
     (f : Physlib.Particles.Parton.PDF.Pdf Flavor) (n : ℕ) (i : Flavor) (Q2 : ℝ)
     (h : MellinConvolutionAssumptions C (fun x => f i x Q2) ((n : ℂ) + 1)) :

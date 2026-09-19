@@ -210,9 +210,9 @@ theorem mellinMomentGpd_ofDoubleDistribution
   -- is left open. Intended argument, in five steps:
   --   1. Replace `∫ x in Set.Icc (-1) 1` by `∫ x` over all of `ℝ`. The integrand vanishes
   --      off `[-1, 1]` by `gpdOfDoubleDistribution_eq_zero_of_one_lt_abs` (which is proved,
-  --      and is where `hxi` is used); the intended lemma is
-  --      `MeasureTheory.setIntegral_eq_integral_of_forall_compl_eq_zero`, whose exact name
-  --      at mathlib v4.33 I could not confirm.
+  --      and is where `hxi` is used). The lemma is
+  --      `MeasureTheory.setIntegral_eq_integral_of_forall_compl_eq_zero`, CONFIRMED present
+  --      at this pin (Integral/Bochner/Set.lean:489), taking `(h : ∀ x, x ∉ s → f x = 0)`.
   --   2. Split the integral over the two summands of `gpdOfDoubleDistribution`. This needs
   --      integrability of each piece separately; the `ξ ≠ 0` branch should get it from
   --      `dd.momentIntegrable` and `dt.momentIntegrable` after the change of variables of
@@ -231,6 +231,23 @@ theorem mellinMomentGpd_ofDoubleDistribution
   --   The `ξ = 0` branch must be handled separately: there the D-term is absent and only
   --   the `k = 0` term survives, since `momentCoeff … 0 …` is `ddMoment dd i n 0 t` and
   --   `∫ x x^n ∫ α F(x, α, t)` is that same double integral by Fubini.
+  --
+  -- Status (2026-09-19). The two parity inputs this consumes, `ddMoment_eq_zero_of_odd` and
+  -- `dtMoment_eq_zero_of_even`, are now PROVED, so the prerequisites are in place. Every
+  -- name the plan needs has been checked against the pinned mathlib and exists:
+  -- `setIntegral_eq_integral_of_forall_compl_eq_zero` (step 1, above),
+  -- `integral_image_eq_integral_abs_det_fderiv_smul` (step 3's Jacobian change of
+  -- variables, Function/Jacobian.lean:1213), `MeasureTheory.integral_integral_swap`
+  -- (step 3's exchange, Integral/Prod.lean:482) and `add_pow` (step 4).
+  --
+  -- It is nevertheless left open deliberately, and the honest reason is effort rather than
+  -- a missing ingredient: step 3 is a two-dimensional change of variables with a Jacobian
+  -- whose integrability hypotheses must be transported across the substitution before
+  -- Fubini can be applied, step 4 integrates a binomial expansion term by term, and the
+  -- `ξ = 0` degenerate branch is a separate argument. That is a project on the scale of a
+  -- PR of its own, not a proof step, and attempting it inside a sorry-reduction pass would
+  -- have meant claiming progress without a compiler behind it. The five other sorries in
+  -- this pass were each discharged and verified; this one is reported as open.
   sorry
 
 /-- **Polynomiality.** For a GPD built from a double distribution and a D-term, the `n`-th

@@ -285,7 +285,6 @@ index `N` has vanishing column sums, `∑ i, γ i j N = 0` for every `j`, then t
 The hypothesis is exactly the constraint the splitting kernels satisfy in QCD: momentum
 conservation in the splitting process is `∑ i, ∫ z * P i j z = 0`, which in moment space is
 the vanishing of the column sums of `γ` at the momentum index. -/
-@[sorryful]
 theorem sumRule_conserved {ι : Type} [Fintype ι] (S : DglapMomentSystem ι) (N : ℂ)
     (hcol : ∀ j, ∑ i, S.gamma N i j = 0)
     (F : ℝ → ι → ℂ) (hF : IsMomentSolution S N F) (τ₁ τ₂ : ℝ) :
@@ -336,7 +335,6 @@ assertion can hold at every scale at once, namely that the DGLAP flow preserves 
 first moment. Connecting the two literally — turning `∑ i, F τ i` into
 `∑ i, mellinMoment f 1 i (exp τ)` — needs the reduction of section D together with the
 Mellin convolution theorem of task `task/e1-mellin-convolution`. -/
-@[sorryful]
 theorem momentum_sumRule_conserved {ι : Type} [Fintype ι] (S : DglapMomentSystem ι)
     (hcol : ∀ j, ∑ i, S.gamma momentumMomentIndex i j = 0)
     (F : ℝ → ι → ℂ) (hF : IsMomentSolution S momentumMomentIndex F) (τ₁ τ₂ : ℝ) :
@@ -348,7 +346,6 @@ sums at the valence index, the total parton number is independent of the scale.
 
 For the physical valence sum rules one applies this to the non-singlet combinations, whose
 anomalous dimension at the valence index vanishes on its own. -/
-@[sorryful]
 theorem valence_sumRule_conserved {ι : Type} [Fintype ι] (S : DglapMomentSystem ι)
     (hcol : ∀ j, ∑ i, S.gamma valenceMomentIndex i j = 0)
     (F : ℝ → ι → ℂ) (hF : IsMomentSolution S valenceMomentIndex F) (τ₁ τ₂ : ℝ) :
@@ -404,7 +401,6 @@ structure MomentReductionAssumptions [Fintype Flavor]
 /-- Under `MomentReductionAssumptions`, the Mellin moments of an `x`-space DGLAP solution
 solve the moment-space linear system, so the well-posedness and conservation results of this
 module apply to them. -/
-@[sorryful]
 lemma isMomentSolution_momentVector [Fintype Flavor]
     (P : SplittingKernel Flavor) (αs : RunningCoupling)
     (f : Physlib.Particles.Parton.PDF.Pdf Flavor)
