@@ -74,6 +74,54 @@ Quantum information theory. Currently a distinct codebase with its own conventio
 </tr>
 </table>
 
+## Status: deep inelastic scattering formalization
+
+This fork carries a formalization of deep inelastic scattering in the Standard Model, merged into
+`master` on 2026-09-19 by [#1](https://github.com/wdconinc/physlib/pull/1) after twelve follow-up
+pull requests ([#2](https://github.com/wdconinc/physlib/pull/2)–[#13](https://github.com/wdconinc/physlib/pull/13)).
+
+**Scale.** 65 modules, 13,421 lines, 410 theorems and lemmas, across:
+
+| Area | Files | Lines | Theorems |
+|---|---|---|---|
+| `QFT/Scattering/DIS/PVES` — parity-violating electron scattering | 8 | 3,108 | 72 |
+| `QFT/Factorization` — convolution, Mellin, DGLAP evolution | 15 | 2,401 | 82 |
+| `Particles/Parton` — PDFs, TMDs, GPDs, fragmentation | 14 | 2,235 | 74 |
+| `QFT/Scattering/DIS/Inference` — the inverse problem | 8 | 1,791 | 56 |
+| `QFT/Scattering/DIS/Exclusive` — DVCS, DVMP, deconvolution | 9 | 1,327 | 34 |
+| `QFT/Scattering/DIS/Tensors` — hadronic tensor decomposition | 2 | 1,204 | 52 |
+| `QFT/Scattering/DIS/{Polarized,SIDIS,Kinematics,Corrections}` | 9 | 1,355 | 40 |
+
+**What is proved, and what is assumed.** The development states physics hypotheses explicitly as
+`structure …Assumptions` bundles and proves conditionally on them, so "no `sorry`" and "derived
+from first principles" are different claims and should not be conflated. Results that are now
+unconditional on any `sorry` include the Mellin convolution theorem, the Burkhardt-Cottingham and
+Wandzura-Wilczek sum rules, the Callan-Gross relation, the Soffer bound (derived from
+`Matrix.PosSemidef` rather than assumed), DGLAP uniqueness in moment space, and identifiability of
+the PDF inverse problem.
+
+**Five `sorry`s remain** in the DIS programme (13 repository-wide):
+
+| Declaration | Module |
+|---|---|
+| `mellinMomentGpd_ofDoubleDistribution` | `Particles/Parton/GPD/Polynomiality.lean` ([#16](https://github.com/wdconinc/physlib/issues/16)) |
+| `momentSolution_exists` | `QFT/Factorization/Evolution/MomentSpace.lean` |
+| `exists_isF1F2Decomposition` | `QFT/Scattering/DIS/Tensors/Basic.lean` |
+| `hasShadow_of_isLeadingOrderDvcs` | `QFT/Scattering/DIS/Exclusive/Deconvolution/Basic.lean` |
+| `dd_eq_of_agreeOnLowSkewnessDglap` | `QFT/Scattering/DIS/Exclusive/Deconvolution/Uniqueness.lean` |
+
+**Build status: `master` is currently red.** The `Style linters` workflow fails on two modules that
+came in with #1 and had never been compiled by CI before — the workflows' `pull_request` triggers
+were restricted to `master`, so nothing on the feature branch ever reached the compiler until shortly
+before the merge. Both are filed with full diagnoses:
+
+- [#14](https://github.com/wdconinc/physlib/issues/14) — `Mathematics/KroneckerDelta/Basic.lean`, 9 errors
+- [#15](https://github.com/wdconinc/physlib/issues/15) — `QFT/PerturbationTheory/FeynmanDiagrams/TopologyEnumeration.lean`, 14 errors from 5 causes, 4 of them mechanical
+
+Note that both counts are floors rather than totals: Lake stops at a failing module and elaboration
+stops at the first error in a declaration, so more may surface as these clear. Outside those two files,
+spelling and the Python linters pass, and the root import list is complete.
+
 ## Requirements of the project
 
 🎯 The project shall contain results (definitions, theorems, lemmas and calculations) from **physics**,
