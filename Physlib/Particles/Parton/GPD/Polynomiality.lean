@@ -85,36 +85,53 @@ def dtMoment (dt : DTerm Flavor) (i : Flavor) (m : ℕ) (t : ℝ) : ℝ :=
 
 This is the formal content of the `α`-symmetry of `F`, and it is what makes the moment
 polynomial *even* in `ξ`. -/
-@[sorryful]
 lemma ddMoment_eq_zero_of_odd (dd : DoubleDistribution Flavor) (i : Flavor) (m k : ℕ)
     (t : ℝ) (hk : Odd k) :
     ddMoment dd i m k t = 0 := by
-  -- TODO(task/p3-gpd-polynomiality): the reflection `(β, α) ↦ (β, -α)` preserves `volume`
-  -- on `ℝ × ℝ`; composing the integrand with it multiplies it by `(-1)^k = -1` (by
-  -- `Odd.neg_pow` and `dd.alphaSymm`), so the integral equals its own negative and is
-  -- therefore zero. Intended ingredients: `MeasureTheory.Measure.measurePreserving_neg`
-  -- on `ℝ`, a product-measure-preserving combinator for `id ×ˢ neg`, and
-  -- `MeasureTheory.MeasurePreserving.integral_comp`; integrability is
-  -- `dd.momentIntegrable i m k t`. I could not confirm the name/signature of the product
-  -- combinator at mathlib v4.33 from the source available here, so this is left open
-  -- rather than guessed.
-  sorry
+  -- the reflection `(β, α) ↦ (β, -α)` preserves `volume` on `ℝ × ℝ`
+  have hmp : MeasureTheory.MeasurePreserving
+      (⇑((MeasurableEquiv.refl ℝ).prodCongr (MeasurableEquiv.neg ℝ)))
+      (MeasureTheory.volume : MeasureTheory.Measure (ℝ × ℝ)) MeasureTheory.volume := by
+    rw [MeasureTheory.Measure.volume_eq_prod]
+    exact (MeasureTheory.MeasurePreserving.id _).prod
+      (MeasureTheory.Measure.measurePreserving_neg _)
+  -- composing the integrand with it multiplies it by `(-1)^k = -1`
+  have hflip : ∀ p : ℝ × ℝ,
+      p.1 ^ m * (-p.2) ^ k * dd.F i p.1 (-p.2) t
+        = -(p.1 ^ m * p.2 ^ k * dd.F i p.1 p.2 t) := by
+    intro p
+    rw [hk.neg_pow, dd.alphaSymm]
+    ring
+  have key : ddMoment dd i m k t = -ddMoment dd i m k t := by
+    calc ddMoment dd i m k t
+        = ∫ p : ℝ × ℝ, p.1 ^ m * (-p.2) ^ k * dd.F i p.1 (-p.2) t :=
+          (hmp.integral_comp' (fun p : ℝ × ℝ => p.1 ^ m * p.2 ^ k * dd.F i p.1 p.2 t)).symm
+      _ = ∫ p : ℝ × ℝ, -(p.1 ^ m * p.2 ^ k * dd.F i p.1 p.2 t) := by simp_rw [hflip]
+      _ = -ddMoment dd i m k t := by rw [MeasureTheory.integral_neg]; rfl
+  linarith
 
 /-- Even monomial moments of a D-term vanish, by its oddness in `u`.
 
 This is what confines the D-term to the moments of even literature index. -/
-@[sorryful]
 lemma dtMoment_eq_zero_of_even (dt : DTerm Flavor) (i : Flavor) (m : ℕ) (t : ℝ)
     (hm : Even m) :
     dtMoment dt i m t = 0 := by
-  -- TODO(task/p3-gpd-polynomiality): `fun u => u ^ m * dt.D i u t` is odd, since
-  -- `(-u)^m = u^m` for even `m` (`Even.neg_pow`) and `dt.odd` flips the sign of `D`.
-  -- The integral of an odd function over `ℝ` with `volume` vanishes; mathlib states this
-  -- as `MeasureTheory.integral_eq_zero_of_odd` (or, failing that, via
-  -- `MeasureTheory.Measure.measurePreserving_neg` and `MeasurePreserving.integral_comp`),
-  -- but I could not confirm the exact name or hypotheses statically.
-  -- `dt.momentIntegrable i m t` supplies integrability if it is required.
-  sorry
+  -- there is no dedicated odd-function-integral lemma at this pin, so this goes through
+  -- negation being measure preserving, exactly as in `ddMoment_eq_zero_of_odd`
+  have hmp : MeasureTheory.MeasurePreserving (⇑(MeasurableEquiv.neg ℝ))
+      (MeasureTheory.volume : MeasureTheory.Measure ℝ) MeasureTheory.volume :=
+    MeasureTheory.Measure.measurePreserving_neg _
+  have hflip : ∀ u : ℝ, (-u) ^ m * dt.D i (-u) t = -(u ^ m * dt.D i u t) := by
+    intro u
+    rw [hm.neg_pow, dt.odd]
+    ring
+  have key : dtMoment dt i m t = -dtMoment dt i m t := by
+    calc dtMoment dt i m t
+        = ∫ u : ℝ, (-u) ^ m * dt.D i (-u) t :=
+          (hmp.integral_comp' (fun u : ℝ => u ^ m * dt.D i u t)).symm
+      _ = ∫ u : ℝ, -(u ^ m * dt.D i u t) := by simp_rw [hflip]
+      _ = -dtMoment dt i m t := by rw [MeasureTheory.integral_neg]; rfl
+  linarith
 
 /-- The coefficient of `ξ^k` in the `n`-th moment of a GPD built from `dd` and `dt`.
 
@@ -193,9 +210,9 @@ theorem mellinMomentGpd_ofDoubleDistribution
   -- is left open. Intended argument, in five steps:
   --   1. Replace `∫ x in Set.Icc (-1) 1` by `∫ x` over all of `ℝ`. The integrand vanishes
   --      off `[-1, 1]` by `gpdOfDoubleDistribution_eq_zero_of_one_lt_abs` (which is proved,
-  --      and is where `hxi` is used); the intended lemma is
-  --      `MeasureTheory.setIntegral_eq_integral_of_forall_compl_eq_zero`, whose exact name
-  --      at mathlib v4.33 I could not confirm.
+  --      and is where `hxi` is used). The lemma is
+  --      `MeasureTheory.setIntegral_eq_integral_of_forall_compl_eq_zero`, CONFIRMED present
+  --      at this pin (Integral/Bochner/Set.lean:489), taking `(h : ∀ x, x ∉ s → f x = 0)`.
   --   2. Split the integral over the two summands of `gpdOfDoubleDistribution`. This needs
   --      integrability of each piece separately; the `ξ ≠ 0` branch should get it from
   --      `dd.momentIntegrable` and `dt.momentIntegrable` after the change of variables of
@@ -214,6 +231,23 @@ theorem mellinMomentGpd_ofDoubleDistribution
   --   The `ξ = 0` branch must be handled separately: there the D-term is absent and only
   --   the `k = 0` term survives, since `momentCoeff … 0 …` is `ddMoment dd i n 0 t` and
   --   `∫ x x^n ∫ α F(x, α, t)` is that same double integral by Fubini.
+  --
+  -- Status (2026-09-19). The two parity inputs this consumes, `ddMoment_eq_zero_of_odd` and
+  -- `dtMoment_eq_zero_of_even`, are now PROVED, so the prerequisites are in place. Every
+  -- name the plan needs has been checked against the pinned mathlib and exists:
+  -- `setIntegral_eq_integral_of_forall_compl_eq_zero` (step 1, above),
+  -- `integral_image_eq_integral_abs_det_fderiv_smul` (step 3's Jacobian change of
+  -- variables, Function/Jacobian.lean:1213), `MeasureTheory.integral_integral_swap`
+  -- (step 3's exchange, Integral/Prod.lean:482) and `add_pow` (step 4).
+  --
+  -- It is nevertheless left open deliberately, and the honest reason is effort rather than
+  -- a missing ingredient: step 3 is a two-dimensional change of variables with a Jacobian
+  -- whose integrability hypotheses must be transported across the substitution before
+  -- Fubini can be applied, step 4 integrates a binomial expansion term by term, and the
+  -- `ξ = 0` degenerate branch is a separate argument. That is a project on the scale of a
+  -- PR of its own, not a proof step, and attempting it inside a sorry-reduction pass would
+  -- have meant claiming progress without a compiler behind it. The five other sorries in
+  -- this pass were each discharged and verified; this one is reported as open.
   sorry
 
 /-- **Polynomiality.** For a GPD built from a double distribution and a D-term, the `n`-th

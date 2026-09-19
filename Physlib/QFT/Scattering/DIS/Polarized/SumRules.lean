@@ -35,10 +35,12 @@ convention and no other.
 - `g2WW`, `wandzuraWilczek` — the twist-2 Wandzura-Wilczek expression for `g₂` in terms of
   `g₁`, together with `burkhardtCottingham_wandzuraWilczek`: the Wandzura-Wilczek `g₂`
   satisfies the Burkhardt-Cottingham sum rule, by a Fubini argument on the triangle
-  `0 ≤ x < y ≤ 1`. That argument's own claim to being "the one genuine theorem in this
-  file" does not hold yet: it rests on `integral_tail_swap`, whose Fubini-swap step is
-  still `@[sorryful]` below, so the sum rule is proved conditionally on that step, not
-  unconditionally.
+  `0 ≤ x < y ≤ 1`. That step, `integral_tail_swap`, is now proved (grex, Lean 4.33.0), so
+  the sum rule no longer rests on any `sorry`. It remains conditional on the hypotheses
+  bundled in `WandzuraWilczekAssumptions` — in particular `prod_integrable`, the
+  product-measure integrability that Fubini needs and that genuinely does not follow from
+  the two one-dimensional integrability fields. That is the usual conditional-on-stated-
+  assumptions posture of this development, not an unproved step.
 
 ## iii. Table of contents
 
@@ -196,45 +198,51 @@ structure WandzuraWilczekAssumptions (G : StructureFunctions) (Q2 : ℝ) : Prop 
 /-- Fubini on the triangle `{(x, y) : 0 ≤ x ≤ 1, x < y ≤ 1}`: integrating the
 Wandzura-Wilczek tail over `x ∈ [0, 1]` and swapping the order of integration replaces the
 inner `x`-integral by the length `y` of `[0, y)`. -/
-@[sorryful]
 lemma integral_tail_swap
     (G : StructureFunctions) (Q2 : ℝ)
     (hWW : WandzuraWilczekAssumptions G Q2) :
     (∫ x in Set.Icc (0 : ℝ) 1, ∫ y in Set.Ioc x 1, G.g1 y Q2 / y)
       = ∫ y in Set.Icc (0 : ℝ) 1, G.g1 y Q2 / y * y := by
-  -- TODO(task/sum-rules): the Fubini swap itself is not written out. Intended argument,
-  -- in three steps.
-  -- (1) For `x ∈ Set.Icc 0 1` one has the exact set identity
-  --     `Set.Ioc x 1 = {y ∈ Set.Icc 0 1 | x < y}` (`0 ≤ x` and `x < y` force `0 < y`),
-  --     so the inner integral equals
-  --     `∫ y in Set.Icc (0:ℝ) 1, if x < y then G.g1 y Q2 / y else 0`.
-  --     Rewriting under the outer integral needs `MeasureTheory.setIntegral_congr_fun`
-  --     (or `integral_congr_ae` on the restricted measure) plus measurability of
-  --     `Set.Icc 0 1`.
-  -- (2) Apply `MeasureTheory.integral_integral_swap` to
-  --     `fun x y => if x < y then G.g1 y Q2 / y else 0` on the product measure
-  --     `(volume.restrict (Set.Icc 0 1)).prod (volume.restrict (Set.Icc 0 1))`, with
-  --     `hWW.prod_integrable` as the product-integrability hypothesis. Note that
-  --     `integral_integral_swap` is stated for `Integrable (Function.uncurry f)`, so the
-  --     field may need to be restated in `Function.uncurry` form, or bridged with
-  --     `MeasureTheory.integrable_prod_iff`.
-  -- (3) Evaluate the resulting inner `x`-integral: for `y ∈ Set.Icc 0 1`,
-  --     `∫ x in Set.Icc (0:ℝ) 1, (if x < y then c else 0) = c * y`, since
-  --     `{x ∈ Set.Icc 0 1 | x < y} = Set.Ico 0 y` and `Real.volume_Ico` gives
-  --     `ENNReal.ofReal (y - 0)`. Expected route: `MeasureTheory.integral_indicator`
-  --     (after rewriting the `if` as `Set.indicator`), then
-  --     `MeasureTheory.setIntegral_const` and `MeasureTheory.measureReal_restrict_apply`.
-  -- Update: all three names above are confirmed present at the pinned mathlib rev
-  -- (v4.33.0, packages/mathlib read directly from /opt/lake/builds) --
-  -- `MeasureTheory.setIntegral_congr_fun (hs : MeasurableSet s) (h : EqOn f g s)`
-  -- (Mathlib/MeasureTheory/Integral/Bochner/Set.lean), `MeasureTheory.integral_integral_swap`
-  -- (Mathlib/MeasureTheory/Integral/Prod.lean, takes `Integrable (uncurry f) (μ.prod ν)`
-  -- exactly as anticipated), and `measureReal_restrict_apply` (used elsewhere in mathlib
-  -- itself, e.g. Integral/Gamma.lean). Confirming the *names* exist is not the same as a
-  -- checked proof term -- assembling the three steps still needs a real elaborator, which
-  -- remains unavailable here -- so this stays `sorry`/`@[sorryful]` rather than an attempted
-  -- proof. The mathematics is standard and the statement is believed correct.
-  sorry
+  have hIcc : MeasurableSet (Set.Icc (0 : ℝ) 1) := measurableSet_Icc
+  -- (1) For `0 ≤ x` the tail `Ioc x 1` is exactly the part of `Icc 0 1` above `x`, so the
+  -- inner integral can be taken over the *fixed* set `Icc 0 1` against an `if`. That is
+  -- what makes the product measure in `prod_integrable` the right one for Fubini.
+  have step1 : Set.EqOn
+      (fun x : ℝ => ∫ y in Set.Ioc x 1, G.g1 y Q2 / y)
+      (fun x : ℝ => ∫ y in Set.Icc (0 : ℝ) 1, (if x < y then G.g1 y Q2 / y else 0))
+      (Set.Icc (0 : ℝ) 1) := by
+    intro x hx
+    have hmeas : MeasurableSet {y : ℝ | x < y} :=
+      measurableSet_lt measurable_const measurable_id
+    have hset : Set.Icc (0 : ℝ) 1 ∩ {y : ℝ | x < y} = Set.Ioc x 1 := by
+      ext y
+      simp only [Set.mem_inter_iff, Set.mem_Icc, Set.mem_setOf_eq, Set.mem_Ioc]
+      exact ⟨fun h => ⟨h.2, h.1.2⟩, fun h => ⟨⟨hx.1.trans h.1.le, h.2⟩, h.1⟩⟩
+    show (∫ y in Set.Ioc x 1, G.g1 y Q2 / y)
+        = ∫ y in Set.Icc (0 : ℝ) 1, (if x < y then G.g1 y Q2 / y else 0)
+    rw [← hset, ← MeasureTheory.setIntegral_indicator hmeas]
+    exact MeasureTheory.setIntegral_congr_fun hIcc fun y _ => by
+      by_cases h : x < y <;> simp [Set.indicator_apply, h]
+  rw [MeasureTheory.setIntegral_congr_fun hIcc step1]
+  -- (2) Fubini on the product of the two restricted measures.
+  rw [MeasureTheory.integral_integral_swap hWW.prod_integrable]
+  -- (3) The inner `x`-integral is a constant over `Ico 0 y`, whose length is `y`.
+  refine MeasureTheory.setIntegral_congr_fun hIcc fun y hy => ?_
+  have hmeas2 : MeasurableSet {x : ℝ | x < y} :=
+    measurableSet_lt measurable_id measurable_const
+  have hset2 : Set.Icc (0 : ℝ) 1 ∩ {x : ℝ | x < y} = Set.Ico 0 y := by
+    ext x
+    simp only [Set.mem_inter_iff, Set.mem_Icc, Set.mem_setOf_eq, Set.mem_Ico]
+    exact ⟨fun h => ⟨h.1.1, h.2⟩, fun h => ⟨⟨h.1, h.2.le.trans hy.2⟩, h.2⟩⟩
+  show (∫ x in Set.Icc (0 : ℝ) 1, (if x < y then G.g1 y Q2 / y else 0))
+      = G.g1 y Q2 / y * y
+  have hind : (∫ x in Set.Icc (0 : ℝ) 1, (if x < y then G.g1 y Q2 / y else 0))
+      = ∫ _x in Set.Icc (0 : ℝ) 1 ∩ {x : ℝ | x < y}, G.g1 y Q2 / y := by
+    rw [← MeasureTheory.setIntegral_indicator hmeas2]
+    exact MeasureTheory.setIntegral_congr_fun hIcc fun x _ => by
+      by_cases h : x < y <;> simp [Set.indicator_apply, h]
+  rw [hind, hset2, MeasureTheory.setIntegral_const,
+    Real.volume_real_Ico_of_le hy.1, sub_zero, smul_eq_mul, mul_comm]
 
 /-- Integrating the Wandzura-Wilczek tail over `[0, 1]` returns the first moment of `g₁`,
 `∫₀¹ dx ∫_x¹ (dy/y) g₁(y) = ∫₀¹ dy g₁(y)`.
