@@ -6,6 +6,7 @@ Authors: Joseph Tooby-Smith
 module
 
 public import Physlib.QFT.Factorization.Evolution.Basic
+public import Physlib.Meta.Linters.Sorry
 /-!
 
 # DGLAP Evolution Toy Solutions

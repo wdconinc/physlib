@@ -6,6 +6,7 @@ Authors: Joseph Tooby-Smith
 module
 
 public import Physlib.QFT.Factorization.Evolution.Basic
+public import Physlib.Meta.Linters.Sorry
 /-!
 
 # DGLAP Evolution in Moment Space
@@ -159,11 +160,14 @@ TODO(task/e2-dglap-wellposedness): proof not completed. Intended argument. On ea
 Lipschitz in `F` on bounded sets, continuous in `τ`, by the same estimate as in
 `momentSolution_unique`), which gives a solution on that interval; because the field is
 *linear* in `F`, the local solutions extend and patch to a solution on all of `ℝ` (no
-finite-time blow-up: `‖F τ‖ ≤ ‖F0‖ * exp (∫ K)` by Gronwall). Mathlib has the
-Picard-Lindelöf local existence theorem; the global linear-system statement is, as far as
-could be established offline, not available ready-made at the pinned revision, so this is
-the substantive missing piece of this module. An alternative route avoiding the patching
-argument is to write the solution explicitly as the time-ordered exponential
+finite-time blow-up: `‖F τ‖ ≤ ‖F0‖ * exp (∫ K)` by Gronwall).
+
+Checked against the pinned mathlib (2026-09-19), so this is no longer a guess: local
+existence *is* available, as the `ODE.IsPicardLindelof.exists_*` family in
+`Mathlib/Analysis/ODE/ExistUnique.lean`; a ready-made **global** statement for linear
+systems is *not*. That gap is the substantive missing piece of this module. The preferred
+route avoids the patching argument entirely: write the solution explicitly as the
+time-ordered exponential
 `F τ = exp ((∫ s in τ0..τ, S.alphaS (exp s) / (2 * π)) • S.gamma N) *ᵥ F0`, which is
 legitimate *here* because the coefficient matrices at different `τ` are all multiples of the
 single matrix `S.gamma N` and therefore commute; that reduces existence to differentiating
@@ -278,14 +282,12 @@ def momentVector (f : Physlib.Particles.Parton.PDF.Pdf Flavor) (n : ℕ) (τ : �
 
 /-- Transport of a real derivative along the inclusion `ℝ → ℂ`.
 
-TODO(task/e2-dglap-wellposedness): proof not completed. This is the composition of `h` with
-the `ℝ`-linear isometry `Complex.ofRealCLM`; the intended proof is
-`Complex.ofRealCLM.hasFDerivAt.comp_hasDerivAt τ h` (possibly `HasDerivAt.ofReal_comp` in
-the pinned revision), but neither name nor signature could be confirmed offline. -/
-@[sorryful]
+This is `HasDerivAt.ofReal_comp` (`Mathlib/Analysis/Complex/RealDeriv.lean`), which is
+exactly the composition with the `ℝ`-linear isometry `Complex.ofRealCLM` that the earlier
+note anticipated. -/
 lemma hasDerivAt_ofReal {g : ℝ → ℝ} {g' τ : ℝ} (h : HasDerivAt g g' τ) :
-    HasDerivAt (fun s => ((g s : ℝ) : ℂ)) ((g' : ℝ) : ℂ) τ := by
-  sorry
+    HasDerivAt (fun s => ((g s : ℝ) : ℂ)) ((g' : ℝ) : ℂ) τ :=
+  h.ofReal_comp
 
 /-- Assumptions reducing an `x`-space DGLAP solution to the moment-space linear system at
 index `n`, with real anomalous dimensions `γ`.
