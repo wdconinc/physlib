@@ -138,8 +138,8 @@ structure CollinsProjectionAssumptions
   num_proj : Harmonics.projectedMoment P Harmonics.sinPhiSum
       (fun _phiH _phiS => F.FUT_collins x zHad Q2 pT) = F.FUT_collins x zHad Q2 pT
 
-  /-- Derive the Collins projection assumptions from explicit projected equalities. -/
-  lemma collinsProjectionAssumptions_of_equalities
+/-- Derive the Collins projection assumptions from explicit projected equalities. -/
+lemma collinsProjectionAssumptions_of_equalities
     (P : Harmonics.Projector)
     (F : SpinStructureFunctions)
     (x zHad Q2 pT : ℝ)
@@ -148,7 +148,7 @@ structure CollinsProjectionAssumptions
     (hNum : Harmonics.projectedMoment P Harmonics.sinPhiSum
       (fun _phiH _phiS => F.FUT_collins x zHad Q2 pT) = F.FUT_collins x zHad Q2 pT) :
     CollinsProjectionAssumptions P F x zHad Q2 pT := by
-    exact ⟨hDen, hNum⟩
+  exact ⟨hDen, hNum⟩
 
 /--
 Concrete Collins projection theorem derived from harmonic normalization rather
