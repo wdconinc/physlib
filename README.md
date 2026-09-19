@@ -111,8 +111,8 @@ the PDF inverse problem.
 | `dd_eq_of_agreeOnLowSkewnessDglap` | `QFT/Scattering/DIS/Exclusive/Deconvolution/Uniqueness.lean` |
 
 **Build status: `master` is currently red.** The `Style linters` workflow fails on two modules that
-came in with #1 and had never been compiled by CI before — the workflows' `pull_request` trigger
-was restricted to `master`, so nothing on the feature branch ever reached a compiler until shortly
+came in with #1 and had never been compiled by CI before — the workflows' `pull_request` triggers
+were restricted to `master`, so nothing on the feature branch ever reached the compiler until shortly
 before the merge. Both are filed with full diagnoses:
 
 - [#14](https://github.com/wdconinc/physlib/issues/14) — `Mathematics/KroneckerDelta/Basic.lean`, 9 errors
