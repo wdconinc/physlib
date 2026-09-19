@@ -6,10 +6,11 @@ Authors: Joseph Tooby-Smith
 module
 
 public import Physlib.QFT.Scattering.DIS.Inference.Unfolding
-public import Physlib.Meta.Linters.Sorry
 /-!
 
 # Identifiability of the parton-distribution inverse problem
+
+## i. Overview
 
 Determining a parton distribution from data is an inverse problem. At leading order each
 datum is a bounded linear functional of the distribution,
@@ -19,7 +20,7 @@ datum is a bounded linear functional of the distribution,
 while `f` ranges over an infinite-dimensional space of densities. This module states and
 proves the resulting identifiability failure, together with its positive counterpart.
 
-## Main results
+## ii. Key results
 
 - `not_finiteDimensional_blindSubspace`: finitely many bounded measurements of an
   infinite-dimensional density space leave a blind subspace that is not finite-dimensional,
@@ -34,6 +35,15 @@ proves the resulting identifiability failure, together with its positive counter
   total chi-square plus a strictly convex penalty has a unique minimizer.
 - `not_finiteDimensional_blindSubspace_kernels`: the concrete instance, on square-integrable
   densities over the physical support `(0, 1]` of the Bjorken variable.
+
+## iii. Table of contents
+
+- **A.** Rank-nullity in the form used here
+- **B.** Finite experiments on a continuum density space
+- **C.** Bridge to the binned response-matrix layer
+- **D.** The fit objective, and what restores uniqueness
+- **E.** The honest picture: bounded bias, unbounded ambiguity
+- **F.** A concrete density space
 
 ## What this does and does not say
 
@@ -95,7 +105,7 @@ namespace Identifiability
 
 /-!
 
-## Rank-nullity in the form used here
+## A. Rank-nullity in the form used here
 
 -/
 
@@ -134,7 +144,7 @@ theorem finiteDimensional_of_finiteDimensional_ker {M N : Type*}
 
 /-!
 
-## Finite experiments on a continuum density space
+## B. Finite experiments on a continuum density space
 
 -/
 
@@ -234,7 +244,7 @@ theorem not_finiteDimensional_blindSubspace (hE : ¬ FiniteDimensional ℝ E)
 
 /-!
 
-## Bridge to the binned response-matrix layer
+## C. Bridge to the binned response-matrix layer
 
 A binning is itself an experiment: `n` bounded functionals whose values are the bin
 contents, computed by `predict`. Composing a binning with a response matrix gives the
@@ -301,7 +311,7 @@ theorem not_finiteDimensional_blindSubspace_binning (hE : ¬ FiniteDimensional �
 
 /-!
 
-## The fit objective, and what restores uniqueness
+## D. The fit objective, and what restores uniqueness
 
 -/
 
@@ -428,7 +438,7 @@ theorem exists_unique_penalized_minimizer (X : Experiment E m) (data sigma : Fin
 
 /-!
 
-## The honest picture: bounded bias, unbounded ambiguity
+## E. The honest picture: bounded bias, unbounded ambiguity
 
 -/
 
@@ -449,7 +459,7 @@ theorem bias_bounded_with_infinite_ambiguity (hE : ¬ FiniteDimensional ℝ E)
 
 /-!
 
-## A concrete density space
+## F. A concrete density space
 
 -/
 
@@ -471,39 +481,130 @@ abbrev DensityL2 : Type :=
 against the kernel. -/
 def kernelMeasurement (K : DensityL2) : DensityL2 →L[ℝ] ℝ := innerSL ℝ K
 
-/-- The measurement functional in integral form. -/
-@[sorryful]
+/-- The measurement functional in integral form.
+
+`kernelMeasurement K` is `innerSL ℝ K`, so this is `MeasureTheory.L2.inner_def` (which is
+`rfl`) followed by the real specialisation of the inner product on `ℝ`: `RCLike.inner_apply'`
+gives `⟪x, y⟫ = conj x * y`, and conjugation on `ℝ` is the identity. -/
 lemma kernelMeasurement_apply (K f : DensityL2) :
     kernelMeasurement K f
       = ∫ x, K x * f x ∂(MeasureTheory.volume.restrict (Set.Ioc (0 : ℝ) 1)) := by
-  -- Confirmed against the pinned mathlib source: `MeasureTheory.L2.inner_def (f g) :
-  -- ⟪f, g⟫ = ∫ a, ⟪f a, g a⟫ ∂μ` exists exactly as anticipated
-  -- (Mathlib/MeasureTheory/Function/L2Space.lean:137). Not attempting the full proof here --
-  -- DensityL2's own inner-product/coercion unfolding is not traced -- so this stays open, but
-  -- with the previously-unconfirmed name now confirmed.
-  sorry
+  simp only [kernelMeasurement, innerSL_apply_apply, MeasureTheory.L2.inner_def,
+    RCLike.inner_apply', starRingEnd_apply, star_trivial]
 
 /-- An experiment built from `m` square-integrable measurement kernels. -/
 def experimentOfKernels (K : Fin m → DensityL2) : Experiment DensityL2 m :=
   fun a => kernelMeasurement (K a)
 
-/-- The concrete density space is infinite-dimensional. -/
-@[sorryful]
+/-- The half-open intervals `(1/(k+2), 1/(k+1)]`: a countable pairwise-disjoint family inside
+the physical support `(0, 1]`.
+
+`abbrev` rather than `def` deliberately. The helper lemmas below are stated about
+`dyadicPiece k`, but `indicatorConstLp` needs `MeasurableSet (Set.Ioc _ _)` and unifies
+against the unfolded form; at `def` transparency those do not match, which is the same
+reducible-versus-default mismatch catalogued in `QFT/QCD/CasimirDerivation.lean`. -/
+private abbrev dyadicPiece (k : ℕ) : Set ℝ :=
+  Set.Ioc (1 / (k + 2 : ℝ)) (1 / (k + 1 : ℝ))
+
+private lemma dyadicPiece_lt (k : ℕ) : (1 : ℝ) / (k + 2) < 1 / (k + 1) := by
+  have h1 : (0 : ℝ) < (k : ℝ) + 1 := by positivity
+  exact one_div_lt_one_div_of_lt h1 (by linarith)
+
+private lemma dyadicPiece_subset (k : ℕ) : dyadicPiece k ⊆ Set.Ioc (0 : ℝ) 1 := by
+  intro x hx
+  have h0 : (0 : ℝ) < 1 / ((k : ℝ) + 2) := by positivity
+  refine ⟨h0.trans hx.1, hx.2.trans ?_⟩
+  rw [div_le_one (by positivity)]
+  have : (0 : ℝ) ≤ (k : ℝ) := Nat.cast_nonneg k
+  linarith
+
+/-- Past index `i`, every later piece lies at or below `1/(i+2)`, the open left endpoint of
+piece `i`; so the pieces are pairwise disjoint. -/
+private lemma dyadicPiece_disjoint : Pairwise fun i j => Disjoint (dyadicPiece i) (dyadicPiece j) := by
+  have key : ∀ i j : ℕ, i < j → Disjoint (dyadicPiece i) (dyadicPiece j) := by
+    intro i j hij
+    refine Set.disjoint_left.mpr ?_
+    intro x hxi hxj
+    have hcast : (i : ℝ) + 1 ≤ (j : ℝ) := by exact_mod_cast Nat.succ_le_of_lt hij
+    have hle : (1 : ℝ) / ((j : ℝ) + 1) ≤ 1 / ((i : ℝ) + 2) :=
+      one_div_le_one_div_of_le (by positivity) (by linarith)
+    exact absurd (lt_of_le_of_lt (hxj.2.trans hle) hxi.1) (lt_irrefl x)
+  intro i j hij
+  rcases lt_or_gt_of_ne hij with h | h
+  · exact key i j h
+  · exact (key j i h).symm
+
+private lemma measure_dyadicPiece_ne_top (k : ℕ) :
+    (MeasureTheory.volume.restrict (Set.Ioc (0 : ℝ) 1)) (dyadicPiece k) ≠ ⊤ := by
+  rw [MeasureTheory.Measure.restrict_apply measurableSet_Ioc]
+  refine ne_top_of_le_ne_top ?_ (MeasureTheory.measure_mono Set.inter_subset_right)
+  simp [Real.volume_Ioc]
+
+private lemma measure_dyadicPiece_pos (k : ℕ) :
+    0 < (MeasureTheory.volume.restrict (Set.Ioc (0 : ℝ) 1)) (dyadicPiece k) := by
+  rw [MeasureTheory.Measure.restrict_apply measurableSet_Ioc,
+    Set.inter_eq_self_of_subset_left (dyadicPiece_subset k), Real.volume_Ioc,
+    ENNReal.ofReal_pos]
+  exact sub_pos.mpr (dyadicPiece_lt k)
+
+/-- The indicator of the `k`-th piece, as an element of the density space. -/
+private def dyadicIndicator (k : ℕ) : DensityL2 :=
+  MeasureTheory.indicatorConstLp 2 measurableSet_Ioc (measure_dyadicPiece_ne_top k) (1 : ℝ)
+
+private lemma dyadicIndicator_ne_zero (k : ℕ) : dyadicIndicator k ≠ 0 := by
+  rw [← norm_pos_iff, dyadicIndicator,
+    MeasureTheory.norm_indicatorConstLp (by norm_num) (by norm_num)]
+  have h1 : 0 < (MeasureTheory.volume.restrict (Set.Ioc (0 : ℝ) 1)).real (dyadicPiece k) := by
+    rw [MeasureTheory.measureReal_def]
+    exact ENNReal.toReal_pos (measure_dyadicPiece_pos k).ne' (measure_dyadicPiece_ne_top k)
+  rw [norm_one, one_mul]
+  exact Real.rpow_pos_of_pos h1 _
+
+/-- Disjoint supports make the family orthogonal. -/
+private lemma dyadicIndicator_orthogonal :
+    Pairwise fun i j => inner ℝ (dyadicIndicator i) (dyadicIndicator j) = (0 : ℝ) := by
+  intro i j hij
+  rw [MeasureTheory.L2.inner_def]
+  have hzero : (fun x => inner ℝ (dyadicIndicator i x) (dyadicIndicator j x))
+      =ᵐ[MeasureTheory.volume.restrict (Set.Ioc (0 : ℝ) 1)] fun _ => (0 : ℝ) := by
+    filter_upwards [MeasureTheory.indicatorConstLp_coeFn (p := 2)
+        (hs := (measurableSet_Ioc : MeasurableSet (dyadicPiece i)))
+        (hμs := measure_dyadicPiece_ne_top i) (c := (1 : ℝ)),
+      MeasureTheory.indicatorConstLp_coeFn (p := 2)
+        (hs := (measurableSet_Ioc : MeasurableSet (dyadicPiece j)))
+        (hμs := measure_dyadicPiece_ne_top j) (c := (1 : ℝ))] with x hxi hxj
+    -- `inner` on `ℝ` is multiplication, so the product vanishes as soon as one factor does,
+    -- and disjointness guarantees that at every `x`.
+    by_cases hmem : x ∈ dyadicPiece i
+    · have hnot : x ∉ dyadicPiece j :=
+        Set.disjoint_left.mp (dyadicPiece_disjoint hij) hmem
+      simp only [dyadicIndicator, RCLike.inner_apply', starRingEnd_apply, star_trivial,
+        mul_eq_zero]
+      exact Or.inr (by rw [hxj, Set.indicator_of_notMem hnot])
+    · simp only [dyadicIndicator, RCLike.inner_apply', starRingEnd_apply, star_trivial,
+        mul_eq_zero]
+      exact Or.inl (by rw [hxi, Set.indicator_of_notMem hmem])
+  rw [MeasureTheory.integral_congr_ae hzero, MeasureTheory.integral_zero]
+
+/-- The concrete density space is infinite-dimensional.
+
+The witness is the family of indicators of the pairwise-disjoint intervals
+`(1/(k+2), 1/(k+1)]`. Disjoint supports make the family orthogonal, and each piece has
+positive measure so no member is zero; `linearIndependent_of_ne_zero_of_inner_eq_zero` then
+supplies an infinite linearly independent family, which a finite-dimensional space cannot
+contain. -/
 lemma not_finiteDimensional_densityL2 : ¬ FiniteDimensional ℝ DensityL2 := by
-  -- TODO(task/u2-identifiability): the intended argument exhibits an infinite linearly
-  -- independent family, for instance the indicators of the pairwise disjoint intervals
-  -- `Set.Ioc (1 / (k + 2)) (1 / (k + 1))` for `k : ℕ`. Each is square integrable on `(0, 1]`
-  -- and they have pairwise disjoint supports, hence are linearly independent in `L²`.
-  -- Writing this needs the current names for `MeasureTheory.memLp_indicator_const` and
-  -- `Real.volume_Ioc` plus a `LinearIndependent` argument over disjoint supports, none of
-  -- which could be confirmed without a toolchain, so the step is left open.
-  sorry
+  intro hfd
+  have hli : LinearIndependent ℝ dyadicIndicator :=
+    linearIndependent_of_ne_zero_of_inner_eq_zero dyadicIndicator_ne_zero
+      dyadicIndicator_orthogonal
+  have : Finite ℕ := hli.finite_of_isNoetherian
+  exact not_finite ℕ
 
 /-- **The concrete statement.** Finitely many square-integrable measurement kernels leave an
 infinite-dimensional blind subspace of square-integrable densities on `(0, 1]`. This is the
 instance that carries the physics content: the abstract theorem alone does not exhibit a
 space in which the measurement functionals really are continuous. -/
-@[sorryful]
 theorem not_finiteDimensional_blindSubspace_kernels (K : Fin m → DensityL2) :
     ¬ FiniteDimensional ℝ (blindSubspace (experimentOfKernels K)) :=
   not_finiteDimensional_blindSubspace not_finiteDimensional_densityL2 _
