@@ -206,7 +206,15 @@ triangle `{(x, z) : 0 < x ≤ z ≤ 1}` in exactly the form the Fubini exchange 
 None of the fields is a bare `Prop` placeholder: each is an integrability statement about a named
 integrand, so the bundle cannot be discharged vacuously. -/
 structure MellinConvolutionAssumptions (C f : ℝ → ℝ) (N : ℂ) : Prop where
-  /-- The transform of the coefficient function converges absolutely at `N`. -/
+  /-- The transform of the coefficient function converges absolutely at `N`.
+
+  Not consumed by any proof in this file: `integral_mellinIntegrand_of_mem` turned out to need
+  no convergence hypothesis, and the Fubini exchange takes `jointIntegrable` instead. It is kept
+  because it is half of the "strip" condition the bundle documents, and because without it the
+  conclusion of `mellinDis_convolveAt` is uninformative for a divergent `C`: `mellinDis C N` is a
+  Bochner integral, hence `0` by convention when the integrand is not integrable, so both sides
+  would collapse. Whether an assumption bundle should carry a field no proof projects is a
+  judgement for review, not something to settle by deleting a public field. -/
   convC : MellinDisConvergent C N
   /-- The transform of the distribution converges absolutely at `N`. -/
   convF : MellinDisConvergent f N
@@ -258,9 +266,15 @@ lemma MellinConvolutionAssumptions.convolutionConvergent {C f : ℝ → ℝ} {N 
 coefficient function.
 
 This is the one place where the collinear form of the kernel is used, and it is the sanity check
-on the definition: with any other power of `z` in the kernel the factorization fails. -/
+on the definition: with any other power of `z` in the kernel the factorization fails.
+
+No convergence hypothesis on `C` is needed. An earlier draft carried
+`hC : MellinDisConvergent C N` in case the change of variables had to be justified on an
+integrable integrand, but the route actually used is a chain of pointwise identities — a domain
+restriction where the kernel vanishes, then a substitution — so no integrability side condition
+ever arises. -/
 lemma integral_mellinIntegrand_of_mem (C f : ℝ → ℝ) (N : ℂ) {z : ℝ}
-    (hz0 : 0 < z) (hz1 : z ≤ 1) (hC : MellinDisConvergent C N) :
+    (hz0 : 0 < z) (hz1 : z ≤ 1) :
     (∫ x in Set.Ioc (0 : ℝ) 1, mellinIntegrand C f N x z)
       = (z : ℂ) ^ (N - 1) * (f z : ℂ) * mellinDis C N := by
   -- (1) The kernel's indicator restricts the domain: for `z < x` the kernel vanishes, so on
@@ -331,7 +345,7 @@ theorem mellinDis_convolveAt (C f : ℝ → ℝ) (N : ℂ)
   have hinner : ∀ z ∈ Set.Ioc (0 : ℝ) 1,
       (∫ x in Set.Ioc (0 : ℝ) 1, mellinIntegrand C f N x z)
         = ((z : ℂ) ^ (N - 1) * (f z : ℂ)) * mellinDis C N :=
-    fun z hz => integral_mellinIntegrand_of_mem C f N hz.1 hz.2 h.convC
+    fun z hz => integral_mellinIntegrand_of_mem C f N hz.1 hz.2
   rw [MeasureTheory.setIntegral_congr_fun measurableSet_Ioc hinner,
     MeasureTheory.integral_mul_const]
   have hf : (∫ z in Set.Ioc (0 : ℝ) 1, (z : ℂ) ^ (N - 1) * (f z : ℂ)) = mellinDis f N := rfl
