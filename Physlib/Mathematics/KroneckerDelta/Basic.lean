@@ -627,6 +627,7 @@ section GeneralizedContraction
 
 variable {ι : Type} [DecidableEq ι] [Fintype ι]
 
+omit [Fintype ι] in
 /-- Cyclic reindexing invariance for repeated-index placement.
 
 Mathematically, this is the statement that moving the repeated index `l`
@@ -667,6 +668,7 @@ private lemma generalizedKroneckerDelta_last_eq_front' {m : ℕ} (hm : 1 ≤ m)
                 (extendIndices 1 m hm (fun _ : Fin 1 => l) ν j)) := by
           rw [Matrix.det_submatrix_equiv_self]
 
+omit [Fintype ι] in
 /-- Generic version of `bordered_submatrix_last_eq`. -/
 private lemma bordered_submatrix_last_eq' (μ ν : Fin n → ι) (l : ι) :
     Matrix.submatrix
