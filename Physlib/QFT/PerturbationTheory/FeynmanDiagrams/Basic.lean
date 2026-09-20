@@ -56,6 +56,9 @@ namespace QFT
 namespace PerturbationTheory
 namespace FeynmanDiagrams
 
+open scoped InnerProductSpace
+open scoped Lorentz.Vector
+
 /-! ### Field and Index Types -/
 
 /-- Lorentz index (0=time, 1,2,3=spatial). -/
