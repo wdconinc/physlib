@@ -94,18 +94,7 @@ def qcdContributingOneLoopBetaDiagramClasses : Finset QCDOneLoopBetaDiagramClass
 /-- Classified QCD one-loop labels match canonical class order. -/
 theorem qcdOneLoopTopologyLabels_eq_canonicalOrder :
     qcdOneLoopTopologyLabels = qcdOneLoopBetaClassOrder := by
-  simp [qcdOneLoopTopologyLabels,
-    qcdOneLoopTopologyCandidateEnumeration,
-    oneLoopTopologyCandidates,
-    classifyOneLoopTopologyCandidate,
-    qcdClassifyOneLoopTopologyCandidate,
-    qcdOneLoopBetaClassOfTopologyClass,
-    enumerateCandidates,
-    oneLoopTopologyConstraints,
-    graphOfConstraint,
-    candidateOfGraph,
-    allListsOfLength,
-    qcdOneLoopBetaClassOrder]
+  decide
 
 /-- Set-level completeness for QCD one-loop topology class labels. -/
 theorem qcdOneLoopTopologyLabels_toFinset_eq_contributingSet :
@@ -126,7 +115,7 @@ def primitivePoleOfClass
 lemma sum_primitivePoleOfClass_eq_total
     (p : PrimitivePoles) :
     (qcdOneLoopBetaClassOrder.map (primitivePoleOfClass p)).sum = p.total := by
-  simp [qcdOneLoopBetaClassOrder, primitivePoleOfClass, PrimitivePoles.total]
+  simp [qcdOneLoopBetaClassOrder, primitivePoleOfClass, PrimitivePoles.total, add_assoc]
 
 /-- Extract primitive poles from a concrete one-loop self-energy diagram bundle by using
 the standard numerator contractions and the canonical scalar-master identifications. -/
