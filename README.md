@@ -110,17 +110,41 @@ the PDF inverse problem.
 | `hasShadow_of_isLeadingOrderDvcs` | `QFT/Scattering/DIS/Exclusive/Deconvolution/Basic.lean` |
 | `dd_eq_of_agreeOnLowSkewnessDglap` | `QFT/Scattering/DIS/Exclusive/Deconvolution/Uniqueness.lean` |
 
-**Build status: `master` is currently red.** The `Style linters` workflow fails on two modules that
-came in with #1 and had never been compiled by CI before — the workflows' `pull_request` triggers
-were restricted to `master`, so nothing on the feature branch ever reached the compiler until shortly
-before the merge. Both are filed with full diagnoses:
+**Build status: `master` is currently red.** A body of code came in with #1 that CI had never
+compiled — the workflows' `pull_request` triggers were restricted to `master`, so nothing on the
+feature branch reached the compiler until shortly before the merge. The failures are being cleared
+in layers, because Lake stops at a failing module and skips everything downstream of it: each fix
+makes the build advance and reveals what was hidden behind it.
 
-- [#14](https://github.com/wdconinc/physlib/issues/14) — `Mathematics/KroneckerDelta/Basic.lean`, 9 errors
-- [#15](https://github.com/wdconinc/physlib/issues/15) — `QFT/PerturbationTheory/FeynmanDiagrams/TopologyEnumeration.lean`, 14 errors from 5 causes, 4 of them mechanical
+Fixed so far:
 
-Note that both counts are floors rather than totals: Lake stops at a failing module and elaboration
-stops at the first error in a declaration, so more may surface as these clear. Outside those two files,
-spelling and the Python linters pass, and the root import list is complete.
+- [#14](https://github.com/wdconinc/physlib/issues/14) — `Mathematics/KroneckerDelta/Basic.lean`, 9 errors. Fixed and merged in [#18](https://github.com/wdconinc/physlib/pull/18).
+- [#15](https://github.com/wdconinc/physlib/issues/15) — `FeynmanDiagrams/TopologyEnumeration.lean`, 14 errors from six causes. Fixed in [#19](https://github.com/wdconinc/physlib/pull/19) (open).
+- [#20](https://github.com/wdconinc/physlib/issues/20) — `Particles/StandardModel/HiggsBoson/Basic.lean`, 3 errors. Fixed in [#21](https://github.com/wdconinc/physlib/pull/21) (open).
+
+Still open. With #18 and #21 applied, a whole-library `lake build Physlib` reaches **9381 targets**
+and fails in **9 modules with 48 error lines**. Fourteen of those are `TopologyEnumeration`, which
+#19 fixes, so merging the two open PRs should leave roughly **34 errors across 8 modules**:
+
+| Module | Errors |
+|---|---|
+| `Relativity/Fermions/Weyl/{Left,Right,DualLeft,DualRight}Handed` | 23 |
+| `QFT/PerturbationTheory/WickAlgebra/NormalOrder/Basic` | 6 |
+| `Relativity/Tensors/LeviCivita/Contractions` | 2 |
+| `QFT/PerturbationTheory/FeynmanDiagrams/Basic` | 2 (parse errors) |
+| `Relativity/LorentzGroup/Restricted/FromBoostRotation` | 1 |
+
+None of this is a regression from the fixes above: every one of these modules transitively imports
+`KroneckerDelta/Basic.lean`, which did not compile before #18, so none could ever have built.
+
+**Every count here is a floor, not a total**, for the reason given above — four times now, clearing
+one layer has exposed another. Outside these modules, spelling and the Python linters pass, and the
+root import list is complete.
+
+Note also that the repository's own Lean linters (`sorry_lint`, `style_lint`, `check_file_imports`,
+`runPhyslibLinters`) are `lean_exe` targets, so verifying them requires a toolchain whose bundled
+`clang` can link against the host's glibc; they have not been run on the cluster used for the build
+verification above, where that requirement is not met.
 
 ## Requirements of the project
 
