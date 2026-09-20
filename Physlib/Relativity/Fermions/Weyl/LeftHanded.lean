@@ -118,6 +118,11 @@ def rep : Representation ℂ SL(2,ℂ) LeftHandedWeyl where
   toFun := fun M => {
     toFun := fun (ψ : LeftHandedWeyl) =>
       LeftHandedWeyl.toFin2ℂEquiv.symm (M.1 *ᵥ ψ.toFin2ℂ),
+    -- `simp only` rather than `simp` in both fields below. `Matrix.mulVec_fin_two` is a global
+    -- `@[simp]` lemma (Mathlib/Topology/Compactification/OnePoint/ProjectiveLine.lean) that
+    -- rewrites `*ᵥ` on any `Fin 2` matrix into an explicit `![…]` literal. It fires before
+    -- `mulVec_add`/`mulVec_smul` can, leaving a componentwise goal the default simp set cannot
+    -- close. Do not relax these to `simp`.
     map_add' := by
       intro ψ ψ'
       simp only [toFin2ℂ, map_add, mulVec_add]

@@ -116,6 +116,11 @@ def rep : Representation ℂ SL(2,ℂ) RightHandedWeyl where
   toFun := fun M => {
     toFun := fun (ψ : RightHandedWeyl) =>
       RightHandedWeyl.toFin2ℂEquiv.symm (M.1.map star *ᵥ ψ.toFin2ℂ),
+    -- `simp only` rather than `simp` in both fields below. `Matrix.mulVec_fin_two` is a global
+    -- `@[simp]` lemma (Mathlib/Topology/Compactification/OnePoint/ProjectiveLine.lean) that
+    -- rewrites `*ᵥ` on any `Fin 2` matrix into an explicit `![…]` literal. It fires before
+    -- `mulVec_add`/`mulVec_smul` can, leaving a componentwise goal the default simp set cannot
+    -- close. Do not relax these to `simp`.
     map_add' := by
       intro ψ ψ'
       simp only [toFin2ℂ, map_add, mulVec_add]
@@ -130,6 +135,10 @@ def rep : Representation ℂ SL(2,ℂ) RightHandedWeyl where
     simp only [RCLike.star_def, LinearMap.coe_mk, AddHom.coe_mk, Module.End.mul_apply,
       LinearEquiv.apply_symm_apply, mulVec_mulVec, EmbeddingLike.apply_eq_iff_eq]
     refine congrFun (congrArg _ ?_) _
+    -- The explicit `show` is load-bearing, not cosmetic. `Matrix.SpecialLinearGroup` is a
+    -- semireducible `def` for a subtype, so `(M * N).1` is type-correct only at default
+    -- transparency; `simp only [SpecialLinearGroup.coe_mul]` therefore silently fails to
+    -- fire on it. Stating the equation directly sidesteps that coercion.
     show (M.1 * N.1).map ⇑(starRingEnd ℂ) = _
     exact Matrix.map_mul
 
