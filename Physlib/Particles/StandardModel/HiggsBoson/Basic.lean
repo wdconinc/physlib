@@ -184,8 +184,7 @@ def repGaugeGroupI : Representation ℂ GaugeGroupI HiggsVec where
   map_mul' g₁ g₂ := by
     refine LinearMap.ext fun φ => ?_
     simp only [Module.End.mul_apply, LinearMap.coe_mk, AddHom.coe_mk, map_mul,
-      Submonoid.coe_mul, WithLp.ofLp_toLp, mulVec_smul, smul_smul, mulVec_mulVec,
-      mul_pow, mul_comm]
+      Submonoid.coe_mul, mulVec_smul, smul_smul, mulVec_mulVec, mul_pow]
 
 lemma repGaugeGroupI_apply (g : StandardModel.GaugeGroupI) (φ : HiggsVec) :
     repGaugeGroupI g φ = (WithLp.toLp 2 <| g.toU1 ^ 3 • (g.toSU2.1 *ᵥ φ.ofLp)) := rfl
