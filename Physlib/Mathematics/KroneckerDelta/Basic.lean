@@ -197,7 +197,7 @@ This is defined for any finite type `α` with decidable equality. -/
 def generalizedKroneckerDelta {α ι : Type} [DecidableEq α]
     [DecidableEq ι] [Fintype ι]
     (μ : ι → α) (ν : ι → α) : ℤ :=
-  Matrix.det (fun i j => δℤ (μ i) (ν j))
+  Matrix.det (Matrix.of fun i j => δℤ (μ i) (ν j))
 
 /-- Swapping two of the upper indices of the generalized Kronecker delta negates it.
 This is one row transposition of the underlying determinant. -/
@@ -363,19 +363,19 @@ private lemma generalizedKroneckerDelta_last_eq_front {m d : ℕ} (hm : 1 ≤ m)
   have hμ := extendIndices_last_eq_front_cycleRange hm μ l
   have hν := extendIndices_last_eq_front_cycleRange hm ν l
   calc
-    Matrix.det (fun i j : Fin m =>
+    Matrix.det (Matrix.of fun i j : Fin m =>
         δℤ
           (extendIndices (m - 1) m (Nat.sub_le _ _) μ (fun _ => l) i)
           (extendIndices (m - 1) m (Nat.sub_le _ _) ν (fun _ => l) j))
         = Matrix.det (Matrix.submatrix
-            (fun i j : Fin m =>
+            (Matrix.of fun i j : Fin m =>
               δℤ
                 (extendIndices 1 m hm (fun _ : Fin 1 => l) μ i)
                 (extendIndices 1 m hm (fun _ : Fin 1 => l) ν j)) σ σ) := by
           congr 1
           funext i j
           simp [Matrix.submatrix_apply, σ, hμ, hν]
-    _ = Matrix.det (fun i j : Fin m =>
+    _ = Matrix.det (Matrix.of fun i j : Fin m =>
             δℤ
               (extendIndices 1 m hm (fun _ : Fin 1 => l) μ i)
               (extendIndices 1 m hm (fun _ : Fin 1 => l) ν j)) := by
@@ -431,14 +431,14 @@ private lemma sum_updateRow_delta {n d : ℕ}
 private lemma bordered_submatrix_last_eq {n d : ℕ}
     (μ ν : Fin n → Fin (d + 1)) (l : Fin (d + 1)) :
     Matrix.submatrix
-      (fun (i j : Fin (n + 1)) =>
+      (Matrix.of fun (i j : Fin (n + 1)) =>
         δℤ
           (extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => l) i)
           (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) j))
       (Fin.last n).succAbove (Fin.last n).succAbove =
-    fun (i j : Fin n) => δℤ (μ i) (ν j) := by
+    Matrix.of fun (i j : Fin n) => δℤ (μ i) (ν j) := by
   funext i j
-  simp only [Matrix.submatrix_apply]
+  simp only [Matrix.submatrix_apply, Matrix.of_apply]
   have hi : (Fin.last n).succAbove i = i.castSucc :=
     Fin.succAbove_of_castSucc_lt _ _ (Fin.castSucc_lt_last i)
   have hj : (Fin.last n).succAbove j = j.castSucc :=
@@ -502,16 +502,16 @@ private lemma extendIndices_succAbove_eq_cycleIcc {n : ℕ} (hn : 0 < n)
 private lemma castSucc_minor_eq_cycleIcc {n : ℕ} (hn : 0 < n)
   {α : Type} [DecidableEq α] (μ ν : Fin n → α) (i : Fin n) :
     Matrix.submatrix
-      (fun (p q : Fin (n + 1)) =>
+      (Matrix.of fun (p q : Fin (n + 1)) =>
         δℤ
           (extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => μ i) p)
           (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => μ i) q))
       i.castSucc.succAbove (Fin.last n).succAbove =
     Matrix.submatrix
-      (fun (p q : Fin n) => δℤ (μ p) (ν q))
+      (Matrix.of fun (p q : Fin n) => δℤ (μ p) (ν q))
       (Fin.cycleIcc i (finLastOfPos n hn)) id := by
   funext p q
-  simp only [Matrix.submatrix_apply, id_eq]
+  simp only [Matrix.submatrix_apply, Matrix.of_apply, id_eq]
   have hp := extendIndices_succAbove_eq_cycleIcc hn μ i p
   have hq : (Fin.last n).succAbove q = q.castSucc :=
     Fin.succAbove_of_castSucc_lt _ _ (Fin.castSucc_lt_last q)
@@ -523,13 +523,13 @@ private lemma castSucc_minor_det {n : ℕ} (hn : 0 < n)
   {α : Type} [DecidableEq α] (μ ν : Fin n → α) (i : Fin n) :
     Matrix.det
       (Matrix.submatrix
-        (fun (p q : Fin (n + 1)) =>
+        (Matrix.of fun (p q : Fin (n + 1)) =>
           δℤ
             (extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => μ i) p)
             (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => μ i) q))
         i.castSucc.succAbove (Fin.last n).succAbove) =
     (-1 : ℤ) ^ (n - 1 - (i : ℕ)) *
-      Matrix.det (fun (p q : Fin n) => δℤ (μ p) (ν q)) := by
+      Matrix.det (Matrix.of fun (p q : Fin n) => δℤ (μ p) (ν q)) := by
   rw [castSucc_minor_eq_cycleIcc hn]
   rw [Matrix.det_permute]
   have hsign := Fin.sign_cycleIcc_of_le (i := i) (j := finLastOfPos n hn)
@@ -549,12 +549,12 @@ private lemma laplace_castSucc_term {n d : ℕ} (_hnd : n + 1 ≤ d + 1)
           (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) (Fin.last n))) *
         Matrix.det
           (Matrix.submatrix
-            (fun (p q : Fin (n + 1)) =>
+            (Matrix.of fun (p q : Fin (n + 1)) =>
               δℤ
                 (extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => l) p)
                 (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) q))
             i.castSucc.succAbove (Fin.last n).succAbove) =
-    -Matrix.det (fun (p q : Fin n) => δℤ (μ p) (ν q)) := by
+    -Matrix.det (Matrix.of fun (p q : Fin n) => δℤ (μ p) (ν q)) := by
   have hn : 0 < n := lt_of_le_of_lt (Nat.zero_le i.1) i.isLt
   have hleft : ∀ l : Fin (d + 1),
       extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => l) i.castSucc = μ i := by
@@ -595,12 +595,12 @@ private lemma laplace_last_term {n d : ℕ} (_hnd : n + 1 ≤ d + 1)
           (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) (Fin.last n))) *
         Matrix.det
           (Matrix.submatrix
-            (fun (i j : Fin (n + 1)) =>
+            (Matrix.of fun (i j : Fin (n + 1)) =>
               δℤ
                 (extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => l) i)
                 (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) j))
             (Fin.last n).succAbove (Fin.last n).succAbove) =
-    (d + 1 : ℤ) * Matrix.det (fun (i j : Fin n) => δℤ (μ i) (ν j)) := by
+    (d + 1 : ℤ) * Matrix.det (Matrix.of fun (i j : Fin n) => δℤ (μ i) (ν j)) := by
   have h_entry : ∀ l : Fin (d + 1),
       extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => l) (Fin.last n) = l ∧
       extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) (Fin.last n) = l := fun l =>
@@ -627,6 +627,7 @@ section GeneralizedContraction
 
 variable {ι : Type} [DecidableEq ι] [Fintype ι]
 
+omit [Fintype ι] in
 /-- Cyclic reindexing invariance for repeated-index placement.
 
 Mathematically, this is the statement that moving the repeated index `l`
@@ -650,34 +651,35 @@ private lemma generalizedKroneckerDelta_last_eq_front' {m : ℕ} (hm : 1 ≤ m)
   have hμ := extendIndices_last_eq_front_cycleRange hm μ l
   have hν := extendIndices_last_eq_front_cycleRange hm ν l
   calc
-    Matrix.det (fun i j : Fin m =>
+    Matrix.det (Matrix.of fun i j : Fin m =>
         δℤ
           (extendIndices (m - 1) m (Nat.sub_le _ _) μ (fun _ => l) i)
           (extendIndices (m - 1) m (Nat.sub_le _ _) ν (fun _ => l) j))
         = Matrix.det (Matrix.submatrix
-            (fun i j : Fin m =>
+            (Matrix.of fun i j : Fin m =>
               δℤ
                 (extendIndices 1 m hm (fun _ : Fin 1 => l) μ i)
                 (extendIndices 1 m hm (fun _ : Fin 1 => l) ν j)) σ σ) := by
           congr 1; funext i j
           simp [Matrix.submatrix_apply, σ, hμ, hν]
-      _ = Matrix.det (fun i j : Fin m =>
+      _ = Matrix.det (Matrix.of fun i j : Fin m =>
               δℤ
                 (extendIndices 1 m hm (fun _ : Fin 1 => l) μ i)
                 (extendIndices 1 m hm (fun _ : Fin 1 => l) ν j)) := by
           rw [Matrix.det_submatrix_equiv_self]
 
+omit [Fintype ι] in
 /-- Generic version of `bordered_submatrix_last_eq`. -/
 private lemma bordered_submatrix_last_eq' (μ ν : Fin n → ι) (l : ι) :
     Matrix.submatrix
-      (fun (i j : Fin (n + 1)) =>
+      (Matrix.of fun (i j : Fin (n + 1)) =>
         δℤ
           (extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => l) i)
           (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) j))
       (Fin.last n).succAbove (Fin.last n).succAbove =
-    fun (i j : Fin n) => δℤ (μ i) (ν j) := by
+    Matrix.of fun (i j : Fin n) => δℤ (μ i) (ν j) := by
   funext i j
-  simp only [Matrix.submatrix_apply]
+  simp only [Matrix.submatrix_apply, Matrix.of_apply]
   have hi : (Fin.last n).succAbove i = i.castSucc :=
     Fin.succAbove_of_castSucc_lt _ _ (Fin.castSucc_lt_last i)
   have hj : (Fin.last n).succAbove j = j.castSucc :=
@@ -695,12 +697,12 @@ private lemma laplace_castSucc_term' (μ ν : Fin n → ι) (i : Fin n) :
           (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) (Fin.last n))) *
         Matrix.det
           (Matrix.submatrix
-            (fun (p q : Fin (n + 1)) =>
+            (Matrix.of fun (p q : Fin (n + 1)) =>
               δℤ
                 (extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => l) p)
                 (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) q))
             i.castSucc.succAbove (Fin.last n).succAbove) =
-    -Matrix.det (fun (p q : Fin n) => δℤ (μ p) (ν q)) := by
+    -Matrix.det (Matrix.of fun (p q : Fin n) => δℤ (μ p) (ν q)) := by
   have hn : 0 < n := lt_of_le_of_lt (Nat.zero_le i.1) i.isLt
   have hleft : ∀ l : ι,
       extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => l) i.castSucc = μ i :=
@@ -717,12 +719,12 @@ private lemma laplace_castSucc_term' (μ ν : Fin n → ι) (i : Fin n) :
         (-1 : ℤ) ^ ((i : ℕ) + (Fin.last n : ℕ)) *
           Matrix.det
             (Matrix.submatrix
-              (fun (p q : Fin (n + 1)) =>
+              (Matrix.of fun (p q : Fin (n + 1)) =>
                 δℤ
                   (extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => μ i) p)
                   (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => μ i) q))
               i.castSucc.succAbove (Fin.last n).succAbove) =
-        -Matrix.det (fun (p q : Fin n) => δℤ (μ p) (ν q)) := by
+        -Matrix.det (Matrix.of fun (p q : Fin n) => δℤ (μ p) (ν q)) := by
       rw [castSucc_minor_det hn μ ν i]
       have hpow :
           (-1 : ℤ) ^ ((i : ℕ) + (Fin.last n : ℕ)) *
@@ -732,7 +734,7 @@ private lemma laplace_castSucc_term' (μ ν : Fin n → ι) (i : Fin n) :
         rw [← pow_add, hsum]
         exact Odd.neg_one_pow (by use n - 1; omega)
       have hpow' := congrArg
-        (fun t : ℤ => t * Matrix.det (fun (p q : Fin n) => δℤ (μ p) (ν q))) hpow
+        (fun t : ℤ => t * Matrix.det (Matrix.of fun (p q : Fin n) => δℤ (μ p) (ν q))) hpow
       simpa [mul_assoc] using hpow'
     simpa [kroneckerDelta] using hminor
   · intro l _ hl; simp [kroneckerDelta, Ne.symm hl]
@@ -748,12 +750,12 @@ private lemma laplace_last_term' (μ ν : Fin n → ι) :
           (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) (Fin.last n))) *
         Matrix.det
           (Matrix.submatrix
-            (fun (i j : Fin (n + 1)) =>
+            (Matrix.of fun (i j : Fin (n + 1)) =>
               δℤ
                 (extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => l) i)
                 (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) j))
             (Fin.last n).succAbove (Fin.last n).succAbove) =
-    (Fintype.card ι : ℤ) * Matrix.det (fun (i j : Fin n) => δℤ (μ i) (ν j)) := by
+    (Fintype.card ι : ℤ) * Matrix.det (Matrix.of fun (i j : Fin n) => δℤ (μ i) (ν j)) := by
   have h_entry : ∀ l : ι,
       extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => l) (Fin.last n) = l ∧
       extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) (Fin.last n) = l := fun l =>
@@ -792,6 +794,7 @@ private theorem generalizedKroneckerDeltaReal_contraction_base' (m : ℕ) (hm : 
   | succ n =>
     simp only [Nat.succ_sub_one, generalizedKroneckerDelta]
     simp_rw [Matrix.det_succ_column _ (Fin.last n)]
+    simp only [Matrix.of_apply]
     rw [Finset.sum_comm, Fin.sum_univ_castSucc]
     have hlast :
         (∑ l : ι,
@@ -801,12 +804,12 @@ private theorem generalizedKroneckerDeltaReal_contraction_base' (m : ℕ) (hm : 
               (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) (Fin.last n))) *
             Matrix.det
               (Matrix.submatrix
-                (fun (i j : Fin (n + 1)) =>
+                (Matrix.of fun (i j : Fin (n + 1)) =>
                   δℤ
                     (extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => l) i)
                     (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) j))
                 (Fin.last n).succAbove (Fin.last n).succAbove)) =
-        (Fintype.card ι : ℤ) * Matrix.det (fun (i j : Fin n) => δℤ (μ i) (ν j)) := by
+        (Fintype.card ι : ℤ) * Matrix.det (Matrix.of fun (i j : Fin n) => δℤ (μ i) (ν j)) := by
       exact laplace_last_term' (μ := μ) (ν := ν)
     rw [hlast]
     have hcast' : ∀ i : Fin n,
@@ -817,12 +820,12 @@ private theorem generalizedKroneckerDeltaReal_contraction_base' (m : ℕ) (hm : 
                 (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) (Fin.last n)) *
             Matrix.det
               (Matrix.submatrix
-                (fun p q : Fin (n + 1) =>
+                (Matrix.of fun p q : Fin (n + 1) =>
                   δℤ
                     (extendIndices n (n + 1) (Nat.le_succ n) μ (fun _ => l) p)
                     (extendIndices n (n + 1) (Nat.le_succ n) ν (fun _ => l) q))
                 i.castSucc.succAbove (Fin.last n).succAbove) =
-          -Matrix.det (fun p q : Fin n => δℤ (μ p) (ν q)) := by
+          -Matrix.det (Matrix.of fun p q : Fin n => δℤ (μ p) (ν q)) := by
       intro i
       exact laplace_castSucc_term' μ ν i
     simp_rw [hcast']
@@ -833,7 +836,7 @@ private theorem generalizedKroneckerDeltaReal_contraction_base' (m : ℕ) (hm : 
       have hnat : Fintype.card ι + 1 - (n + 1) = Fintype.card ι - n := by omega
       rw [hnat, Nat.cast_sub (Nat.le_of_lt_succ (Nat.lt_succ_of_lt hnd))]
     rw [hcoeff]
-    let D : ℤ := Matrix.det (fun p q => δℤ (μ p) (ν q))
+    let D : ℤ := Matrix.det (Matrix.of fun p q => δℤ (μ p) (ν q))
     change (Fintype.card (Fin n) : ℤ) • (-D) + (Fintype.card ι : ℤ) * D =
       ((Fintype.card ι : ℤ) - n) * D
     rw [show (Fintype.card (Fin n) : ℤ) = n by simp]
