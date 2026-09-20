@@ -118,17 +118,20 @@ def rep : Representation ℂ SL(2,ℂ) RightHandedWeyl where
       RightHandedWeyl.toFin2ℂEquiv.symm (M.1.map star *ᵥ ψ.toFin2ℂ),
     map_add' := by
       intro ψ ψ'
-      simp [mulVec_add]
+      simp only [toFin2ℂ, map_add, mulVec_add]
     map_smul' := by
       intro r ψ
-      simp [mulVec_smul]}
+      simp only [toFin2ℂ, map_smul, mulVec_smul, RingHom.id_apply]}
   map_one' := by
     ext i
     simp
   map_mul' := fun M N => by
     ext1 x
-    simp only [SpecialLinearGroup.coe_mul, RCLike.star_def, Matrix.map_mul, LinearMap.coe_mk,
-      AddHom.coe_mk, Module.End.mul_apply, LinearEquiv.apply_symm_apply, mulVec_mulVec]
+    simp only [RCLike.star_def, LinearMap.coe_mk, AddHom.coe_mk, Module.End.mul_apply,
+      LinearEquiv.apply_symm_apply, mulVec_mulVec, EmbeddingLike.apply_eq_iff_eq]
+    refine congrFun (congrArg _ ?_) _
+    show (M.1 * N.1).map ⇑(starRingEnd ℂ) = _
+    exact Matrix.map_mul
 
 lemma rep_apply (M : SL(2,ℂ)) (ψ : RightHandedWeyl) : rep M ψ = ⟨M.1.map star *ᵥ ψ.1⟩ := rfl
 

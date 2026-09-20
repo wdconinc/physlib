@@ -122,18 +122,19 @@ def rep : Representation ℂ SL(2,ℂ) DualLeftHandedWeyl where
       DualLeftHandedWeyl.toFin2ℂEquiv.symm ((M.1⁻¹)ᵀ *ᵥ ψ.toFin2ℂ),
     map_add' := by
       intro ψ ψ'
-      simp [mulVec_add]
+      simp only [toFin2ℂ, map_add, mulVec_add]
     map_smul' := by
       intro r ψ
-      simp [mulVec_smul]}
+      simp only [toFin2ℂ, map_smul, mulVec_smul, RingHom.id_apply]}
   map_one' := by
     ext i
     simp
   map_mul' := fun M N => by
     ext1 x
-    simp only [SpecialLinearGroup.coe_mul, LinearMap.coe_mk, AddHom.coe_mk, Module.End.mul_apply,
+    simp only [LinearMap.coe_mk, AddHom.coe_mk, Module.End.mul_apply,
       LinearEquiv.apply_symm_apply, mulVec_mulVec, EmbeddingLike.apply_eq_iff_eq]
     refine (congrFun (congrArg _ ?_) _)
+    show ((M.1 * N.1)⁻¹)ᵀ = _
     rw [Matrix.mul_inv_rev]
     exact transpose_mul _ _
 
