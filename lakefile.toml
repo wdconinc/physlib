@@ -73,6 +73,7 @@ supportInterpreter = true
 [[lean_exe]]
 name = "runPhyslibAlphaLinters"
 srcDir = "scripts/PhyslibAlpha"
+supportInterpreter = true
 
 [[lean_exe]]
 name = "enumerate_topologies"
