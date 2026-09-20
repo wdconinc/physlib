@@ -178,13 +178,6 @@ For connected scattering topologies this matches `L = I - V + 1`. -/
 def TopologyConstraint.estimatedLoopOrder (constraint : TopologyConstraint) : ℕ :=
   constraint.internalEdgeCount + 1 - constraint.interactionNodeCount
 
-/-- Enumerate all quadruples `(a, b, c, d)` of natural numbers with `a + b + c + d = n`. -/
-def splitQuadruples (n : ℕ) : List (ℕ × ℕ × ℕ × ℕ) :=
-  (List.range (n + 1)).flatMap (fun a =>
-  (List.range (n - a + 1)).flatMap (fun b =>
-  (List.range (n - a - b + 1)).map (fun c =>
-    (a, b, c, n - a - b - c))))
-
 /-- Generate all `TopologyConstraint` rows whose node/edge counts lie within `budget`.
 Rows are assigned sequential `diagramId`s (1-based) and `symmetryFactor = 1`.
 Calling `admissibleConstraintsOfTheory` on these rows applies alphabet and valence
@@ -192,6 +185,14 @@ filtering to obtain process-specific admissible rows. -/
 def generateConstraintRowsFromBudget
     (externalNodeCount : ℕ)
     (budget : TopologyOrderBudget) : List TopologyConstraint :=
+  -- Enumerate all quadruples `(a, b, c, d)` of naturals with `a + b + c + d = n`.
+  -- Local rather than a top-level `def`: it is used only here, and exporting a name this
+  -- generic from the module's public API is not intended (review comment on PR #19).
+  let splitQuadruples : ℕ → List (ℕ × ℕ × ℕ × ℕ) := fun n =>
+    (List.range (n + 1)).flatMap (fun a =>
+    (List.range (n - a + 1)).flatMap (fun b =>
+    (List.range (n - a - b + 1)).map (fun c =>
+      (a, b, c, n - a - b - c))))
   let rawRows : List TopologyConstraint :=
     (List.range (budget.maxInteractionNodeCount + 1)).flatMap (fun iN =>
     (List.range (budget.maxInternalEdgeCount + 1)).flatMap (fun iE =>
