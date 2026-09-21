@@ -114,12 +114,80 @@ structure HarmonicOrthogonalityAssumptions (P : Projector) : Prop where
   sinPhiDiff_sinPhiSum : projectedMoment P sinPhiDiff sinPhiSum = 0
   sinPhiSum_sinPhiDiff : projectedMoment P sinPhiSum sinPhiDiff = 0
 
-/--
-The normalized angular projector is intended as the concrete projector behind the
-harmonic-orthogonality layer.
--/
-structure NormalizedAngularProjectorAssumptions : Prop where
-  orthogonality : HarmonicOrthogonalityAssumptions normalizedAngularProjector
+/-- The normalized angular projector does **not** satisfy the harmonic-orthogonality
+contract.
+
+Its four quadrature nodes are `(phi_h, phi_S) ∈ {0, π} × {0, π}`, and both
+`sin(phi_h - phi_S)` and `sin(phi_h + phi_S)` vanish at every one of them. The projector
+therefore returns `0` for the self-moment of each harmonic, where the contract demands
+`1 / 2`.
+
+This replaces a `NormalizedAngularProjectorAssumptions` bundle that asserted the contract
+*did* hold for this projector. That bundle had no dependent declarations, which is the only
+reason nothing downstream was proved from a false hypothesis. -/
+lemma not_harmonicOrthogonality_normalizedAngularProjector :
+    ¬ HarmonicOrthogonalityAssumptions normalizedAngularProjector := by
+  intro h
+  have hz : projectedMoment normalizedAngularProjector sinPhiDiff sinPhiDiff = 0 := by
+    simp only [projectedMoment, normalizedAngularProjector, sinPhiDiff]
+    rw [show (0 : ℝ) - 0 = 0 by ring, show Real.pi - 0 = Real.pi by ring,
+      show (0 : ℝ) - Real.pi = -Real.pi by ring, show Real.pi - Real.pi = 0 by ring]
+    simp
+  rw [h.sinPhiDiff_self] at hz
+  norm_num at hz
+
+/-- A four-node azimuthal quadrature projector with nodes
+`(phi_h, phi_S) ∈ {π/4, 3π/4} × {π/4, -π/4}`.
+
+Unlike `normalizedAngularProjector`, these nodes avoid the common zeros of the two sine
+harmonics: `phi_h - phi_S` and `phi_h + phi_S` each take the value `π/2` at exactly two of
+the four nodes and a zero of `sin` at the other two. -/
+def harmonicQuadratureProjector : Projector :=
+  fun f =>
+    (f (Real.pi / 4) (Real.pi / 4) + f (3 * Real.pi / 4) (Real.pi / 4)
+      + f (Real.pi / 4) (-(Real.pi / 4)) + f (3 * Real.pi / 4) (-(Real.pi / 4))) / 4
+
+/-- The quadrature projector satisfies the abstract linearity contract. -/
+lemma harmonicQuadratureProjector_isLinear :
+    ProjectorAssumptions harmonicQuadratureProjector := by
+  constructor
+  · intro f g
+    unfold harmonicQuadratureProjector
+    ring
+  · intro a f
+    unfold harmonicQuadratureProjector
+    ring
+
+/-- The quadrature projector satisfies the harmonic-orthogonality contract.
+
+This discharges `HarmonicOrthogonalityAssumptions` at a concrete projector, so the
+downstream asymmetry and interference theorems that take it as a hypothesis have an
+exhibited model. -/
+lemma harmonicQuadratureProjector_orthogonality :
+    HarmonicOrthogonalityAssumptions harmonicQuadratureProjector := by
+  have d1 : Real.pi / 4 - Real.pi / 4 = 0 := by ring
+  have d2 : 3 * Real.pi / 4 - Real.pi / 4 = Real.pi / 2 := by ring
+  have d3 : Real.pi / 4 - -(Real.pi / 4) = Real.pi / 2 := by ring
+  have d4 : 3 * Real.pi / 4 - -(Real.pi / 4) = Real.pi := by ring
+  have s1 : Real.pi / 4 + Real.pi / 4 = Real.pi / 2 := by ring
+  have s2 : 3 * Real.pi / 4 + Real.pi / 4 = Real.pi := by ring
+  have s3 : Real.pi / 4 + -(Real.pi / 4) = 0 := by ring
+  have s4 : 3 * Real.pi / 4 + -(Real.pi / 4) = Real.pi / 2 := by ring
+  refine ⟨fun c => ?_, ?_, ?_, ?_, ?_⟩
+  · simp only [projectedMoment, harmonicQuadratureProjector, oneWeight]
+    ring
+  · simp only [projectedMoment, harmonicQuadratureProjector, sinPhiDiff]
+    rw [d1, d2, d3, d4]
+    norm_num [Real.sin_pi_div_two]
+  · simp only [projectedMoment, harmonicQuadratureProjector, sinPhiSum]
+    rw [s1, s2, s3, s4]
+    norm_num [Real.sin_pi_div_two]
+  · simp only [projectedMoment, harmonicQuadratureProjector, sinPhiDiff, sinPhiSum]
+    rw [d1, d2, d3, d4, s1, s2, s3, s4]
+    norm_num [Real.sin_pi_div_two]
+  · simp only [projectedMoment, harmonicQuadratureProjector, sinPhiDiff, sinPhiSum]
+    rw [d1, d2, d3, d4, s1, s2, s3, s4]
+    norm_num [Real.sin_pi_div_two]
 
 end Harmonics
 end Asymmetries

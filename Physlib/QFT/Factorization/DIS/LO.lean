@@ -65,12 +65,22 @@ lemma loStructureFunction_singleFlavor_kernel [Fintype Flavor]
       = ∑ i, Convolution.convolveAt (fun x' z => C0 x' z Q2) (fun z => f i z Q2) x := by
   simp [loStructureFunction, loChannel]
 
-/-- Physics-facing factorization assumptions, separated from structural assumptions. -/
-structure LOPhysicsAssumptions : Type where
-  /-- Placeholder proposition for perturbative-regime validity. -/
-  perturbativeRegime : Prop
-  /-- Witness that perturbative-regime assumptions hold. -/
-  hPerturbativeRegime : perturbativeRegime
+/-- Physics-facing marker in the leading-order factorization signature.
+
+This structure previously carried an arbitrary `Prop` field together with a witness for it.
+That pair asserts nothing: instantiating the field at `True` satisfies it, so every theorem
+taking the bundle held unconditionally in the physics variable. The fields have therefore
+been removed rather than restated, because no *parameter-free* proposition can express the
+perturbative-regime condition — that condition is a statement about `α_s(Q^2)`, and this
+structure is indexed by nothing.
+
+The marker itself is retained only because `loFactorized_of_assumptions` below, and
+`QFT/Scattering/DIS/Examples/Basic.lean` downstream, bind it positionally. It carries no
+content, as `loPhysicsAssumptions_holds` records. -/
+structure LOPhysicsAssumptions : Prop
+
+/-- The leading-order physics marker is unconditionally satisfied: it asserts nothing. -/
+lemma loPhysicsAssumptions_holds : LOPhysicsAssumptions := ⟨⟩
 
 /-- Theorem schema separating analytic and physics assumptions in the signature. -/
 lemma loFactorized_of_assumptions [Fintype Flavor]

@@ -30,9 +30,11 @@ structure DataPoint : Type where
   Q2 : ℝ
   observed : ℝ
 
-/-- Covariance-model placeholder interface. -/
-structure CovarianceModel : Type where
-  variance : DataPoint → ℝ
+-- A `CovarianceModel` record used to sit here, with the single field
+-- `variance : DataPoint → ℝ`. It had no dependent declaration anywhere in the repository,
+-- it is definitionally just `DataPoint → ℝ`, and `chiSq` below already takes the width as
+-- a plain real argument, so the wrapper added no structure and imposed no constraint (in
+-- particular it did not require the variance to be nonnegative). It has been removed.
 
 /-- Chi-square contribution interface. -/
 def chiSq (prediction observed sigma : ℝ) : ℝ :=

@@ -67,6 +67,23 @@ structure BoundedCorrections
   tmBound : ∀ x Q2, |δTM x Q2| ≤ 1
   htBound : ∀ x Q2, |δHT x Q2| ≤ 1
 
+/-- The stability statement the bounded-corrections bundle exists to support: a corrected
+observable stays within `2` of its baseline, uniformly in `x` and `Q²`. -/
+lemma correctedObservable_sub_baseline_abs_le
+    (F : ℝ → ℝ → ℝ)
+    (δTM : TargetMassCorrection)
+    (δHT : HigherTwistCorrection)
+    (h : BoundedCorrections δTM δHT)
+    (x Q2 : ℝ) :
+    |correctedObservable F δTM δHT x Q2 - F x Q2| ≤ 2 := by
+  have h1 := abs_le.mp (h.tmBound x Q2)
+  have h2 := abs_le.mp (h.htBound x Q2)
+  rw [abs_le]
+  simp only [correctedObservable]
+  constructor
+  · linarith [h1.1, h2.1]
+  · linarith [h1.2, h2.2]
+
 end Corrections
 end DIS
 end Scattering
