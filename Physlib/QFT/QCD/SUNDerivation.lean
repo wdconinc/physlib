@@ -34,7 +34,10 @@ instantiated to the standard `SU(Nc)` values.
 def sunNormalizedData (nC : ℝ) : NormalizedGeneratorData where
   AdjIndex := Unit
   FundIndex := Unit
+  adjFintype := inferInstance
+  fundFintype := inferInstance
   genEntry := fun _ _ _ => 0
+  structConst := fun _ _ _ => 0
   deltaAdj := fun _ _ => 1
   deltaFund := fun _ _ => 1
   tF := 1 / 2
@@ -51,21 +54,14 @@ def sunNormalizedData (nC : ℝ) : NormalizedGeneratorData where
 instance instHasNormalizedGeneratorDataSUN (nC : ℝ) : HasNormalizedGeneratorData (SUN nC) where
   data := sunNormalizedData nC
 
-/-- The canonical `SU(Nc)` package satisfies the derivation targets. -/
-def sunCasimirDerivationAssumptions (nC : ℝ) :
-    CasimirDerivationAssumptions (sunNormalizedData nC) := by
-  refine casimirDerivationAssumptions_of_iff
-    (D := sunNormalizedData nC)
-    ((1 / 2 : ℝ) = 1 / 2)
-    (((nC ^ 2 - 1) / (2 * nC) : ℝ) = (nC ^ 2 - 1) / (2 * nC))
-    ((nC : ℝ) = nC)
-    (by rfl)
-    (by rfl)
-    (by rfl)
-    ?_ ?_ ?_
-  · exact Iff.rfl
-  · exact Iff.rfl
-  · exact Iff.rfl
+/-! `sunCasimirDerivationAssumptions` used to live here.  It claimed that the canonical
+`SU(Nc)` package satisfies the Casimir derivation targets, but it did so only because
+those targets were `Prop`-valued parameters instantiated to `1/2 = 1/2` and friends.
+Now that `CasimirDerivationAssumptions` carries the real identities, the claim is false
+for this package: with `genEntry = 0` and `deltaAdj = 1`, the trace identity reads
+`0 = T_F = 1/2`.  The obstruction is the placeholder generator entries, not the identity
+— a genuine package needs `su(n)` generator matrices, which this library does not have.
+See `u1NormalizedData` in `CasimirDerivation` for a sector where the identities hold. -/
 
 /-- The canonical `SU(Nc)` identities imply all normalized-generator contracts. -/
 lemma sunNormalizedContracts (nC : ℝ) :

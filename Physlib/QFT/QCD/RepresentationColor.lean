@@ -46,8 +46,14 @@ structure NormalizedGeneratorData : Type 2 where
   AdjIndex : Type
   /-- Index type for basis vectors in the fundamental representation. -/
   FundIndex : Type
+  /-- The adjoint index set is finite, so that sums over generators are defined. -/
+  adjFintype : Fintype AdjIndex
+  /-- The fundamental index set is finite, so that matrix traces are defined. -/
+  fundFintype : Fintype FundIndex
   /-- Generator matrix entries `(T^a)_i_j`. -/
   genEntry : AdjIndex → FundIndex → FundIndex → ℝ
+  /-- Structure constants `f^{abc}` of the gauge algebra. -/
+  structConst : AdjIndex → AdjIndex → AdjIndex → ℝ
   /-- Adjoint Kronecker delta placeholder. -/
   deltaAdj : AdjIndex → AdjIndex → ℝ
   /-- Fundamental Kronecker delta placeholder. -/
@@ -58,18 +64,56 @@ structure NormalizedGeneratorData : Type 2 where
   cF : ℝ
   /-- Adjoint Casimir coefficient `C_A`. -/
   cA : ℝ
-  /-- Trace normalization contract (e.g. `Tr(T^a T^b) = T_F δ^{ab}`). -/
+  /-- Trace normalization contract.  This is a `Prop`-valued *parameter*, not the
+  identity `Tr(T^a T^b) = T_F δ^{ab}` itself; see `NormalizedGeneratorData.TraceIdentity`
+  for the statement it stands for. -/
   traceNormalization : Prop
   /-- Witness for trace normalization. -/
   hTraceNormalization : traceNormalization
-  /-- Fundamental Casimir contract (e.g. `Σ_a T^a T^a = C_F I`). -/
+  /-- Fundamental Casimir contract.  A `Prop`-valued parameter; the intended statement is
+  `NormalizedGeneratorData.FundamentalCasimirIdentity`. -/
   fundamentalCasimir : Prop
   /-- Witness for fundamental Casimir contract. -/
   hFundamentalCasimir : fundamentalCasimir
-  /-- Adjoint Casimir contract (e.g. `f^{acd} f^{bcd} = C_A δ^{ab}`). -/
+  /-- Adjoint Casimir contract.  A `Prop`-valued parameter; the intended statement is
+  `NormalizedGeneratorData.AdjointCasimirIdentity`. -/
   adjointCasimir : Prop
   /-- Witness for adjoint Casimir contract. -/
   hAdjointCasimir : adjointCasimir
+
+/-! ### Representation-level identities
+
+The three `Prop` fields above (`traceNormalization`, `fundamentalCasimir`,
+`adjointCasimir`) are *parameters ranging over propositions*: instantiating them with
+`True` satisfies the package, so on their own they assert nothing.  The definitions in
+this section write down what those names are meant to say, as equations in the data the
+package already carries.  They are consumed by `CasimirDerivationAssumptions`. -/
+
+/-- The trace-normalization identity `Tr(T^a T^b) = T_F δ^{ab}`, written out in the
+stored generator entries. -/
+def NormalizedGeneratorData.TraceIdentity (D : NormalizedGeneratorData) : Prop :=
+  letI := D.fundFintype
+  ∀ a b : D.AdjIndex,
+    (∑ i : D.FundIndex, ∑ j : D.FundIndex, D.genEntry a i j * D.genEntry b j i)
+      = D.tF * D.deltaAdj a b
+
+/-- The fundamental Casimir identity `Σ_a T^a T^a = C_F I`, written out in the stored
+generator entries. -/
+def NormalizedGeneratorData.FundamentalCasimirIdentity (D : NormalizedGeneratorData) :
+    Prop :=
+  letI := D.adjFintype
+  letI := D.fundFintype
+  ∀ i j : D.FundIndex,
+    (∑ a : D.AdjIndex, ∑ k : D.FundIndex, D.genEntry a i k * D.genEntry a k j)
+      = D.cF * D.deltaFund i j
+
+/-- The adjoint Casimir identity `f^{acd} f^{bcd} = C_A δ^{ab}`, written out in the
+stored structure constants. -/
+def NormalizedGeneratorData.AdjointCasimirIdentity (D : NormalizedGeneratorData) : Prop :=
+  letI := D.adjFintype
+  ∀ a b : D.AdjIndex,
+    (∑ c : D.AdjIndex, ∑ d : D.AdjIndex, D.structConst a c d * D.structConst b c d)
+      = D.cA * D.deltaAdj a b
 
 /-- Extract color invariants from normalized-generator representation data. -/
 def colorInvariantsOf (D : NormalizedGeneratorData) : ColorInvariants where
