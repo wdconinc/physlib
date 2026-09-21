@@ -17,7 +17,7 @@ term that improves that suppression by one further power. This module states tha
 with the remainder bound explicit, and proves the facts that stop the statement from being
 empty.
 
-## What is, and is not, formalized here
+## A. What is, and is not, formalized here
 
 The anchor papers for this target do something considerably stronger than what is stated
 below. arXiv:2510.14496 evaluates the *complete* set of kinematic power corrections to the
@@ -49,7 +49,7 @@ the TMD power counting, and because `Kpc` is the interface that a future derivat
 factorization theorem in this library should be asked to produce. A definition that merely
 named a correction term without bounding anything would carry none of this content.
 
-## Not captured
+## B. Not captured
 
 * The all-orders resummation of kinematic power corrections. Only a single order is
   described; `Kpc` bounds the remainder after one correction, not after a series.
@@ -62,7 +62,7 @@ named a correction term without bounding anything would carry none of this conte
 * Any link to the transverse-momentum integrals of `Physlib.Particles.Parton.TMD.Basic`:
   the structure function here is an abstract function of `λ`, not one built from a `Tmd`.
 
-## References
+## C. References
 
 * arXiv:2510.14496, *Kinematic power corrections for TMD factorization theorem of
   semi-inclusive deep-inelastic scattering*.
