@@ -50,12 +50,22 @@ lemma ee_toy_bridge_example
 
 variable (V : Type) [AddCommGroup V] [Module ℝ V]
 
-/-- Toy hadronic assumptions record for ep interface tests. -/
-def toyHadronicAssumptions
+/-- The zero hadronic tensor satisfies weak-current conservation.
+
+This is a consistency witness only.  It is *not* evidence that the assumptions are weak: by
+`EP.not_hadronicWeakCurrentAssumptions_of_ne_zero`, any tensor that is nonzero against `q`
+fails them.  The previous version of this definition read
+`⟨True, trivial, True, trivial, True, trivial⟩`, which was a witness that the assumptions
+as then stated were empty. -/
+lemma toyHadronicAssumptions
     (g : Kinematics.Bilin V)
     (K : Kinematics.DisKinematics V) :
-    EP.HadronicWeakCurrentAssumptions V g K :=
-  ⟨True, trivial, True, trivial, True, trivial⟩
+    EP.HadronicWeakCurrentAssumptions V g K 0 := by
+  refine ⟨?_, ?_⟩
+  · intro v
+    simp
+  · intro v
+    simp
 
 /-- ep sanity check: canonical bridge theorem is executable at the DIS point
 `(x, y) = (xBj, yInel)`. -/
@@ -70,14 +80,10 @@ lemma ep_toy_bridge_example
         (K.yInel g)
         epsilonReg
       = (2 * gammaZVal) / (|2 * (photonVal + zVal)| + epsilonReg) := by
-  have hPoint :
-      EP.IsDISObservablePoint V g K (K.xBj g) (K.yInel g) := by
-    simp [EP.IsDISObservablePoint]
   simpa [toyDecomposition] using
     EP.canonical_beamHelicityAsymmetry_eq_interferenceRatio
       V g K (toyDecomposition photonVal zVal gammaZVal)
       (K.xBj g) (K.yInel g) epsilonReg
-      (toyHadronicAssumptions V g K) hPoint
 
 /-! ## Experiment-facing ep connection (EIC-style) -/
 

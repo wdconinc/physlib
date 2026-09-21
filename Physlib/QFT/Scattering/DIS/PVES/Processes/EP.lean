@@ -7,6 +7,7 @@ module
 
 public import Physlib.QFT.Scattering.DIS.PVES.Interference.Basic
 public import Physlib.QFT.Scattering.DIS.Kinematics.Basic
+public import Physlib.QFT.Scattering.DIS.Tensors.Basic
 /-!
 
 # PVES Electron-Proton Asymmetry Interfaces
@@ -42,22 +43,48 @@ def IsDISObservablePoint
     (x y : ℝ) : Prop :=
   x = K.xBj g ∧ y = K.yInel g
 
-/-- Hadronic weak-current assumptions used in ep PVES interfaces. -/
+/-- Conservation of the hadronic neutral weak current, as a statement about an explicit
+hadronic tensor `W`.
+
+Two deliberate choices:
+
+* `W` is an argument.  The previous version of this structure took only `g` and `K` and
+  carried three `Prop`-plus-witness field pairs (`weakCurrentConserved`,
+  `hasResponseModel`, `parityViolatingCompatible`).  That form is not a hypothesis at all:
+  `Examples.toyHadronicAssumptions` instantiated it as `⟨True, trivial, True, trivial,
+  True, trivial⟩`, which is available for every `g` and `K`.
+* There is no symmetry field.  `Tensors.Hadronic.Assumptions` assumes `W.IsSymm`, which is
+  the parity-even electromagnetic case; the neutral weak hadronic tensor carries the
+  parity-odd `F₃` structure and is not symmetric, so assuming symmetry here would assume
+  away the effect being measured.
+
+The two fields that had no honest statement at this fidelity, `hasResponseModel` and
+`parityViolatingCompatible`, are dropped rather than restated: nothing in this module has a
+structure-function decomposition to which they could refer. -/
 structure HadronicWeakCurrentAssumptions
     (g : Kinematics.Bilin V)
-  (K : Kinematics.DisKinematics V) : Type where
-  /-- Neutral weak current is conserved in the hadronic response model. -/
-  weakCurrentConserved : Prop
-  /-- Witness of weak-current conservation. -/
-  hWeakCurrentConserved : weakCurrentConserved
-  /-- Hadronic form-factor/structure-function response is available. -/
-  hasResponseModel : Prop
-  /-- Witness that a response model is available. -/
-  hHasResponseModel : hasResponseModel
-  /-- Response model is compatible with parity-violating neutral-current terms. -/
-  parityViolatingCompatible : Prop
-  /-- Witness of PV-compatible hadronic response. -/
-  hParityViolatingCompatible : parityViolatingCompatible
+    (K : Kinematics.DisKinematics V)
+    (W : Kinematics.Bilin V) : Prop where
+  /-- Current conservation in the first tensor slot, `q_μ W^{μν} = 0`. -/
+  conserved_left : ∀ v : V, W K.q v = 0
+  /-- Current conservation in the second tensor slot, `W^{μν} q_ν = 0`. -/
+  conserved_right : ∀ v : V, W v K.q = 0
+
+/-- The parity-even electromagnetic assumptions of `Tensors.Hadronic` are strictly stronger:
+they imply weak-current conservation, and additionally impose covariance and symmetry. -/
+lemma HadronicWeakCurrentAssumptions.of_hadronicAssumptions
+    {g : Kinematics.Bilin V} {K : Kinematics.DisKinematics V} {W : Kinematics.Bilin V}
+    (h : Tensors.Hadronic.Assumptions g K W) :
+    HadronicWeakCurrentAssumptions V g K W :=
+  ⟨h.conserved_left, h.conserved_right⟩
+
+/-- The assumptions have content: a tensor that is nonzero against `q` in the first slot
+fails them. -/
+lemma not_hadronicWeakCurrentAssumptions_of_ne_zero
+    {g : Kinematics.Bilin V} {K : Kinematics.DisKinematics V} {W : Kinematics.Bilin V}
+    {v : V} (hv : W K.q v ≠ 0) :
+    ¬ HadronicWeakCurrentAssumptions V g K W :=
+  fun h => hv (h.conserved_left v)
 
 /-- Helicity-resolved ep cross-section proxy model at DIS variables `(x, y)`. -/
 structure CrossSectionModel
@@ -91,24 +118,26 @@ def IsolationAssumptions
     (M : CrossSectionModel V g K) : Prop :=
   HelicityInterferenceIsolationAssumptions D M.sigmaPlus M.sigmaMinus
 
-/-- ep asymmetry bridge theorem parallel to the ee case, with hadronic and
-kinematic compatibility assumptions explicit in the statement. -/
+/-- ep asymmetry bridge theorem parallel to the ee case.
+
+**Assumptions discharged.** The previous statement also carried
+`hHad : HadronicWeakCurrentAssumptions V g K` and `hPoint : M.pointCompatible x y`.  Neither
+was used: the proof bound them to `_`-prefixed hypotheses and then proceeded from `hIso`
+alone.  Both are removed here, which strengthens the result -- helicity-interference
+isolation is by itself sufficient, at every `(x, y)` including points the model does not
+declare compatible.  That is a statement about the *reach* of the present formalization, not
+a physics claim: the asymmetry chain in this module is algebra on
+`NeutralCurrentDecomposition` and never touches the hadronic side. -/
 lemma beamHelicityAsymmetry_eq_interferenceRatio_of_isolation
     {g : Kinematics.Bilin V}
     {K : Kinematics.DisKinematics V}
     (D : NeutralCurrentDecomposition)
     (M : CrossSectionModel V g K)
     (x y epsilonReg : ℝ)
-    (hHad : HadronicWeakCurrentAssumptions V g K)
-    (hPoint : M.pointCompatible x y)
     (hIso : IsolationAssumptions V D M) :
     beamHelicityAsymmetry V M x y epsilonReg
       = (2 * D.gammaZInterference x y) /
           (|2 * (D.photon x y + D.zBoson x y)| + epsilonReg) := by
-  have _hDIS : IsDISObservablePoint V g K x y := M.hPointCompatible x y hPoint
-  have _hWeak := hHad.hWeakCurrentConserved
-  have _hResp := hHad.hHasResponseModel
-  have _hPV := hHad.hParityViolatingCompatible
   have hPlus := hIso.plus_eq x y
   have hMinus := hIso.minus_eq x y
   have hNum : M.sigmaPlus x y - M.sigmaMinus x y = 2 * D.gammaZInterference x y := by
@@ -151,19 +180,15 @@ lemma canonical_beamHelicityAsymmetry_eq_interferenceRatio
     (g : Kinematics.Bilin V)
     (K : Kinematics.DisKinematics V)
     (D : NeutralCurrentDecomposition)
-    (x y epsilonReg : ℝ)
-    (hHad : HadronicWeakCurrentAssumptions V g K)
-    (hPoint : IsDISObservablePoint V g K x y) :
+    (x y epsilonReg : ℝ) :
     beamHelicityAsymmetry V (canonicalModelOfDecomposition V g K D) x y epsilonReg
       = (2 * D.gammaZInterference x y) /
-          (|2 * (D.photon x y + D.zBoson x y)| + epsilonReg) := by
-  exact beamHelicityAsymmetry_eq_interferenceRatio_of_isolation
+          (|2 * (D.photon x y + D.zBoson x y)| + epsilonReg) :=
+  beamHelicityAsymmetry_eq_interferenceRatio_of_isolation
     V
     D
     (canonicalModelOfDecomposition V g K D)
     x y epsilonReg
-    hHad
-    hPoint
     (canonicalModel_isolationAssumptions V D)
 
 end EP
