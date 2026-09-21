@@ -54,6 +54,15 @@ not proved here (one `sorry`). What *is* proved is that the transverse basis sat
 `IsLorentzCovariant` has teeth (`covariant_spectator_offDiagonal_zero`), and that the
 coefficients are unique (`decomposition_unique`).
 
+The `Hadronic.Witness` section audits `IsLorentzCovariant` itself, since
+`Assumptions.covariant` is the field that the critique of placeholder assumption bundles
+named. Verdict: the predicate is **not vacuous** — `not_isLorentzCovariant_wWit` exhibits a
+tensor that fails it — but it is **not a predicate of `W` alone**: on the one-dimensional
+kinematics of `isLorentzCovariant_line` it holds for every bilinear form, because the
+kinematic stabilizer is trivial there. Its strength is the size of that stabilizer, a
+property of `(V, g, p, q)`. The same section supplies `uniquenessWit`, the first
+instantiation of `UniquenessAssumptions`, which had never been shown inhabited.
+
 The parity-violating `F₃ ε^{μναβ} p_α q_β / (2 p·q)` term is *not* included: on an abstract
 `V` with only a bilinear form there is no orientation or volume form, and physlib's
 `Relativity.Tensors.RealTensor.Metrics.LeviCivita` supplies `leviCivita4Int` only as a
@@ -624,6 +633,188 @@ theorem exists_isF1F2Decomposition (g : Bilin V) (K : DisKinematics V) (W : Bili
     (hA : Assumptions g K W) :
     ∃ F1 F2 : ℝ, IsF1F2Decomposition g K W F1 F2 := by
   sorry
+
+/-!
+
+## Audit of `IsLorentzCovariant`: what the predicate does and does not assert
+
+`Hadronic.Assumptions.covariant` is the field that the critique of placeholder assumption
+bundles named. The section above asserts in prose that it "has teeth" and that it degenerates
+when the kinematic stabilizer is trivial. Neither claim was backed by a witness, so neither
+was checked. This section settles both by construction, and the verdict is:
+
+**`IsLorentzCovariant` is a genuine predicate, not a vacuous one — but it is not a predicate
+of `W` alone. Its strength is exactly the size of the kinematic stabilizer, which is a
+property of `(V, g, p, q)` and not of `W`.** Concretely:
+
+* `not_isLorentzCovariant_wWit` exhibits `(V, g, K, W)` where the predicate **fails**. So it
+  is not satisfiable by every `W` and is therefore not vacuous. This is the test a vacuous
+  field cannot pass: `foo : Prop` paired with `hFoo : foo` admits `foo := True`, and no
+  witness of failure exists for it. One does here.
+* `isLorentzCovariant_line` exhibits kinematics on which the predicate holds for **every**
+  bilinear form, because the stabilizer there is the identity alone
+  (`stabilizer_line_eq_id`). So the predicate is *conditionally* uninformative, exactly as
+  the `exists_isF1F2Decomposition` docstring claims in prose — now as a theorem.
+
+Both witnesses use the same `+---`-signature construction restricted to one time and two
+space directions, `ℝ × ℝ × ℝ` with `g (v₀,v₁,v₂) (w₀,w₁,w₂) = v₀w₀ - v₁w₁ - v₂w₂`, which is
+the smallest space carrying a timelike `p`, a spacelike `q` orthogonal to it, and one
+spectator direction — the minimum needed for `covariant_spectator_offDiagonal_zero` to bite.
+
+The same construction settles a second open question at no extra cost: `uniquenessWit`
+instantiates `UniquenessAssumptions`, which nothing in the repository previously did. Until
+now `decomposition_unique` and `fromF1F2_ne_zero` were conditioned on a hypothesis not known
+to be satisfiable; had it been empty, both would have been vacuously true statements about
+nothing.
+
+-/
+
+namespace Witness
+
+/-- The `+--` Minkowski form on `ℝ × ℝ × ℝ`, one time and two space directions:
+`g v w = v₀w₀ - v₁w₁ - v₂w₂`. This is the `Kinematics` sign convention, restricted to the
+smallest dimension that admits a spectator direction. -/
+def gWit : Bilin (ℝ × ℝ × ℝ) :=
+  LinearMap.mk₂ ℝ (fun v w => v.1 * w.1 - v.2.1 * w.2.1 - v.2.2 * w.2.2)
+    (fun _ _ _ => by simp only [Prod.fst_add, Prod.snd_add]; ring)
+    (fun _ _ _ => by simp only [Prod.smul_fst, Prod.smul_snd, smul_eq_mul]; ring)
+    (fun _ _ _ => by simp only [Prod.fst_add, Prod.snd_add]; ring)
+    (fun _ _ _ => by simp only [Prod.smul_fst, Prod.smul_snd, smul_eq_mul]; ring)
+
+@[simp] lemma gWit_apply (v w : ℝ × ℝ × ℝ) :
+    gWit v w = v.1 * w.1 - v.2.1 * w.2.1 - v.2.2 * w.2.2 := rfl
+
+/-- `gWit` is symmetric, as a metric must be. -/
+lemma gWit_isSymm : gWit.IsSymm := by
+  refine { eq := ?_ }
+  intro v w
+  simp only [gWit_apply]
+  ring
+
+/-- Witness kinematics: timelike hadron momentum `p = (1,0,0)` and spacelike momentum
+transfer `q = (0,1,0)`, orthogonal to `p`, which leaves `(0,0,1)` as a spectator direction
+orthogonal to both. Here `g q q = -1`, so `Q² = 1 > 0`, the physical DIS sign. -/
+def kWit : DisKinematics (ℝ × ℝ × ℝ) where
+  p := (1, 0, 0)
+  pPrime := 0
+  k := (0, 1, 0)
+  kPrime := 0
+  q := (0, 1, 0)
+  hq := by simp
+
+@[simp] lemma kWit_p : kWit.p = ((1, 0, 0) : ℝ × ℝ × ℝ) := rfl
+
+@[simp] lemma kWit_q : kWit.q = ((0, 1, 0) : ℝ × ℝ × ℝ) := rfl
+
+/-- The off-diagonal spectator-hadron structure `W v w = v₂ w₀`, i.e. `u^μ p^ν` for `u` the
+spectator direction. This is precisely one of the structures that Lorentz covariance is
+supposed to forbid in the hadronic tensor, so it is the natural candidate for a failure
+witness. -/
+def wWit : Bilin (ℝ × ℝ × ℝ) :=
+  LinearMap.mk₂ ℝ (fun v w => v.2.2 * w.1)
+    (fun _ _ _ => by simp only [Prod.snd_add]; ring)
+    (fun _ _ _ => by simp only [Prod.smul_snd, smul_eq_mul]; ring)
+    (fun _ _ _ => by simp only [Prod.fst_add]; ring)
+    (fun _ _ _ => by simp only [Prod.smul_fst, smul_eq_mul]; ring)
+
+@[simp] lemma wWit_apply (v w : ℝ × ℝ × ℝ) : wWit v w = v.2.2 * w.1 := rfl
+
+/-- **`IsLorentzCovariant` is not vacuous: here is a tensor that fails it.** The spectator
+direction `u = (0,0,1)` is non-null and orthogonal to both `p` and `q`, so reflection in it
+is a kinematic stabilizer element; covariance would then force the mixed component
+`W u p` to vanish, but `wWit u p = 1`.
+
+This is the decisive test for a placeholder field. A field of the form `foo : Prop` together
+with `hFoo : foo` admits `foo := True`, so no instantiation can ever fail it and no witness
+like this one exists. That `IsLorentzCovariant` has one settles the question the assumption
+bundle critique raised about `Assumptions.covariant`: the field asserts something. -/
+theorem not_isLorentzCovariant_wWit : ¬ IsLorentzCovariant gWit kWit wWit := by
+  intro hW
+  have h : wWit ((0, 0, 1) : ℝ × ℝ × ℝ) ((1, 0, 0) : ℝ × ℝ × ℝ) = 0 :=
+    covariant_spectator_offDiagonal_zero gWit kWit wWit gWit_isSymm hW (0, 0, 1) (1, 0, 0)
+      (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+  norm_num at h
+
+/-- Corollary: `Hadronic.Assumptions` is not satisfied by every symmetric conserved tensor,
+because its `covariant` field alone already rules `wWit` out. -/
+lemma not_assumptions_wWit : ¬ Assumptions gWit kWit wWit := by
+  intro hA
+  exact not_isLorentzCovariant_wWit hA.covariant
+
+/-- **`UniquenessAssumptions` is satisfiable.** The `F1` probe is the spectator pair
+`(u, u)`, which sees the transverse projector (`g u u = -1`) but is orthogonal to `p_T`; the
+`F2` probe is the null pair `(n, n)` with `n = (1,0,1)`, for which the projector value
+`-n₀² + n₂² ` vanishes while `g p_T n = 1`.
+
+Without a witness of this kind, `decomposition_unique` and `fromF1F2_ne_zero` were
+conditioned on a structure not known to be inhabited. -/
+def uniquenessWit : UniquenessAssumptions gWit kWit where
+  vF1 := (0, 0, 1)
+  wF1 := (0, 0, 1)
+  transverse_nonzero := by rw [transverseMetric_apply]; norm_num
+  pT_outer_zero := by simp only [pTransverse_pairing]; norm_num
+  vF2 := (1, 0, 1)
+  wF2 := (1, 0, 1)
+  transverse_zero := by rw [transverseMetric_apply]; norm_num
+  pT_outer_nonzero := by simp only [pTransverse_pairing]; norm_num
+
+/-!
+
+### The other side: covariance is only as strong as the stabilizer
+
+-/
+
+/-- If the identity is the only element of the kinematic stabilizer, then every bilinear form
+is Lorentz covariant, so the predicate carries no information about `W`. This is the precise
+form of the caveat recorded in prose on `exists_isF1F2Decomposition`. -/
+lemma isLorentzCovariant_of_stabilizer_eq_id (g : Bilin V) (K : DisKinematics V)
+    (hTriv : ∀ f : V →ₗ[ℝ] V, IsKinematicStabilizer g K f → f = LinearMap.id)
+    (W : Bilin V) :
+    IsLorentzCovariant g K W := by
+  intro f hf v w
+  rw [hTriv f hf]
+  simp
+
+/-- The multiplication form on the line. -/
+def gLine : Bilin ℝ :=
+  LinearMap.mk₂ ℝ (fun v w => v * w)
+    (fun _ _ _ => by ring)
+    (fun _ _ _ => by simp only [smul_eq_mul]; ring)
+    (fun _ _ _ => by ring)
+    (fun _ _ _ => by simp only [smul_eq_mul]; ring)
+
+@[simp] lemma gLine_apply (v w : ℝ) : gLine v w = v * w := rfl
+
+/-- Degenerate one-dimensional kinematics, `p = q = 1`. There is no spectator direction. -/
+def kLine : DisKinematics ℝ where
+  p := 1
+  pPrime := 0
+  k := 1
+  kPrime := 0
+  q := 1
+  hq := by norm_num
+
+/-- On the line, a kinematic stabilizer element is the identity: it fixes `p = 1`, and `1`
+spans. Note that the isometry field is not even needed. -/
+lemma stabilizer_line_eq_id (f : ℝ →ₗ[ℝ] ℝ) (hf : IsKinematicStabilizer gLine kLine f) :
+    f = LinearMap.id := by
+  have h1 : f 1 = 1 := hf.fixes_q
+  ext x
+  show f x = x
+  calc f x = f (x • (1 : ℝ)) := by rw [smul_eq_mul, mul_one]
+    _ = x • f 1 := map_smul f x 1
+    _ = x := by rw [h1, smul_eq_mul, mul_one]
+
+/-- **`IsLorentzCovariant` is uninformative on these kinematics: every bilinear form
+satisfies it.** Together with `not_isLorentzCovariant_wWit` this pins the verdict — the
+predicate is neither vacuous nor a constraint on `W` alone. It is a constraint on `W`
+*relative to a stabilizer group*, and it is empty exactly when that group is trivial. Any
+downstream use of `Assumptions.covariant` therefore carries an unstated dependence on the
+ambient geometry, which is what `SpectatorAssumptions` exists to supply. -/
+lemma isLorentzCovariant_line (W : Bilin ℝ) : IsLorentzCovariant gLine kLine W :=
+  isLorentzCovariant_of_stabilizer_eq_id gLine kLine stabilizer_line_eq_id W
+
+end Witness
 
 end Hadronic
 

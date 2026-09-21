@@ -1817,7 +1817,27 @@ lemma moller_twoLoop_experiment_observable_bridge
 /-- Interface for assigning two-loop diagram weights under a renormalization scheme.
 
 This keeps scheme assumptions explicit while leaving concrete analytic derivation
-for follow-up modules. -/
+for follow-up modules.
+
+An earlier version carried three further fields
+
+```
+  absorbsUVPoles : Prop
+  finiteRenormalizedShift : Prop
+  gaugeParameterIndependent : Prop
+```
+
+which asserted nothing, and in a stronger sense than the usual `foo : Prop` plus
+`hFoo : foo` pattern: there was no accompanying proof field at all, so the structure carried
+three propositions and assumed none of them. All three concrete schemes below instantiated
+them as literal `True`. They have been removed rather than repaired because none of the three
+can be stated honestly against the data this structure holds: `diagramWeight` is an
+`ℝ`-valued map on topology labels, with no pole structure for `absorbsUVPoles` to cancel, no
+regulator for `finiteRenormalizedShift` to survive, and no gauge parameter for
+`gaugeParameterIndependent` to be independent of. Stating them requires a two-loop amplitude
+with a regulator, which this module does not have; the removal records that the scheme
+interface is bookkeeping for weights, and that its renormalization content is still to be
+supplied. -/
 structure MollerTwoLoopWeightScheme where
   /-- Label for documentation and downstream reporting. -/
   schemeName : String
@@ -1825,12 +1845,6 @@ structure MollerTwoLoopWeightScheme where
   schemeKind : String
   /-- Weight assignment for each two-loop topology class. -/
   diagramWeight : MollerTwoLoopDiagramLabel → ℝ
-  /-- Interface assumption: UV poles can be absorbed by renormalization constants. -/
-  absorbsUVPoles : Prop
-  /-- Interface assumption: finite renormalized contribution remains. -/
-  finiteRenormalizedShift : Prop
-  /-- Interface assumption: scheme keeps gauge-parameter independent observable shift. -/
-  gaugeParameterIndependent : Prop
   /-- Optional benchmark value for the relative asymmetry correction `δA/A`. -/
   benchmarkDeltaAOverA : Option ℝ
 
@@ -1869,9 +1883,6 @@ def mollerOnShellPlaceholderScheme : MollerTwoLoopWeightScheme where
   schemeName := "MOLLER-on-shell-placeholder"
   schemeKind := "on-shell"
   diagramWeight := mollerOnShellPlaceholderWeights
-  absorbsUVPoles := True
-  finiteRenormalizedShift := True
-  gaugeParameterIndependent := True
   benchmarkDeltaAOverA := none
 
 /-- Placeholder MS-bar-style scheme for MOLLER two-loop bookkeeping. -/
@@ -1879,9 +1890,6 @@ def mollerMSbarPlaceholderScheme : MollerTwoLoopWeightScheme where
   schemeName := "MOLLER-msbar-placeholder"
   schemeKind := "MS-bar"
   diagramWeight := mollerMSbarPlaceholderWeights
-  absorbsUVPoles := True
-  finiteRenormalizedShift := True
-  gaugeParameterIndependent := True
   benchmarkDeltaAOverA := none
 
 /-- Placeholder vertex-focused MOLLER scheme inspired by arXiv:1508.07853.
@@ -1893,9 +1901,6 @@ def mollerVertex1508_07853PlaceholderScheme : MollerTwoLoopWeightScheme where
   schemeName := "MOLLER-vertex-1508.07853-placeholder"
   schemeKind := "vertex-subset"
   diagramWeight := mollerVertex1508_07853PlaceholderWeights
-  absorbsUVPoles := True
-  finiteRenormalizedShift := True
-  gaugeParameterIndependent := True
   benchmarkDeltaAOverA := some (-0.0034)
 
 /-- Registry-style selector for initial placeholder renormalization schemes.
