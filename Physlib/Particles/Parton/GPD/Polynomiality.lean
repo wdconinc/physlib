@@ -50,10 +50,25 @@ Two structural facts then give the physics content:
 
 ## Status
 
-The algebraic and polynomial-bookkeeping content is proved. Three measure-theoretic
-statements are left as marked `sorry`s: the two "integral of an odd function vanishes"
-lemmas and the Fubini/change-of-variables core. Each carries a `TODO` naming the intended
-argument; none has been compiled, since this branch was written without a Lean toolchain.
+The algebraic and polynomial-bookkeeping content is proved, including both parity inputs
+(`ddMoment_eq_zero_of_odd` and `dtMoment_eq_zero_of_even`). Exactly **one** statement is
+left as a marked `sorry`: the Fubini/change-of-variables core
+`mellinMomentGpd_ofDoubleDistribution`, whose `TODO` names the intended argument.
+
+Four declarations inherit that `sorry` and are tagged accordingly:
+`mellinMomentGpd_polynomial`, `mellinMomentH_polynomial`,
+`polynomialityAssumptionsOfDoubleDistribution` and
+`mellinMomentH_n0_eq_at_zero_ofDoubleDistribution`. Verified with `#print axioms` at
+`b63a5fcc` (grex job 5450e7a7, node n352): each of the five reports `sorryAx`, while every
+other declaration in this module reports only `[propext, Classical.choice, Quot.sound]`.
+
+**Consequence for the assumption bundle.** `polynomialityAssumptionsOfDoubleDistribution`
+is advertised in `GPD.Moments` as discharging `PolynomialityAssumptions`, and it is the
+only bridge offered. Because it rests on the `sorry` above, that discharge is not real at
+the kernel level: "polynomiality holds for double-distribution models" is currently
+*assumed*, in the same sense that the bundle itself assumes it, rather than established.
+The bridge is retained because its reduction to a single analytic statement is genuine
+content, but it must not be read as retiring the bundle.
 
 -/
 
@@ -251,7 +266,11 @@ theorem mellinMomentGpd_ofDoubleDistribution
   sorry
 
 /-- **Polynomiality.** For a GPD built from a double distribution and a D-term, the `n`-th
-`x`-moment is, at physical skewness, an even polynomial in `ξ` of degree at most `n + 1`. -/
+`x`-moment is, at physical skewness, an even polynomial in `ξ` of degree at most `n + 1`.
+
+Inherits the `sorry` of `mellinMomentGpd_ofDoubleDistribution`, which supplies the
+`polynomial` clause; the evenness clause and the degree bound are proved outright. -/
+@[sorryful]
 theorem mellinMomentGpd_polynomial
     (dd : DoubleDistribution Flavor) (dt : DTerm Flavor) (n : ℕ) (i : Flavor) (t : ℝ) :
     ∃ p : Polynomial ℝ, p.natDegree ≤ n + 1 ∧ (∀ k, Odd k → p.coeff k = 0) ∧
@@ -265,7 +284,11 @@ theorem mellinMomentGpd_polynomial
     rw [momentPolynomial_eval]
     exact mellinMomentGpd_ofDoubleDistribution dd dt n i xi t hxi
 
-/-- Polynomiality for a full GPD model built from double distributions. -/
+/-- Polynomiality for a full GPD model built from double distributions.
+
+Inherits the `sorry` of `mellinMomentGpd_ofDoubleDistribution` through
+`mellinMomentGpd_polynomial`. -/
+@[sorryful]
 theorem mellinMomentH_polynomial
     (ddH ddE : DoubleDistribution Flavor) (dtH dtE : DTerm Flavor)
     (n : ℕ) (i : Flavor) (t : ℝ) :
@@ -298,8 +321,17 @@ lemma momentPolynomial_coeff_top_eq_zero_of_even (dd : DoubleDistribution Flavor
   rw [momentPolynomial_coeff_top]
   exact dtMoment_eq_zero_of_even dt i n t hn
 
-/-- **Retiring the assumption bundle.** Any GPD model built from double distributions
-satisfies `PolynomialityAssumptions`; the hypothesis is discharged rather than assumed. -/
+/-- **The bridge to the assumption bundle — not yet a discharge.** Any GPD model built
+from double distributions satisfies `PolynomialityAssumptions`, *conditionally on*
+`mellinMomentGpd_ofDoubleDistribution`, which is a tagged `sorry`.
+
+The `coeff` and `coeff_eq_zero_of_odd` fields are supplied by proved results; the
+`polynomial` field is exactly the open analytic core. So what this definition achieves is
+a reduction — the whole bundle is now pinned to one measure-theoretic statement instead of
+three — and **not** the retirement of the bundle. `#print axioms` on it reports `sorryAx`
+(verified at `b63a5fcc`, grex job 5450e7a7). Until that `sorry` is closed, a caller who
+obtains `PolynomialityAssumptions` this way has assumed polynomiality, not proved it. -/
+@[sorryful]
 def polynomialityAssumptionsOfDoubleDistribution
     (ddH ddE : DoubleDistribution Flavor) (dtH dtE : DTerm Flavor) :
     PolynomialityAssumptions (Model.ofDoubleDistribution ddH dtH ddE dtE) where
@@ -308,7 +340,12 @@ def polynomialityAssumptionsOfDoubleDistribution
   polynomial := fun n i xi t hxi => by
     exact mellinMomentGpd_ofDoubleDistribution ddH dtH n i xi t hxi
 
-/-- The `n = 0` corollary of `GPD.Moments`, now with its hypothesis discharged. -/
+/-- The `n = 0` corollary of `GPD.Moments`, with its hypothesis supplied by the bridge
+above rather than by the caller.
+
+Since that bridge rests on `mellinMomentGpd_ofDoubleDistribution`, so does this: the
+hypothesis has been *relocated*, not discharged. -/
+@[sorryful]
 lemma mellinMomentH_n0_eq_at_zero_ofDoubleDistribution
     (ddH ddE : DoubleDistribution Flavor) (dtH dtE : DTerm Flavor)
     (i : Flavor) (xi t : ℝ) (hxi : |xi| ≤ 1) :

@@ -6,7 +6,6 @@ Authors: Joseph Tooby-Smith
 module
 
 public import Physlib.QFT.Factorization.Evolution.Basic
-public import Physlib.Meta.Linters.Sorry
 /-!
 
 # DGLAP Evolution Toy Solutions
@@ -86,8 +85,13 @@ of the evolution equation is independent of the scale.
 
 This is a statement about *all* solutions, not an exhibited one, and it is the kind of
 conclusion the corrected predicate supports: it follows from the vanishing of the
-`τ`-derivative. -/
-@[sorryful]
+`τ`-derivative.
+
+The proof below is complete and uses only proved inputs (`dglapRhsLogScale_zero_kernel` and
+`eq_of_hasDerivAt_zero`). It nevertheless carried a `@[sorryful]` attribute, which was stale:
+`#print axioms` reports `[propext, Classical.choice, Quot.sound]` (verified at `b63a5fcc`,
+grex job 5450e7a7, node n352). Since physlib's sorry linter also rejects a tag on a
+sorry-free declaration, the tag has been removed. -/
 lemma scale_independent_of_zeroKernel [Fintype Flavor]
     (αs : RunningCoupling)
     (f : Physlib.Particles.Parton.PDF.Pdf Flavor)
