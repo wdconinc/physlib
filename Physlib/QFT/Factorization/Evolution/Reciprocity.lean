@@ -237,7 +237,7 @@ lemma isTimelikeAnomalousDim_unique {N γ₁ γ₂ : ℂ} (h₁ : T.IsTimelikeAn
 
 /-- Well-posedness of the timelike anomalous dimension: at every spin there is exactly one
 horizontal displacement between the free and the interacting trajectory. -/
-theorem timelikeAnomalousDim_existsUnique (N : ℂ) :
+lemma timelikeAnomalousDim_existsUnique (N : ℂ) :
     ∃! γ : ℂ, T.IsTimelikeAnomalousDim N γ :=
   ⟨T.timelikeAnomalousDim N, T.isTimelikeAnomalousDim_timelikeAnomalousDim N,
     fun _ hγ => T.isTimelikeAnomalousDim_unique hγ
