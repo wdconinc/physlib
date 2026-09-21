@@ -240,20 +240,9 @@ theorem mollerOneLoopTopologyClassEnumeration_map_fst :
       (candidates := mollerOneLoopTopologyCandidateEnumeration)
 
 /-- Møller one-loop labels from topology enumeration match canonical order. -/
-theorem mollerOneLoopTopologyLabels_eq_canonicalOrder :
+lemma mollerOneLoopTopologyLabels_eq_canonicalOrder :
     mollerOneLoopTopologyLabels = mollerOneLoopTopologyClassOrder := by
-  simp [mollerOneLoopTopologyLabels,
-    mollerOneLoopTopologyCandidateEnumeration,
-    oneLoopTopologyCandidates,
-    enumerateCandidates,
-    oneLoopTopologyConstraints,
-    graphOfConstraint,
-    candidateOfGraph,
-    classifyOneLoopTopologyCandidate,
-    mollerClassifyOneLoopTopologyCandidate,
-    mollerOneLoopLabelOfTopologyClass,
-    mollerOneLoopTopologyClassOrder,
-    allListsOfLength]
+  decide
 
 /-- Set-level completeness for Møller one-loop class enumeration. -/
 theorem mollerOneLoopTopologyLabels_toFinset_eq_contributingSet :
@@ -431,19 +420,16 @@ abbrev MollerTwoLoopDiagramData :=
   TwoLoopDiagramData MollerTwoLoopDiagramLabel
 
 /-- Canonical momentum assignment used by the nested gauge-boson self-energy topology. -/
-def mollerNestedGaugeBosonSelfEnergyLoopMomentum1 : Momentum where
-  E := 1
-  p := (1, 0, 0)
+def mollerNestedGaugeBosonSelfEnergyLoopMomentum1 : Momentum :=
+  Momentum.mk 1 1 0 0
 
 /-- Canonical momentum assignment used by the nested gauge-boson self-energy topology. -/
-def mollerNestedGaugeBosonSelfEnergyLoopMomentum2 : Momentum where
-  E := 0
-  p := (0, 1, 0)
+def mollerNestedGaugeBosonSelfEnergyLoopMomentum2 : Momentum :=
+  Momentum.mk 0 0 1 0
 
 /-- Canonical external momentum assignment used by the nested gauge-boson self-energy topology. -/
-def mollerNestedGaugeBosonSelfEnergyExternalMomentum : Momentum where
-  E := 2
-  p := (0, 0, 1)
+def mollerNestedGaugeBosonSelfEnergyExternalMomentum : Momentum :=
+  Momentum.mk 2 0 0 1
 
 /-- Concrete integrand payload for the nested gauge-boson self-energy topology. -/
 def mollerNestedGaugeBosonSelfEnergyIntegrand : TwoLoopScalarIntegrand where
@@ -457,19 +443,16 @@ def mollerNestedGaugeBosonSelfEnergyIntegrand : TwoLoopScalarIntegrand where
   reducedMaster := twoLoopSunset 1
 
 /-- Canonical momentum assignment used by the gauge-boson/ghost mixed topology. -/
-def mollerGaugeGhostMixedLoopMomentum1 : Momentum where
-  E := 0
-  p := (1, 1, 0)
+def mollerGaugeGhostMixedLoopMomentum1 : Momentum :=
+  Momentum.mk 0 1 1 0
 
 /-- Canonical momentum assignment used by the gauge-boson/ghost mixed topology. -/
-def mollerGaugeGhostMixedLoopMomentum2 : Momentum where
-  E := 1
-  p := (0, 1, 1)
+def mollerGaugeGhostMixedLoopMomentum2 : Momentum :=
+  Momentum.mk 1 0 1 1
 
 /-- Canonical external momentum assignment used by the gauge-boson/ghost mixed topology. -/
-def mollerGaugeGhostMixedExternalMomentum : Momentum where
-  E := 1
-  p := (1, 0, 1)
+def mollerGaugeGhostMixedExternalMomentum : Momentum :=
+  Momentum.mk 1 1 0 1
 
 /-- Concrete integrand payload for the gauge-boson/ghost mixed topology. -/
 def mollerGaugeGhostMixedIntegrand : TwoLoopScalarIntegrand where
@@ -483,19 +466,16 @@ def mollerGaugeGhostMixedIntegrand : TwoLoopScalarIntegrand where
   reducedMaster := twoLoopBubble 1
 
 /-- Canonical momentum assignment used by the vertex-corrected box-interference topology. -/
-def mollerVertexCorrectedBoxInterferenceLoopMomentum1 : Momentum where
-  E := 2
-  p := (0, 1, 1)
+def mollerVertexCorrectedBoxInterferenceLoopMomentum1 : Momentum :=
+  Momentum.mk 2 0 1 1
 
 /-- Canonical momentum assignment used by the vertex-corrected box-interference topology. -/
-def mollerVertexCorrectedBoxInterferenceLoopMomentum2 : Momentum where
-  E := 1
-  p := (1, 0, 1)
+def mollerVertexCorrectedBoxInterferenceLoopMomentum2 : Momentum :=
+  Momentum.mk 1 1 0 1
 
 /-- Canonical external momentum assignment for the vertex-corrected box-interference topology. -/
-def mollerVertexCorrectedBoxInterferenceExternalMomentum : Momentum where
-  E := 0
-  p := (1, 1, 0)
+def mollerVertexCorrectedBoxInterferenceExternalMomentum : Momentum :=
+  Momentum.mk 0 1 1 0
 
 /-- Concrete integrand payload for the vertex-corrected box-interference topology. -/
 def mollerVertexCorrectedBoxInterferenceIntegrand : TwoLoopScalarIntegrand where
@@ -513,19 +493,16 @@ def mollerVertexCorrectedBoxInterferenceIntegrand : TwoLoopScalarIntegrand where
   reducedMaster := twoLoopVertexCorrection 1
 
 /-- Canonical momentum assignment used by the double-fermion self-energy topology. -/
-def mollerDoubleFermionSelfEnergyLoopMomentum1 : Momentum where
-  E := 1
-  p := (0, 1, 0)
+def mollerDoubleFermionSelfEnergyLoopMomentum1 : Momentum :=
+  Momentum.mk 1 0 1 0
 
 /-- Canonical momentum assignment used by the double-fermion self-energy topology. -/
-def mollerDoubleFermionSelfEnergyLoopMomentum2 : Momentum where
-  E := 1
-  p := (1, 0, 0)
+def mollerDoubleFermionSelfEnergyLoopMomentum2 : Momentum :=
+  Momentum.mk 1 1 0 0
 
 /-- Canonical external momentum assignment used by the double-fermion self-energy topology. -/
-def mollerDoubleFermionSelfEnergyExternalMomentum : Momentum where
-  E := 0
-  p := (0, 0, 1)
+def mollerDoubleFermionSelfEnergyExternalMomentum : Momentum :=
+  Momentum.mk 0 0 0 1
 
 /-- Concrete integrand payload for the double-fermion self-energy topology. -/
 def mollerDoubleFermionSelfEnergyIntegrand : TwoLoopScalarIntegrand where
@@ -539,19 +516,16 @@ def mollerDoubleFermionSelfEnergyIntegrand : TwoLoopScalarIntegrand where
   reducedMaster := twoLoopSunset 2
 
 /-- Canonical momentum assignment used by the counterterm-inserted one-loop topology. -/
-def mollerCountertermInsertedOneLoopLoopMomentum1 : Momentum where
-  E := 0
-  p := (0, 0, 0)
+def mollerCountertermInsertedOneLoopLoopMomentum1 : Momentum :=
+  Momentum.mk 0 0 0 0
 
 /-- Canonical momentum assignment used by the counterterm-inserted one-loop topology. -/
-def mollerCountertermInsertedOneLoopLoopMomentum2 : Momentum where
-  E := 1
-  p := (1, 0, 0)
+def mollerCountertermInsertedOneLoopLoopMomentum2 : Momentum :=
+  Momentum.mk 1 1 0 0
 
 /-- Canonical external momentum assignment used by the counterterm-inserted one-loop topology. -/
-def mollerCountertermInsertedOneLoopExternalMomentum : Momentum where
-  E := 1
-  p := (0, 1, 0)
+def mollerCountertermInsertedOneLoopExternalMomentum : Momentum :=
+  Momentum.mk 1 0 1 0
 
 /-- Concrete integrand payload for the counterterm-inserted one-loop topology. -/
 def mollerCountertermInsertedOneLoopIntegrand : TwoLoopScalarIntegrand where
@@ -948,9 +922,6 @@ def mollerQGRAFTopologyBundle : List MollerQGRAFTopologyData :=
 /-- Neutral alias for the Møller topology bundle. -/
 abbrev mollerTopologyBundle := mollerQGRAFTopologyBundle
 
-/-- Neutral alias for the Møller topology data selector. -/
-abbrev mollerTopologyDataOfLabel := mollerQGRAFDataOfLabel
-
 /-!
 ## Lean-native QGRAF-style topology enumeration workflow
 
@@ -998,6 +969,13 @@ inductive MollerTopologyNodeKind where
 /-- Compatibility alias: QGRAF-specific node kind name. -/
 abbrev MollerQGRAFNodeKind := MollerTopologyNodeKind
 
+namespace MollerQGRAFNodeKind
+-- An `abbrev` aliases the type but not its constructor namespace, so the
+-- constructors are re-exported to make `MollerQGRAFNodeKind.<ctor>` resolve.
+export MollerTopologyNodeKind
+  (gaugeInteraction ghostInteraction fermionSelfEnergyInsertion countertermInsertion)
+end MollerQGRAFNodeKind
+
 /-- Edge kinds in the Lean-native Møller topology enumeration. -/
 inductive MollerTopologyEdgeKind where
   | gaugePropagator
@@ -1008,6 +986,13 @@ inductive MollerTopologyEdgeKind where
 
 /-- Compatibility alias: QGRAF-specific edge kind name. -/
 abbrev MollerQGRAFEdgeKind := MollerTopologyEdgeKind
+
+namespace MollerQGRAFEdgeKind
+-- An `abbrev` aliases the type but not its constructor namespace, so the
+-- constructors are re-exported to make `MollerQGRAFEdgeKind.<ctor>` resolve.
+export MollerTopologyEdgeKind
+  (gaugePropagator ghostPropagator fermionPropagator countertermEdge)
+end MollerQGRAFEdgeKind
 
 /-- Compact graph container for a generated Møller topology. -/
 structure MollerTopologyGraph where
@@ -1282,16 +1267,6 @@ def mollerQGRAFEnumeratedLabels : List MollerTwoLoopDiagramLabel :=
 /-- Neutral alias for the classified Møller topology labels. -/
 abbrev mollerTopologyLabels := mollerQGRAFEnumeratedLabels
 
-/-- Neutral form of the canonical label-order theorem. -/
-theorem mollerTopologyLabels_eq_canonicalOrder :
-    mollerTopologyLabels =
-      [MollerTwoLoopDiagramLabel.nestedGaugeBosonSelfEnergy,
-       MollerTwoLoopDiagramLabel.gaugeGhostMixed,
-       MollerTwoLoopDiagramLabel.vertexCorrectedBoxInterference,
-       MollerTwoLoopDiagramLabel.doubleFermionSelfEnergy,
-       MollerTwoLoopDiagramLabel.countertermInsertedOneLoop] := by
-  simpa [mollerTopologyLabels] using mollerQGRAFEnumeratedLabels_eq_canonicalOrder
-
 /-- The Lean-native QGRAF classifier produces the expected canonical label order. -/
 lemma mollerQGRAFEnumeratedLabels_eq_canonicalOrder :
     mollerQGRAFEnumeratedLabels =
@@ -1300,11 +1275,17 @@ lemma mollerQGRAFEnumeratedLabels_eq_canonicalOrder :
        MollerTwoLoopDiagramLabel.vertexCorrectedBoxInterference,
        MollerTwoLoopDiagramLabel.doubleFermionSelfEnergy,
        MollerTwoLoopDiagramLabel.countertermInsertedOneLoop] := by
-  simp [mollerQGRAFEnumeratedLabels, mollerQGRAFCandidateEnumeration,
-    mollerQGRAFGraphConstraints, mollerQGRAFGraphOfConstraint,
-    mollerQGRAFCandidateOfConstraint, mollerClassifyQGRAFCandidate,
-    mollerClassifyQGRAFSignature, mollerTwoLoopSignatureOfCandidate,
-    allListsOfLength]
+  decide
+
+/-- Neutral form of the canonical label-order theorem. -/
+lemma mollerTopologyLabels_eq_canonicalOrder :
+    mollerTopologyLabels =
+      [MollerTwoLoopDiagramLabel.nestedGaugeBosonSelfEnergy,
+       MollerTwoLoopDiagramLabel.gaugeGhostMixed,
+       MollerTwoLoopDiagramLabel.vertexCorrectedBoxInterference,
+       MollerTwoLoopDiagramLabel.doubleFermionSelfEnergy,
+       MollerTwoLoopDiagramLabel.countertermInsertedOneLoop] := by
+  simpa [mollerTopologyLabels] using mollerQGRAFEnumeratedLabels_eq_canonicalOrder
 
 /-- Set-level completeness: Lean-native QGRAF classification recovers exactly
 the curated Møller two-loop topology set. -/
@@ -1334,6 +1315,9 @@ def mollerQGRAFDataOfLabel
       mollerVertexCorrectedBoxInterferenceQGRAFData
   | .doubleFermionSelfEnergy => mollerDoubleFermionSelfEnergyQGRAFData
   | .countertermInsertedOneLoop => mollerCountertermInsertedOneLoopQGRAFData
+
+/-- Neutral alias for the Møller topology data selector. -/
+abbrev mollerTopologyDataOfLabel := mollerQGRAFDataOfLabel
 
 /-- Lean-native QGRAF enumerator reproduces the canonical QGRAF topology bundle. -/
 theorem mollerQGRAFTopologyBundle_eq_map_enumeratedLabels :
