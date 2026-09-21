@@ -92,7 +92,7 @@ def qcdContributingOneLoopBetaDiagramClasses : Finset QCDOneLoopBetaDiagramClass
   qcdOneLoopBetaClassOrder.toFinset
 
 /-- Classified QCD one-loop labels match canonical class order. -/
-theorem qcdOneLoopTopologyLabels_eq_canonicalOrder :
+lemma qcdOneLoopTopologyLabels_eq_canonicalOrder :
     qcdOneLoopTopologyLabels = qcdOneLoopBetaClassOrder := by
   decide
 

@@ -240,7 +240,7 @@ theorem mollerOneLoopTopologyClassEnumeration_map_fst :
       (candidates := mollerOneLoopTopologyCandidateEnumeration)
 
 /-- Møller one-loop labels from topology enumeration match canonical order. -/
-theorem mollerOneLoopTopologyLabels_eq_canonicalOrder :
+lemma mollerOneLoopTopologyLabels_eq_canonicalOrder :
     mollerOneLoopTopologyLabels = mollerOneLoopTopologyClassOrder := by
   decide
 
@@ -1278,7 +1278,7 @@ lemma mollerQGRAFEnumeratedLabels_eq_canonicalOrder :
   decide
 
 /-- Neutral form of the canonical label-order theorem. -/
-theorem mollerTopologyLabels_eq_canonicalOrder :
+lemma mollerTopologyLabels_eq_canonicalOrder :
     mollerTopologyLabels =
       [MollerTwoLoopDiagramLabel.nestedGaugeBosonSelfEnergy,
        MollerTwoLoopDiagramLabel.gaugeGhostMixed,
