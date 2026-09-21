@@ -504,8 +504,10 @@ lemma scaledCoefficientDeriv
   have hval : Real.exp L * (Real.exp (-L) * scaledChannelValue K f₀ i x)
       = scaledChannelValue K f₀ i x := by
     rw [← mul_assoc, exp_mul_exp_neg, one_mul]
-  rw [hfun, ← hval]
-  exact (Real.hasDerivAt_exp L).mul_const _
+  rw [hfun]
+  have hd := (Real.hasDerivAt_exp L).mul_const
+    (Real.exp (-L) * scaledChannelValue K f₀ i x)
+  rwa [hval] at hd
 
 /-- The density's scale derivative of the witness is minus the channel value. -/
 lemma scaledDensityDeriv
