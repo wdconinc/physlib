@@ -248,7 +248,7 @@ lemma protonWeakCharge_eq_electronWeakCharge (s2 : ℝ) :
 `sin^2(theta_W)` dependence of `C_{1u}` and `C_{1d}` cancels in the combination
 `C_{1u} + 2 C_{1d}`.  This is why a heavy nucleus, whose weak charge is dominated by `-N`,
 is a weak-mixing-angle probe only through its proton term. -/
-theorem neutronWeakCharge_eq_neg_one (s2 : ℝ) : neutronWeakCharge s2 = -1 := by
+lemma neutronWeakCharge_eq_neg_one (s2 : ℝ) : neutronWeakCharge s2 = -1 := by
   simp only [neutronWeakCharge, c1Up, c1Down]
   ring
 
