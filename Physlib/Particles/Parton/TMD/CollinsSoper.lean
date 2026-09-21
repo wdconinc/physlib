@@ -47,7 +47,18 @@ The RG system, the two equations and the consistency condition are stated;
 would need `μ ↦ ζ ↦ log f` to be twice continuously differentiable jointly and an
 application of mathlib's symmetry-of-second-derivatives result; the condition is
 therefore carried as a hypothesis bundle with its two clauses written out, not asserted.
-Nothing in this module has been compiled.
+
+This module compiles. The sentence previously here, "Nothing in this module has been
+compiled", was written before the module was first built and was left behind when it was;
+it is corrected rather than deleted because a status line that outlives its truth is the
+failure mode this file's own framing note was written to warn about.
+
+A further leading-power caveat, recorded when
+`Physlib.Particles.Parton.TMD.PowerCorrections` was added: the multiplicative two-scale
+structure stated here is the leading-power structure. arXiv:2603.19833 finds that once
+kinematic power corrections are included the TMD evolution factor enters as a convolution
+with the nonperturbative distribution rather than multiplicatively, so `SatisfiesZetaRg`
+should not be read as holding beyond leading power.
 
 ## References
 

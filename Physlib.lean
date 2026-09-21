@@ -225,6 +225,7 @@ public import Physlib.Particles.Parton.PDF.MsbarPositivity
 public import Physlib.Particles.Parton.PDF.Positivity
 public import Physlib.Particles.Parton.TMD.Basic
 public import Physlib.Particles.Parton.TMD.CollinsSoper
+public import Physlib.Particles.Parton.TMD.PowerCorrections
 public import Physlib.Particles.Parton.TMD.Reduction
 public import Physlib.Particles.Parton.Unified.Basic
 public import Physlib.Particles.Parton.Unified.Consistency
