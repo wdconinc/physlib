@@ -381,7 +381,7 @@ linearized small-`x` system has a unique global solution.
 
 Existence is the operator exponential `bfklFlow`; uniqueness is the general BK uniqueness
 statement `bkSolution_unique` applied to the linearized system. -/
-theorem bfkl_exists_unique [CompleteSpace E] (S : SmallXSystem E) (N₀ : E) (Y₀ : ℝ) :
+lemma bfkl_exists_unique [CompleteSpace E] (S : SmallXSystem E) (N₀ : E) (Y₀ : ℝ) :
     ∃! N : ℝ → E, N Y₀ = N₀ ∧ IsBfklSolution S N := by
   refine ⟨bfklFlow S N₀ Y₀, ⟨bfklFlow_self S N₀ Y₀, ?_⟩, ?_⟩
   · rw [isBfklSolution_iff]
