@@ -17,6 +17,8 @@ interfaces used by parity-violating electron scattering (PVES) contracts.
 
 @[expose] public section
 
+noncomputable section
+
 namespace Physlib
 namespace QFT
 namespace Scattering
