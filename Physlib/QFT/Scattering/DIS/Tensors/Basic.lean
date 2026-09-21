@@ -736,10 +736,16 @@ theorem not_isLorentzCovariant_wWit : ¬ IsLorentzCovariant gWit kWit wWit := by
   norm_num at h
 
 /-- Corollary: `Hadronic.Assumptions` is not satisfied by every symmetric conserved tensor,
-because its `covariant` field alone already rules `wWit` out. -/
-lemma not_assumptions_wWit : ¬ Assumptions gWit kWit wWit := by
-  intro hA
-  exact not_isLorentzCovariant_wWit hA.covariant
+because its `covariant` field alone already rules `wWit` out.
+
+Stated as an arrow into `False` rather than with `¬` because `Assumptions` is declared
+`: Type`, not `: Prop`, so it is not negatable. That is worth recording on its own: a bundle
+of physics hypotheses living in `Type` is *data*, two proofs of the same hypotheses are not
+definitionally equal, and it cannot be used where a `Prop` is expected. The same applies to
+`UniquenessAssumptions` and `SpectatorAssumptions`. Moving them to `Prop` is a signature
+change with downstream reach, so it is left for review rather than done here. -/
+lemma not_assumptions_wWit : Assumptions gWit kWit wWit → False := fun hA =>
+  not_isLorentzCovariant_wWit hA.covariant
 
 /-- **`UniquenessAssumptions` is satisfiable.** The `F1` probe is the spectator pair
 `(u, u)`, which sees the transverse projector (`g u u = -1`) but is orthogonal to `p_T`; the
@@ -799,7 +805,7 @@ spans. Note that the isometry field is not even needed. -/
 lemma stabilizer_line_eq_id (f : ℝ →ₗ[ℝ] ℝ) (hf : IsKinematicStabilizer gLine kLine f) :
     f = LinearMap.id := by
   have h1 : f 1 = 1 := hf.fixes_q
-  ext x
+  refine LinearMap.ext fun x => ?_
   show f x = x
   calc f x = f (x • (1 : ℝ)) := by rw [smul_eq_mul, mul_one]
     _ = x • f 1 := map_smul f x 1
