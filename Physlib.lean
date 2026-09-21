@@ -289,6 +289,7 @@ public import Physlib.QFT.Factorization.Evolution.Reciprocity
 public import Physlib.QFT.Factorization.Evolution.SmallX
 public import Physlib.QFT.Factorization.Evolution.Solutions
 public import Physlib.QFT.Factorization.HigherOrder.Basic
+public import Physlib.QFT.Factorization.Scales.Basic
 public import Physlib.QFT.PerturbationTheory.CreateAnnihilate
 public import Physlib.QFT.PerturbationTheory.DimensionalRegularization.Basic
 public import Physlib.QFT.PerturbationTheory.DimensionalRegularization.OneLoopScalars

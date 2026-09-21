@@ -20,6 +20,7 @@ public import Physlib.QFT.Factorization.Evolution.Basic
 public import Physlib.QFT.Factorization.Evolution.QCDCore
 public import Physlib.QFT.Factorization.Evolution.Solutions
 public import Physlib.QFT.Factorization.Evolution.Consistency
+public import Physlib.QFT.Factorization.Scales.Basic
 public import Physlib.QFT.QCD.Basic
 public import Physlib.QFT.QCD.RepresentationColor
 public import Physlib.QFT.QCD.CasimirDerivation
