@@ -286,6 +286,7 @@ public import Physlib.QFT.Factorization.Evolution.Consistency
 public import Physlib.QFT.Factorization.Evolution.MomentSpace
 public import Physlib.QFT.Factorization.Evolution.QCDCore
 public import Physlib.QFT.Factorization.Evolution.Reciprocity
+public import Physlib.QFT.Factorization.Evolution.SmallX
 public import Physlib.QFT.Factorization.Evolution.Solutions
 public import Physlib.QFT.Factorization.HigherOrder.Basic
 public import Physlib.QFT.PerturbationTheory.CreateAnnihilate
