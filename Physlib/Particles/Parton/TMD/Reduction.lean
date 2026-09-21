@@ -38,6 +38,17 @@ def collinearFromTmd
     (ktMax ζ : ℝ) : PDF.Pdf Flavor :=
   fun i x Q2 => integrateTransverse fTmd i x Q2 ζ ktMax
 
+/-- The collinear proxy built from a TMD is nonnegative throughout the physical region.
+
+A collinear density that could go negative would not be a reduction of a positive TMD, so
+this is the minimum the definition has to satisfy to deserve its name. It follows from
+`Assumptions.nonneg` alone; no reduction hypothesis is involved. -/
+lemma collinearFromTmd_nonneg
+    (fTmd : Tmd Flavor) (h : Assumptions fTmd) (ktMax ζ : ℝ)
+    (i : Flavor) (x Q2 : ℝ) (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    0 ≤ collinearFromTmd fTmd ktMax ζ i x Q2 :=
+  integrateTransverse_nonneg fTmd h i x Q2 ζ ktMax hx0 hx1
+
 /-- Reduction interface stating that the transverse-measure integral of a TMD recovers a
 collinear PDF. -/
 def IntegratesToPdf

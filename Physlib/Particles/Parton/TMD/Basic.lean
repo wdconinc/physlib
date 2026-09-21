@@ -87,6 +87,26 @@ lemma eq_zero_of_kT_neg
     f i x kT Q2 ζ = 0 :=
   h.supportKT i x kT Q2 ζ hkT
 
+/-- The transverse-measure integral of a TMD is nonnegative throughout the physical region
+in the Bjorken variable.
+
+This is the statement that the collinear density obtained by reducing a TMD inherits the
+positivity of the TMD, and it is where `Assumptions.nonneg` earns its place: without it the
+field is only restated by `nonneg_on_physicalRegion` and never used. The Jacobian `2π k_T`
+of `integrateTransverse` is nonnegative on the integration region `[0, ktMax]`, so it does
+not spoil the sign. No integrability hypothesis is needed: a non-integrable function has
+Bochner integral `0`, which is also nonnegative. -/
+lemma integrateTransverse_nonneg
+    (f : Tmd Flavor) (h : Assumptions f)
+    (i : Flavor) (x Q2 ζ ktMax : ℝ) (hx0 : 0 ≤ x) (hx1 : x ≤ 1) :
+    0 ≤ integrateTransverse f i x Q2 ζ ktMax := by
+  refine MeasureTheory.setIntegral_nonneg measurableSet_Icc ?_
+  intro kT hkT
+  have hkT0 : 0 ≤ kT := hkT.1
+  have hjac : (0 : ℝ) ≤ 2 * Real.pi * kT :=
+    mul_nonneg (by positivity) hkT0
+  exact mul_nonneg hjac (h.nonneg i x kT Q2 ζ hx0 hx1 hkT0)
+
 /-- Positivity consequence in the physical region. -/
 lemma nonneg_on_physicalRegion
     (f : Tmd Flavor) (h : Assumptions f)
