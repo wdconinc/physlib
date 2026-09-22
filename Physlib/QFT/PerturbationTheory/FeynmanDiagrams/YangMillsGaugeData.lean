@@ -99,8 +99,10 @@ structure YangMillsGaugeData
   /-- The matter basis is finite, so that matrix traces are defined. -/
   fundFintype : Fintype FundBasis
   /-- Generator matrix entries: given adjoint index `a` and matter indices `i j`,
-      the `(i,j)` entry of the generator `T^a`. -/
-  genEntry : AdjBasis → FundBasis → FundBasis → ℝ
+      the `(i,j)` entry of the generator `T^a`.  Complex-valued, matching
+      `RepresentationColor.NormalizedGeneratorData.genEntry`: the matter modules here are
+      complex (`ℂ`, `Fin n → ℂ`), and already `su(2)`'s `T² = σ²/2` has non-real entries. -/
+  genEntry : AdjBasis → FundBasis → FundBasis → ℂ
   /-- Trace normalization coefficient `T_F = Tr(T^a T^b) / δ^{ab}`. -/
   tF : ℝ
   /-- Fundamental Casimir coefficient `C_F`. -/
@@ -190,7 +192,7 @@ def u1YangMillsGaugeData (Y : ℝ) :
   FundBasis := Fin 1         -- one-dimensional charge representation
   adjFintype := inferInstance
   fundFintype := inferInstance
-  genEntry := fun _ _ _ => Y
+  genEntry := fun _ _ _ => (Y : ℂ)
   tF := Y ^ 2
   cF := Y ^ 2
   cA := 0                    -- abelian: no adjoint self-coupling

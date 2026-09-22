@@ -38,8 +38,24 @@ This structure records representation-theoretic input data and the associated
 proof obligations needed to extract color invariants.
 
 `AdjIndex` indexes adjoint generators, and `FundIndex` indexes the fundamental
-representation basis. Matrix entries are encoded as real-valued maps for
-interface purposes.
+representation basis. Generator matrix entries are encoded as **complex**-valued
+maps: the fundamental representation of a compact real form is a complex
+representation, and already for `su(2)` the second generator
+`T² = σ²/2 = (1/2) · !![0, -I; I, 0]` has non-real entries, so a real-valued
+`genEntry` admits no `su(N)` fundamental instance at all.
+
+The remaining numerical data stays real, and deliberately so:
+
+* `tF`, `cF`, `cA` are the real color invariants consumed by `ColorInvariants`;
+  keeping them in `ℝ` and coercing on the right-hand side of the identities
+  makes those identities *stronger* (the complex generator sums are asserted to
+  be real), and leaves `colorInvariantsOf` and everything downstream unchanged.
+* `deltaAdj`, `deltaFund` are Kronecker deltas, valued in `{0, 1} ⊆ ℝ`.
+* `structConst` is real: for a compact real form with Hermitian generators
+  normalized by `Tr(T^a T^b) = T_F δ^{ab}`, the structure constants
+  `f^{abc} = -(i/T_F) · Tr([T^a, T^b] T^c)` are real and totally antisymmetric.
+  Consequently `AdjointCasimirIdentity` below is unchanged: it remains an
+  identity in `ℝ`.
 -/
 structure NormalizedGeneratorData : Type 2 where
   /-- Index type for adjoint generators. -/
@@ -50,8 +66,9 @@ structure NormalizedGeneratorData : Type 2 where
   adjFintype : Fintype AdjIndex
   /-- The fundamental index set is finite, so that matrix traces are defined. -/
   fundFintype : Fintype FundIndex
-  /-- Generator matrix entries `(T^a)_i_j`. -/
-  genEntry : AdjIndex → FundIndex → FundIndex → ℝ
+  /-- Generator matrix entries `(T^a)_i_j`, complex-valued: the fundamental
+  representation of a compact real form is a complex representation. -/
+  genEntry : AdjIndex → FundIndex → FundIndex → ℂ
   /-- Structure constants `f^{abc}` of the gauge algebra. -/
   structConst : AdjIndex → AdjIndex → AdjIndex → ℝ
   /-- Adjoint Kronecker delta placeholder. -/
@@ -90,12 +107,13 @@ this section write down what those names are meant to say, as equations in the d
 package already carries.  They are consumed by `CasimirDerivationAssumptions`. -/
 
 /-- The trace-normalization identity `Tr(T^a T^b) = T_F δ^{ab}`, written out in the
-stored generator entries. -/
+stored generator entries.  An identity in `ℂ`: the generator entries are complex, while
+`T_F` and `δ^{ab}` are real and coerced, so this also asserts that the trace is real. -/
 def NormalizedGeneratorData.TraceIdentity (D : NormalizedGeneratorData) : Prop :=
   letI := D.fundFintype
   ∀ a b : D.AdjIndex,
     (∑ i : D.FundIndex, ∑ j : D.FundIndex, D.genEntry a i j * D.genEntry b j i)
-      = D.tF * D.deltaAdj a b
+      = (D.tF : ℂ) * (D.deltaAdj a b : ℂ)
 
 /-- The fundamental Casimir identity `Σ_a T^a T^a = C_F I`, written out in the stored
 generator entries. -/
@@ -105,7 +123,7 @@ def NormalizedGeneratorData.FundamentalCasimirIdentity (D : NormalizedGeneratorD
   letI := D.fundFintype
   ∀ i j : D.FundIndex,
     (∑ a : D.AdjIndex, ∑ k : D.FundIndex, D.genEntry a i k * D.genEntry a k j)
-      = D.cF * D.deltaFund i j
+      = (D.cF : ℂ) * (D.deltaFund i j : ℂ)
 
 /-- The adjoint Casimir identity `f^{acd} f^{bcd} = C_A δ^{ab}`, written out in the
 stored structure constants. -/
