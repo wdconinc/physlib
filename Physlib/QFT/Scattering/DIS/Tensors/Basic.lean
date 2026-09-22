@@ -728,7 +728,7 @@ This is the decisive test for a placeholder field. A field of the form `foo : Pr
 with `hFoo : foo` admits `foo := True`, so no instantiation can ever fail it and no witness
 like this one exists. That `IsLorentzCovariant` has one settles the question the assumption
 bundle critique raised about `Assumptions.covariant`: the field asserts something. -/
-theorem not_isLorentzCovariant_wWit : ¬ IsLorentzCovariant gWit kWit wWit := by
+lemma not_isLorentzCovariant_wWit : ¬ IsLorentzCovariant gWit kWit wWit := by
   intro hW
   have h : wWit ((0, 0, 1) : ℝ × ℝ × ℝ) ((1, 0, 0) : ℝ × ℝ × ℝ) = 0 :=
     covariant_spectator_offDiagonal_zero gWit kWit wWit gWit_isSymm hW (0, 0, 1) (1, 0, 0)
