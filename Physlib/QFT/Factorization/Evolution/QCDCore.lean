@@ -50,9 +50,12 @@ def qcdRunningCouplingFromRepresentation
 -- A `QCDSplittingKernelAssumptions` bundle used to sit here, carrying a single field
 -- `nonneg : ∀ i j x z, 0 ≤ P i j x z`. It had no dependent declaration anywhere in the
 -- repository, and pointwise nonnegativity is not a property the physical LO QCD splitting
--- kernels have: as `Evolution/CollinearForm.lean` already records, those kernels are
--- plus-distributions accompanied by `δ(1 - z)` terms and are therefore not pointwise
--- nonnegative functions of the momentum-fraction ratio at all. The bundle has been removed
+-- kernels have: as `Evolution/Basic.lean` already records (module docstring, under the note
+-- on splitting kernels being ordinary functions), those kernels carry a `1 / (1 - y)`
+-- plus-distribution and a `δ (1 - y)` term, and are therefore not pointwise nonnegative
+-- functions of the momentum-fraction ratio at all. `Evolution/CollinearForm.lean` records
+-- the plus-distribution half of the same point for `IsCollinearSplittingKernel`.
+-- The bundle has been removed
 -- rather than restated; a positivity contract for QCD kernels needs the distributional
 -- kernel type that does not yet exist here.
 
