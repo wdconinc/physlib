@@ -127,7 +127,7 @@ cannot blow up in finite time — upgrades local existence to global. This is th
 form of DGLAP well-posedness; see the module docstring on why `x`-space is not attempted.
 
 Of the two inputs below, **uniqueness is now proved** (`momentSolution_unique`; `#print axioms`
-reports `[propext, Classical.choice, Quot.sound]`, verified at `b63a5fcc`, grex job 5450e7a7).
+reports `[propext, Classical.choice, Quot.sound]`).
 **Existence is not** (`momentSolution_exists`), and its `sorry` is the single open gap of this
 module: mathlib at this pin has local existence for Picard-Lindelöf fields but no ready-made
 global statement for linear systems. The combination `moment_exists_unique` is assembled from

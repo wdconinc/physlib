@@ -89,8 +89,8 @@ conclusion the corrected predicate supports: it follows from the vanishing of th
 
 The proof below is complete and uses only proved inputs (`dglapRhsLogScale_zero_kernel` and
 `eq_of_hasDerivAt_zero`). It nevertheless carried a `@[sorryful]` attribute, which was stale:
-`#print axioms` reports `[propext, Classical.choice, Quot.sound]` (verified at `b63a5fcc`,
-grex job 5450e7a7, node n352). Since physlib's sorry linter also rejects a tag on a
+`#print axioms` reports `[propext, Classical.choice, Quot.sound]`. Since physlib's sorry
+linter also rejects a tag on a
 sorry-free declaration, the tag has been removed. -/
 lemma scale_independent_of_zeroKernel [Fintype Flavor]
     (αs : RunningCoupling)

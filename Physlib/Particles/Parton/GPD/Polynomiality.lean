@@ -58,9 +58,9 @@ left as a marked `sorry`: the Fubini/change-of-variables core
 Four declarations inherit that `sorry` and are tagged accordingly:
 `mellinMomentGpd_polynomial`, `mellinMomentH_polynomial`,
 `polynomialityAssumptionsOfDoubleDistribution` and
-`mellinMomentH_n0_eq_at_zero_ofDoubleDistribution`. Verified with `#print axioms` at
-`b63a5fcc` (grex job 5450e7a7, node n352): each of the five reports `sorryAx`, while every
-other declaration in this module reports only `[propext, Classical.choice, Quot.sound]`.
+`mellinMomentH_n0_eq_at_zero_ofDoubleDistribution`. Under `#print axioms` each of the five
+reports `sorryAx`, while every other declaration in this module reports only
+`[propext, Classical.choice, Quot.sound]`.
 
 **Consequence for the assumption bundle.** `polynomialityAssumptionsOfDoubleDistribution`
 is advertised in `GPD.Moments` as discharging `PolynomialityAssumptions`, and it is the
@@ -329,7 +329,7 @@ The `coeff` and `coeff_eq_zero_of_odd` fields are supplied by proved results; th
 `polynomial` field is exactly the open analytic core. So what this definition achieves is
 a reduction — the whole bundle is now pinned to one measure-theoretic statement instead of
 three — and **not** the retirement of the bundle. `#print axioms` on it reports `sorryAx`
-(verified at `b63a5fcc`, grex job 5450e7a7). Until that `sorry` is closed, a caller who
+Until that `sorry` is closed, a caller who
 obtains `PolynomialityAssumptions` this way has assumed polynomiality, not proved it. -/
 @[sorryful]
 def polynomialityAssumptionsOfDoubleDistribution

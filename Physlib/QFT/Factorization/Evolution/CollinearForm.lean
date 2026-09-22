@@ -107,8 +107,8 @@ an ordinary differential equation in the scale at fixed `N`.
 Depends on `Convolution.mellinDis_convolveAt`, which at the time this module was written rested
 on an unproved change-of-variables step (`Convolution.integral_mellinIntegrand_of_mem`). That
 step has since been closed: `#print axioms Convolution.mellinDis_convolveAt` reports
-`[propext, Classical.choice, Quot.sound]`, and so does this theorem (verified at `b63a5fcc`,
-grex job 5450e7a7, node n352). The `@[sorryful]` attribute this declaration used to carry was
+`[propext, Classical.choice, Quot.sound]`, and so does this theorem. The `@[sorryful]`
+attribute this declaration used to carry was
 therefore stale, and has been removed — physlib's sorry linter rejects the tag in both
 directions, so a tag on a sorry-free result is as much a failure as a missing tag. -/
 theorem mellinDis_dglapOperator [Fintype Flavor]

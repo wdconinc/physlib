@@ -79,7 +79,7 @@ This bundle is retained for models that are not built from a double distribution
 models that are, `GPD.polynomialityAssumptionsOfDoubleDistribution` constructs it — but
 **that bridge is not a discharge**: its `polynomial` field is
 `GPD.mellinMomentGpd_ofDoubleDistribution`, which is a tagged `sorry`, so `#print axioms`
-on the bridge reports `sorryAx` (verified at `b63a5fcc`). A reader deciding whether this
+on the bridge reports `sorryAx`. A reader deciding whether this
 assumption is "handled" should read it as: handled *modulo* one open measure-theoretic
 statement, and otherwise assumed. No unconditional discharge of this bundle exists
 anywhere in the repository at present. -/
