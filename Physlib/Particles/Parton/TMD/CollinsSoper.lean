@@ -249,6 +249,7 @@ lemma cuspConsistent_logRgSystem (gammaCusp0 : ℝ) (K0 gammaV : ℝ → ℝ) :
         ((Real.hasDerivAt_log hmu').const_mul gammaCusp0)
     have hval : (0 : ℝ) - gammaCusp0 * mu⁻¹ = -gammaCusp0 / mu := by
       field_simp
+      ring
     rw [hval] at h
     exact h
   · intro i x bT mu zeta hzeta
@@ -259,6 +260,7 @@ lemma cuspConsistent_logRgSystem (gammaCusp0 : ℝ) (K0 gammaV : ℝ → ℝ) :
         ((Real.hasDerivAt_log hz).const_mul (gammaCusp0 / 2))
     have hval : (0 : ℝ) - gammaCusp0 / 2 * zeta⁻¹ = -gammaCusp0 / (2 * zeta) := by
       field_simp
+      ring
     rw [hval] at h
     exact h
 
@@ -279,6 +281,7 @@ lemma satisfiesMuRg_sudakovLogTmd (gammaCusp0 : ℝ) (K0 gammaV : ℝ → ℝ) :
   have hval : gammaV bT * mu⁻¹ + 0 - gammaCusp0 / 2 * mu⁻¹ * Real.log zeta
       = (gammaV bT - gammaCusp0 / 2 * Real.log zeta) / mu := by
     field_simp
+    ring
   rw [hval] at h
   exact h
 
