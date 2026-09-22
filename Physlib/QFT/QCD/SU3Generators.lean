@@ -28,6 +28,11 @@ identities instead of to a reflexive triviality.
 
 @[expose] public section
 
+-- The identity proofs below are 64-case sweeps over explicit 3x3 / 8x8x8 tables;
+-- they need considerably more than the default elaboration budget.
+set_option maxHeartbeats 2000000
+set_option maxRecDepth 4000
+
 noncomputable section
 
 namespace Physlib
@@ -166,27 +171,24 @@ def SU3AdjointStatement : Prop :=
 
 /-! ### Proofs of the identities -/
 
-set_option maxHeartbeats 4000000 in
 /-- The fundamental `su(3)` generators `λᵃ/2` are trace-normalized with `T_F = 1/2`. -/
 theorem su3TraceStatement : SU3TraceStatement := by
   intro a b
   fin_cases a <;> fin_cases b <;>
     simp [su3GenEntry, su3DeltaAdj, gellMann3, Fin.sum_univ_three] <;>
     ring_nf <;>
-    simp [invSqrt3_sq, invSqrt3_mul_self, Complex.I_sq, Complex.I_mul_I] <;>
+    simp [invSqrt3_sq, Complex.I_sq] <;>
     ring_nf
 
-set_option maxHeartbeats 4000000 in
 /-- The fundamental `su(3)` Casimir: `Σₐ (λᵃ/2)(λᵃ/2) = (4/3) · 1`. -/
 theorem su3FundamentalStatement : SU3FundamentalStatement := by
   intro i j
   fin_cases i <;> fin_cases j <;>
     simp [su3GenEntry, su3DeltaFund, gellMann3, Fin.sum_univ_three, Fin.sum_univ_eight] <;>
     ring_nf <;>
-    simp [invSqrt3_sq, invSqrt3_mul_self, Complex.I_sq, Complex.I_mul_I] <;>
+    simp [invSqrt3_sq, Complex.I_sq] <;>
     ring_nf
 
-set_option maxHeartbeats 8000000 in
 /-- The adjoint `su(3)` Casimir: `Σ_{cd} f^{acd} f^{bcd} = 3 δᵃᵇ`, i.e. `C_A = 3`. -/
 theorem su3AdjointStatement : SU3AdjointStatement := by
   intro a b
