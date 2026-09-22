@@ -45,21 +45,6 @@ structure RenormalizationConstants : Type where
   /-- Ghost-field renormalization constant. -/
   z3c : LaurentExpansionAtZero
 
-/-- Slavnov-Taylor compatibility contracts for renormalization constants.
-
-Concrete gauge-theory realizations can later replace these abstract contracts
-with explicit identities.
--/
-structure SlavnovTaylorAssumptions (Z : RenormalizationConstants) : Type where
-  /-- Quark-gauge vertex identity placeholder. -/
-  gaugeVertexIdentity : Prop
-  /-- Ghost-gauge vertex identity placeholder. -/
-  ghostVertexIdentity : Prop
-  /-- Witness for quark-gauge vertex identity. -/
-  hGaugeVertexIdentity : gaugeVertexIdentity
-  /-- Witness for ghost-gauge vertex identity. -/
-  hGhostVertexIdentity : ghostVertexIdentity
-
 /-- Extract the `1/ε` coefficient from a Laurent expansion.
 
 This is the concrete pole-extraction seam used by the renormalization layer.
@@ -68,6 +53,36 @@ for loop integrals and counterterms.
 -/
 def poleCoeff (x : LaurentExpansionAtZero) : ℝ :=
   Physlib.QFT.PerturbationTheory.DimensionalRegularization.poleCoeff x
+
+/-- Slavnov-Taylor identities for the coupling renormalization constant, at the level of
+simple poles.
+
+Writing each constant as `Z_X = 1 + z_X / ε + O(ε⁰)`, the coupling renormalization
+constant can be read off either the quark-gauge-boson vertex,
+`Z_g = Z_1F Z_2^{-1} Z_3^{-1/2}`, or the ghost-gauge-boson vertex,
+`Z_g = Z_1c Z_3c^{-1} Z_3^{-1/2}`.  Expanding either relation to first order in `1/ε`
+gives the two equations below, which are genuine constraints on the stored pole
+coefficients rather than propositional placeholders.
+
+Both statements are the one-loop (single-pole, first-order) form of the identities; the
+full multiplicative relations are not expressible here, since `LaurentExpansionAtZero`
+carries no multiplication. -/
+structure SlavnovTaylorAssumptions (Z : RenormalizationConstants) : Prop where
+  /-- Coupling pole read off the quark-gauge-boson vertex: `z_g = z_1F - z_2 - z_3 / 2`. -/
+  gaugeVertexIdentity :
+    poleCoeff Z.zG = poleCoeff Z.z1F - poleCoeff Z.z2 - poleCoeff Z.z3 / 2
+  /-- Coupling pole read off the ghost-gauge-boson vertex: `z_g = z_1c - z_3c - z_3 / 2`. -/
+  ghostVertexIdentity :
+    poleCoeff Z.zG = poleCoeff Z.z1c - poleCoeff Z.z3c - poleCoeff Z.z3 / 2
+
+/-- The two Slavnov-Taylor identities force the quark-gauge and ghost-gauge vertex
+combinations to agree: the pole-level form of `Z_1F / Z_2 = Z_1c / Z_3c`. -/
+lemma slavnovTaylor_vertexRatio_eq
+    (Z : RenormalizationConstants) (h : SlavnovTaylorAssumptions Z) :
+    poleCoeff Z.z1F - poleCoeff Z.z2 = poleCoeff Z.z1c - poleCoeff Z.z3c := by
+  have h1 := h.gaugeVertexIdentity
+  have h2 := h.ghostVertexIdentity
+  linarith
 
 /-- Minimal subtraction-like data needed to map renormalization constants to beta input. -/
 structure MSLikeRenormalizationData : Type where

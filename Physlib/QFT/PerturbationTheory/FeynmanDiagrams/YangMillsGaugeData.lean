@@ -94,6 +94,10 @@ structure YangMillsGaugeData
   AdjBasis : Type
   /-- Index type for a basis of the matter representation. -/
   FundBasis : Type
+  /-- The adjoint basis is finite, so that sums over generators are defined. -/
+  adjFintype : Fintype AdjBasis
+  /-- The matter basis is finite, so that matrix traces are defined. -/
+  fundFintype : Fintype FundBasis
   /-- Generator matrix entries: given adjoint index `a` and matter indices `i j`,
       the `(i,j)` entry of the generator `T^a`. -/
   genEntry : AdjBasis → FundBasis → FundBasis → ℝ
@@ -135,7 +139,10 @@ def yMNormalizedGeneratorData
     (D : YangMillsGaugeData L M) : NormalizedGeneratorData where
   AdjIndex := D.AdjBasis
   FundIndex := D.FundBasis
+  adjFintype := D.adjFintype
+  fundFintype := D.fundFintype
   genEntry := D.genEntry
+  structConst := fun _ _ _ => 0     -- structure constants not carried by `D`
   deltaAdj := fun _ _ => 0          -- Kronecker δ placeholder
   deltaFund := fun _ _ => 0         -- Kronecker δ placeholder
   tF := D.tF
@@ -181,6 +188,8 @@ def u1YangMillsGaugeData (Y : ℝ) :
     YangMillsGaugeData ℝ ℂ where
   AdjBasis := Fin 1          -- one U(1) generator
   FundBasis := Fin 1         -- one-dimensional charge representation
+  adjFintype := inferInstance
+  fundFintype := inferInstance
   genEntry := fun _ _ _ => Y
   tF := Y ^ 2
   cF := Y ^ 2
@@ -220,6 +229,8 @@ def su2YangMillsGaugeData :
   ℂ where
   AdjBasis := Fin 3          -- su(2) has dimension 3
   FundBasis := Fin 2
+  adjFintype := inferInstance
+  fundFintype := inferInstance
   genEntry := fun _ _ _ => 0 -- Pauli-matrix entries: placeholder for basis expansion
   tF := 1 / 2
   cF := 3 / 4
@@ -262,6 +273,8 @@ def suNYangMillsGaugeData (n : ℕ) (_hn : 1 < n) :
   ℂ where
   AdjBasis := Fin (n ^ 2 - 1)      -- dimension of su(n)
   FundBasis := Fin n
+  adjFintype := inferInstance
+  fundFintype := inferInstance
   genEntry := fun _ _ _ => 0       -- placeholder for explicit basis expansion
   tF := 1 / 2
   cF := ((n : ℝ) ^ 2 - 1) / (2 * n)
