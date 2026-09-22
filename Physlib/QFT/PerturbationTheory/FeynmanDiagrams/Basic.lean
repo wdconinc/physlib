@@ -261,14 +261,14 @@ def quarkPropagatorLifted (k : Momentum) (mass ε : ℝ) (_hε : 0 < ε) :
     This record carries only the coupling and a Lorentz-structure flag.  It makes no
     gauge-covariance claim: stating gauge covariance of a vertex needs a formalized
     gauge theory (path integral / BRST), which this library does not yet have. -/
-structure GaugeFermionVertexAssumptions where
+structure GaugeFermionVertexData where
   /-- Coupling strength times representation-generator factor. -/
   colorCoupling : ℝ
   /-- Lorentz-structure flag (Dirac γ^μ term present). -/
   lorentzStructure : Bool
 
 /-- Backward-compatible alias: quark-gluon vertex contract. -/
-abbrev QuarkGluonVertexAssumptions := GaugeFermionVertexAssumptions
+abbrev QuarkGluonVertexData := GaugeFermionVertexData
 
 /-- Numerical data attached to a 3-gauge-boson vertex.
     Generic form: `V^(3) ∝ g f^abc` where `f^abc` are the Lie algebra structure constants.
@@ -277,12 +277,12 @@ abbrev QuarkGluonVertexAssumptions := GaugeFermionVertexAssumptions
     Only the coupling strength is recorded.  The structure-constant and kinematic-factor
     content of the vertex is not asserted: the vertex itself is not represented as a
     tensor here, so there is nothing for such a claim to be about. -/
-structure ThreeGaugeBosonVertexAssumptions where
+structure ThreeGaugeBosonVertexData where
   /-- Coupling strength (proportional to `g`). -/
   couplingStrength : ℝ
 
 /-- Backward-compatible alias: 3-gluon vertex contract. -/
-abbrev ThreeGluonVertexAssumptions := ThreeGaugeBosonVertexAssumptions
+abbrev ThreeGluonVertexData := ThreeGaugeBosonVertexData
 
 /-- Numerical data attached to a 4-gauge-boson vertex.
     Comes from the `[Dμ, Dν]²` term in the covariant-derivative expansion.
@@ -290,19 +290,19 @@ abbrev ThreeGluonVertexAssumptions := ThreeGaugeBosonVertexAssumptions
 
     Only the coupling strength is recorded; the color-tensor and cyclic-permutation
     content of the vertex is not asserted, for the same reason as in the 3-boson case. -/
-structure FourGaugeBosonVertexAssumptions where
+structure FourGaugeBosonVertexData where
   /-- Coupling strength (∝ g²). -/
   couplingStrength : ℝ
 
 /-- Backward-compatible alias: 4-gluon vertex contract. -/
-abbrev FourGluonVertexAssumptions := FourGaugeBosonVertexAssumptions
+abbrev FourGluonVertexData := FourGaugeBosonVertexData
 
 /-- Numerical data attached to a ghost-gauge-boson vertex.
     Generic form: `V = -g f^abc ∂^μ`; absent in U(1), present in SU(2) and SU(3).
 
     The Faddeev-Popov identity itself is not asserted here: it is a statement about
     the gauge-fixed path-integral measure, which this library does not formalize. -/
-structure GhostGaugeBosonVertexAssumptions where
+structure GhostGaugeBosonVertexData where
   /-- Coupling strength (proportional to `g`). -/
   couplingStrength : ℝ
   /-- Color structure: fully antisymmetric structure constants `f^abc`. -/
@@ -311,7 +311,7 @@ structure GhostGaugeBosonVertexAssumptions where
   isDeri : Bool
 
 /-- Backward-compatible alias: ghost-gluon vertex contract. -/
-abbrev GhostGluonVertexAssumptions := GhostGaugeBosonVertexAssumptions
+abbrev GhostGluonVertexData := GhostGaugeBosonVertexData
 
 /-! ### Generic Gauge-Theory Feynman Rules Bundle -/
 
@@ -328,13 +328,13 @@ structure GaugeFeynmanRules where
   /-- Ghost propagator (trivial for U(1), Faddeev-Popov for non-abelian). -/
   ghost_propagator : ∀ (_k : Momentum) (ε : ℝ), 0 < ε → ℂ
   /-- Gauge-fermion vertex contract. -/
-  gf_vertex : GaugeFermionVertexAssumptions
+  gf_vertex : GaugeFermionVertexData
   /-- 3-boson vertex contract (coupling = 0 for abelian sectors). -/
-  three_boson_vertex : ThreeGaugeBosonVertexAssumptions
+  three_boson_vertex : ThreeGaugeBosonVertexData
   /-- 4-boson vertex contract (coupling = 0 for abelian sectors). -/
-  four_boson_vertex : FourGaugeBosonVertexAssumptions
+  four_boson_vertex : FourGaugeBosonVertexData
   /-- Ghost-boson vertex contract (trivial for abelian sectors). -/
-  ghost_boson_vertex : GhostGaugeBosonVertexAssumptions
+  ghost_boson_vertex : GhostGaugeBosonVertexData
   /-- Running coupling at scale μ. -/
   runningCoupling : ℝ → ℝ
 

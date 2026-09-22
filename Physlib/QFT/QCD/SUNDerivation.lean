@@ -63,7 +63,17 @@ for this package: with `genEntry = 0` and `deltaAdj = 1`, the trace identity rea
 — a genuine package needs `su(n)` generator matrices, which this library does not have.
 See `u1NormalizedData` in `CasimirDerivation` for a sector where the identities hold. -/
 
-/-- The canonical `SU(Nc)` identities imply all normalized-generator contracts. -/
+/-- The three normalized-generator contracts hold for `sunNormalizedData`.
+
+**This lemma derives nothing about `SU(Nc)` generators.** The contracts it discharges are the
+`Prop`-valued placeholder fields of `NormalizedGeneratorData`, and for this package they are
+instantiated to the reflexive equalities `(1/2 : ℝ) = 1/2`, `((nC^2-1)/(2*nC) : ℝ) = …` and
+`(nC : ℝ) = nC`, each closed by `Iff.rfl`. No canonical `SU(N)` identity is assumed or used.
+
+The real identities now live next to this one as `NormalizedGeneratorData.TraceIdentity`,
+`.FundamentalCasimirIdentity` and `.AdjointCasimirIdentity`, and `sunNormalizedData` does **not**
+satisfy them: with `genEntry = 0` and `deltaAdj = 1` the trace identity reads `0 = T_F = 1/2`. See
+`u1NormalizedData` in `CasimirDerivation` for a sector where they genuinely hold. -/
 lemma sunNormalizedContracts (nC : ℝ) :
     (sunNormalizedData nC).traceNormalization ∧
       (sunNormalizedData nC).fundamentalCasimir ∧
