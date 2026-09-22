@@ -104,9 +104,13 @@ of the evolution operator is the flavor sum of products
 the channel. Together with the convolution theorem this is what reduces the evolution equation to
 an ordinary differential equation in the scale at fixed `N`.
 
-Depends on `Convolution.mellinDis_convolveAt` and therefore on the unproved change-of-variables
-step; see `Convolution.integral_mellinIntegrand_of_mem`. -/
-@[sorryful]
+Depends on `Convolution.mellinDis_convolveAt`, which at the time this module was written rested
+on an unproved change-of-variables step (`Convolution.integral_mellinIntegrand_of_mem`). That
+step has since been closed: `#print axioms Convolution.mellinDis_convolveAt` reports
+`[propext, Classical.choice, Quot.sound]`, and so does this theorem. The `@[sorryful]`
+attribute this declaration used to carry was
+therefore stale, and has been removed — physlib's sorry linter rejects the tag in both
+directions, so a tag on a sorry-free result is as much a failure as a missing tag. -/
 theorem mellinDis_dglapOperator [Fintype Flavor]
     (P : SplittingKernel Flavor) (p : Flavor → Flavor → ℝ → ℝ)
     (hP : IsCollinearSplittingKernel P p)

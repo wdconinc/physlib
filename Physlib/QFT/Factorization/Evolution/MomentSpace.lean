@@ -35,7 +35,7 @@ here.
   function of the Mellin index, and a continuous running coupling.
 - `IsMomentSolution` is the linear ODE system, stated componentwise with `HasDerivAt`.
 - `moment_exists_unique` is well-posedness: a unique global solution for each initial
-  condition.
+  condition. Tagged `sorry` — uniqueness is proved, existence is not; see section B.
 - `sumRule_conserved` is the conservation law: if the anomalous-dimension matrix has
   vanishing column sums at `N`, then `∑ i, F i` is `τ`-independent.
 - `momentum_sumRule_conserved` and `valence_sumRule_conserved` are its specializations to
@@ -126,15 +126,22 @@ local existence by Picard-Lindelöf and uniqueness by Gronwall, and linearity �
 cannot blow up in finite time — upgrades local existence to global. This is the achievable
 form of DGLAP well-posedness; see the module docstring on why `x`-space is not attempted.
 
-Both inputs below are left as `sorry`: the intended arguments are recorded in their
-docstrings, but the mathlib ODE API could not be checked against the pinned revision while
-writing this module, and guessing names and hypothesis shapes would be worse than an honest
-gap. The combination `moment_exists_unique` is proved from them. -/
+Of the two inputs below, **uniqueness is now proved** (`momentSolution_unique`; `#print axioms`
+reports `[propext, Classical.choice, Quot.sound]`).
+**Existence is not** (`momentSolution_exists`), and its `sorry` is the single open gap of this
+module: mathlib at this pin has local existence for Picard-Lindelöf fields but no ready-made
+global statement for linear systems. The combination `moment_exists_unique` is assembled from
+the two and therefore inherits that `sorry` — it is tagged accordingly, and the
+"well-posedness" advertised in the key-results list above is, at the kernel level, existence
+assumed and uniqueness proved. -/
 
 /-- Uniqueness for the moment-space system: two solutions agreeing at one point agree
 everywhere.
 
-TODO(task/e2-dglap-wellposedness): proof not completed. Intended argument. Fix
+**Proved.** The header of this docstring previously read "proof not completed"; that was left
+behind when the proof landed, and is corrected here — the argument below is complete and
+`#print axioms` reports no `sorryAx`. The shape of the argument, retained because the
+hypothesis bookkeeping is easy to lose: fix
 `T > 0`; on `Set.Icc (τ0 - T) (τ0 + T)` the map `F ↦ momentRhs S N τ F` is Lipschitz with
 constant `K T = (sup over that interval of |S.alphaS (exp τ)| / (2 * π)) * ‖S.gamma N‖`,
 finite because `S.alphaS_continuous` and `Real.continuous_exp` give continuity of

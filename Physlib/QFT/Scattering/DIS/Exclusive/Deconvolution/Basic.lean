@@ -37,6 +37,9 @@ through the coefficient function they determine.
 
 * The map, its kernel, linearity in the GPD, and the equivalence "same Compton form
   factors" ⇔ "difference in the kernel" are proved.
+* `ComptonIntegrable` is discharged for continuous data by
+  `ComptonIntegrable.of_continuousOn` (compactness of `[-1, 1]`), so the bundle is an
+  assumption only for the distributional coefficient functions it was introduced for.
 * `isShadow_of_moments_eq_zero` reduces the construction of a shadow to the construction
   of a nonzero GPD annihilated by the moment functionals the map samples, which is the
   mechanism of the shadow-GPD constructions in the literature.
@@ -129,6 +132,32 @@ structure ComptonIntegrable (K : ComptonCoefficient) (H : Gpd Flavor) (i : Flavo
   integrableOn : ∀ xi t,
     MeasureTheory.IntegrableOn
       (fun x : ℝ => K.C x xi t * ((H i x xi t : ℝ) : ℂ)) (Set.Icc (-1 : ℝ) 1)
+
+/-- **Discharging `ComptonIntegrable` for regular data.** A coefficient function and a GPD
+that are continuous on the support `[-1, 1]` at every skewness and momentum transfer give an
+integrable Compton integrand there, because `[-1, 1]` is compact.
+
+This turns the bundle from an assumption into a hypothesis on the input for every model to
+which it applies. It does *not* cover the physical leading-order coefficient function, which
+carries the `iε` prescription and is a distribution rather than a continuous function — see
+the module docstring. That case needs the principal-value machinery this repository lacks,
+so the bundle is kept rather than replaced. -/
+lemma ComptonIntegrable.of_continuousOn (K : ComptonCoefficient) (H : Gpd Flavor) (i : Flavor)
+    (hC : ∀ xi t, ContinuousOn (fun x : ℝ => K.C x xi t) (Set.Icc (-1 : ℝ) 1))
+    (hH : ∀ xi t, ContinuousOn (fun x : ℝ => H i x xi t) (Set.Icc (-1 : ℝ) 1)) :
+    ComptonIntegrable K H i where
+  integrableOn := fun xi t =>
+    ((hC xi t).fun_mul
+      (Complex.continuous_ofReal.comp_continuousOn' (hH xi t))).integrableOn_Icc
+
+/-- The globally continuous case of `ComptonIntegrable.of_continuousOn`, which is the form
+most model GPDs are presented in. -/
+lemma ComptonIntegrable.of_continuous (K : ComptonCoefficient) (H : Gpd Flavor) (i : Flavor)
+    (hC : ∀ xi t, Continuous (fun x : ℝ => K.C x xi t))
+    (hH : ∀ xi t, Continuous (fun x : ℝ => H i x xi t)) :
+    ComptonIntegrable K H i :=
+  ComptonIntegrable.of_continuousOn K H i (fun xi t => (hC xi t).continuousOn)
+    (fun xi t => (hH xi t).continuousOn)
 
 /-- The Compton map is linear: it takes the difference of two GPDs to the difference of
 their Compton form factors. This is the step that turns the deconvolution problem into a
