@@ -47,10 +47,17 @@ def qcdRunningCouplingFromRepresentation
     (nF lambdaQCD2 : ℝ) : RunningCoupling :=
   qcdRunningCouplingOf G nF lambdaQCD2
 
-/-- Structural assumptions for QCD-flavored splitting kernels. -/
-structure QCDSplittingKernelAssumptions (P : SplittingKernel Flavor) : Prop where
-  /-- Positivity interface for migration probability density kernels. -/
-  nonneg : ∀ i j x z, 0 ≤ P i j x z
+-- A `QCDSplittingKernelAssumptions` bundle used to sit here, carrying a single field
+-- `nonneg : ∀ i j x z, 0 ≤ P i j x z`. It had no dependent declaration anywhere in the
+-- repository, and pointwise nonnegativity is not a property the physical LO QCD splitting
+-- kernels have: as `Evolution/Basic.lean` already records (module docstring, under the note
+-- on splitting kernels being ordinary functions), those kernels carry a `1 / (1 - y)`
+-- plus-distribution and a `δ (1 - y)` term, and are therefore not pointwise nonnegative
+-- functions of the momentum-fraction ratio at all. `Evolution/CollinearForm.lean` records
+-- the plus-distribution half of the same point for `IsCollinearSplittingKernel`.
+-- The bundle has been removed
+-- rather than restated; a positivity contract for QCD kernels needs the distributional
+-- kernel type that does not yet exist here.
 
 /-- DGLAP equation schema specialized to QCD running-coupling input. -/
 def IsQCDDGLAPLogScaleEquation [Fintype Flavor]
