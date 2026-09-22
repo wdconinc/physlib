@@ -95,6 +95,58 @@ lemma weakMassRatioConsistency_of_assumptions
 
 /-!
 
+## `ConsistencyAssumptions` is not a placeholder bundle
+
+Each of the three fields is a polynomial equation between named fields of `Parameters`, not a
+`Prop` variable, so none can be discharged by instantiating it with `True`. The two witnesses
+below make that concrete, which is the test a placeholder cannot pass: one parameter set
+satisfies the bundle and another fails it, so the bundle separates parameter sets.
+
+Note what the satisfying witness costs. `unitCouplingParameters` has `gU1 = 0` — no
+hypercharge coupling, hence `sin²θ_W = 0` and `electricCharge = 0`. That is forced: the
+weak-mixing contract sends `sin²θ_W = g'²/(g² + g'²)`, and the charge contract then needs
+`e² = g² sin²θ_W`, so a witness with all couplings rational and non-zero does not exist over
+`ℚ` in general. The bundle is therefore satisfiable but tightly constrained, which is the
+expected behaviour of a tree-level relation set and not a defect.
+
+-/
+
+/-- A parameter set satisfying all three tree-level contracts. It is degenerate — no
+hypercharge coupling, hence vanishing weak mixing and vanishing electric charge — but it is a
+genuine inhabitant, so `ConsistencyAssumptions` is not empty. -/
+def unitCouplingParameters : Parameters where
+  gSU2 := 1
+  gU1 := 0
+  electricCharge := 0
+  sin2ThetaW := 0
+  mZ := 1
+  mW := 1
+
+/-- `ConsistencyAssumptions` is inhabited. -/
+lemma unitCouplingConsistency : ConsistencyAssumptions unitCouplingParameters where
+  weakMixing := by norm_num [weakMixingConsistency, unitCouplingParameters]
+  electricCharge := by norm_num [electricChargeConsistency, unitCouplingParameters]
+  weakMassRatio := by norm_num [weakMassRatioConsistency, unitCouplingParameters]
+
+/-- A parameter set with every entry equal to `1`. -/
+def allOnesParameters : Parameters where
+  gSU2 := 1
+  gU1 := 1
+  electricCharge := 1
+  sin2ThetaW := 1
+  mZ := 1
+  mW := 1
+
+/-- **`ConsistencyAssumptions` can fail.** At all couplings equal to `1` the weak-mixing
+contract demands `1 * (1 + 1) = 1`. A bundle whose fields were `Prop` placeholders could not
+be refuted by any parameter set; this one can be, so its three fields carry content. -/
+lemma not_consistencyAssumptions_allOnes : ¬ ConsistencyAssumptions allOnesParameters := by
+  intro h
+  have hMix : weakMixingConsistency allOnesParameters := h.weakMixing
+  norm_num [weakMixingConsistency, allOnesParameters] at hMix
+
+/-!
+
 ## Consequences of the tree-level relations
 
 The three contracts above are not independent of the quantities a PVES analysis reports.
