@@ -166,8 +166,8 @@ def SU3AdjointStatement : Prop :=
 
 /-! ### Proofs of the identities -/
 
+set_option maxHeartbeats 4000000 in
 /-- The fundamental `su(3)` generators `λᵃ/2` are trace-normalized with `T_F = 1/2`. -/
-set_option maxHeartbeats 1000000 in
 theorem su3TraceStatement : SU3TraceStatement := by
   intro a b
   fin_cases a <;> fin_cases b <;>
@@ -176,8 +176,8 @@ theorem su3TraceStatement : SU3TraceStatement := by
     simp [invSqrt3_sq, invSqrt3_mul_self, Complex.I_sq, Complex.I_mul_I] <;>
     ring_nf
 
+set_option maxHeartbeats 4000000 in
 /-- The fundamental `su(3)` Casimir: `Σₐ (λᵃ/2)(λᵃ/2) = (4/3) · 1`. -/
-set_option maxHeartbeats 1000000 in
 theorem su3FundamentalStatement : SU3FundamentalStatement := by
   intro i j
   fin_cases i <;> fin_cases j <;>
@@ -186,8 +186,8 @@ theorem su3FundamentalStatement : SU3FundamentalStatement := by
     simp [invSqrt3_sq, invSqrt3_mul_self, Complex.I_sq, Complex.I_mul_I] <;>
     ring_nf
 
+set_option maxHeartbeats 8000000 in
 /-- The adjoint `su(3)` Casimir: `Σ_{cd} f^{acd} f^{bcd} = 3 δᵃᵇ`, i.e. `C_A = 3`. -/
-set_option maxHeartbeats 4000000 in
 theorem su3AdjointStatement : SU3AdjointStatement := by
   intro a b
   fin_cases a <;> fin_cases b <;>
