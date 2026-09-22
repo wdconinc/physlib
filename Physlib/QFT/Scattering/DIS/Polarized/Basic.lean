@@ -66,6 +66,65 @@ structure Assumptions (G : StructureFunctions) : Prop where
   integrableOn_g2 : ∀ Q2,
     MeasureTheory.IntegrableOn (fun x : ℝ => G.g2 x Q2) (Set.Icc (0 : ℝ) 1)
 
+/-! ### The analytic/physical split of `Assumptions`
+
+The bundle mixes a definition with an obligation, as its collinear counterpart does.
+`HasPhysicalSupport` is the physical half: outside `[0, 1]` there is no inclusive scattering
+process for `g₁` and `g₂` to describe, so their vanishing there is part of what a polarized
+structure-function pair is, not a theorem waiting to be proved. `Regularity` is the analytic
+half — measurability and integrability on the physical support — and is discharged for an
+explicit pair in `Physlib.QFT.Scattering.DIS.Polarized.SumRules`.
+
+The field set of `Assumptions` is unchanged. It had no dependent declaration anywhere in the
+repository when this was written, so the split is additive rather than a migration.
+-/
+
+/-- **The physical half of `Assumptions`**: both polarized structure functions vanish
+outside the physical range `[0, 1]` of the Bjorken variable. -/
+structure HasPhysicalSupport (G : StructureFunctions) : Prop where
+  /-- `g₁` is supported in the physical interval `[0, 1]`. -/
+  support_g1 : ∀ x Q2, x < 0 ∨ 1 < x → G.g1 x Q2 = 0
+  /-- `g₂` is supported in the physical interval `[0, 1]`. -/
+  support_g2 : ∀ x Q2, x < 0 ∨ 1 < x → G.g2 x Q2 = 0
+
+/-- **The analytic half of `Assumptions`**: measurability at every scale and integrability on
+the physical support. -/
+structure Regularity (G : StructureFunctions) : Prop where
+  /-- `g₁(·, Q²)` is almost-everywhere strongly measurable at every scale. -/
+  measurable_g1 : ∀ Q2, MeasureTheory.AEStronglyMeasurable (fun x : ℝ => G.g1 x Q2)
+  /-- `g₂(·, Q²)` is almost-everywhere strongly measurable at every scale. -/
+  measurable_g2 : ∀ Q2, MeasureTheory.AEStronglyMeasurable (fun x : ℝ => G.g2 x Q2)
+  /-- `g₁(·, Q²)` is integrable on the physical support at every scale. -/
+  integrableOn_g1 : ∀ Q2,
+    MeasureTheory.IntegrableOn (fun x : ℝ => G.g1 x Q2) (Set.Icc (0 : ℝ) 1)
+  /-- `g₂(·, Q²)` is integrable on the physical support at every scale. -/
+  integrableOn_g2 : ∀ Q2,
+    MeasureTheory.IntegrableOn (fun x : ℝ => G.g2 x Q2) (Set.Icc (0 : ℝ) 1)
+
+/-- The physical half of a full assumption bundle. -/
+lemma Assumptions.hasPhysicalSupport {G : StructureFunctions} (h : Assumptions G) :
+    HasPhysicalSupport G :=
+  { support_g1 := h.support_g1, support_g2 := h.support_g2 }
+
+/-- The analytic half of a full assumption bundle. -/
+lemma Assumptions.regularity {G : StructureFunctions} (h : Assumptions G) : Regularity G :=
+  { measurable_g1 := h.measurable_g1
+    measurable_g2 := h.measurable_g2
+    integrableOn_g1 := h.integrableOn_g1
+    integrableOn_g2 := h.integrableOn_g2 }
+
+/-- The split is exact: `Assumptions` is the conjunction of the physical and the analytic
+half, with no residue. -/
+lemma assumptions_iff {G : StructureFunctions} :
+    Assumptions G ↔ HasPhysicalSupport G ∧ Regularity G :=
+  ⟨fun h => ⟨h.hasPhysicalSupport, h.regularity⟩, fun h =>
+    { support_g1 := h.1.support_g1
+      support_g2 := h.1.support_g2
+      measurable_g1 := h.2.measurable_g1
+      measurable_g2 := h.2.measurable_g2
+      integrableOn_g1 := h.2.integrableOn_g1
+      integrableOn_g2 := h.2.integrableOn_g2 }⟩
+
 /-- The first moment `Γ₁(Q²) = ∫₀¹ dx g₁(x, Q²)`.
 
 Convention: this is the moment with weight `x⁰`, i.e. the plain integral of `g₁` over the
@@ -87,6 +146,33 @@ def firstMomentG2 (G : StructureFunctions) (Q2 : ℝ) : ℝ :=
 /-- Assumptions for a polarized hadronic tensor interface. -/
 structure TensorAssumptions (A : Bilin V) : Prop where
   antisymm : ∀ v w : V, A v w = -A w v
+
+/-! ### `TensorAssumptions` is antisymmetry, and antisymmetry is `IsAlt`
+
+`TensorAssumptions` had no consumer anywhere in the repository when this lane started: no
+bridge produced one and no declaration took one. It is connected here rather than deleted,
+because the physics content — that the polarized hadronic tensor is antisymmetric — is worth
+naming, and because the connection is what shows the bundle is not a physics postulate at
+all: over `ℝ` it is exactly Mathlib's `LinearMap.BilinForm.IsAlt`, an algebraic condition
+with a standard consequence.
+-/
+
+/-- An antisymmetric bilinear form has vanishing diagonal. Over `ℝ` this needs no further
+hypothesis, since `a = -a` forces `a = 0`. -/
+lemma TensorAssumptions.apply_self_eq_zero {W : Type} [AddCommGroup W] [Module ℝ W]
+    {A : Bilin W} (h : TensorAssumptions W A) (v : W) : A v v = 0 := by
+  have hv := h.antisymm v v
+  linarith
+
+/-- `TensorAssumptions` is Mathlib's `LinearMap.BilinForm.IsAlt` spelled out: the DIS
+interface adds nothing to the algebraic notion. -/
+lemma tensorAssumptions_iff_isAlt {W : Type} [AddCommGroup W] [Module ℝ W]
+    {A : Bilin W} : TensorAssumptions W A ↔ A.IsAlt := by
+  constructor
+  · intro h v
+    exact h.apply_self_eq_zero v
+  · intro h
+    exact ⟨fun v w => (LinearMap.BilinForm.IsAlt.neg_eq h w v).symm⟩
 
 /-- Polarized decomposition schema. -/
 def IsPolarizedDecomposition

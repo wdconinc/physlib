@@ -48,7 +48,8 @@ convention and no other.
 - B. Ellis-Jaffe sum rule
 - C. Burkhardt-Cottingham sum rule
 - D. Wandzura-Wilczek relation
-- E. Remaining targets, not yet formalized here
+- E. An explicit structure-function pair
+- F. Remaining targets, not yet formalized here
 
 ## References
 
@@ -298,7 +299,172 @@ theorem burkhardtCottingham_wandzuraWilczek
   have h := firstMoment_g2WW_eq_zero G Q2 (hWW Q2)
   simpa [firstMomentG2, wandzuraWilczek] using h
 
-/-! ## E. Remaining targets
+/-! ## E. An explicit structure-function pair
+
+`WandzuraWilczekAssumptions` had no instance. Every result above is conditional on it, and
+in particular `burkhardtCottingham_wandzuraWilczek` is conditional on `prod_integrable`, a
+product-measure hypothesis that nothing in the repository discharged. The pair below
+discharges all three fields, at every scale, so the Burkhardt-Cottingham sum rule for the
+Wandzura-Wilczek `g₂` becomes an unconditional theorem about a concrete object
+(`burkhardtCottingham_modelStructureFunctions`).
+
+The model is the simplest one whose tail integral has a closed form: `g₁(x, Q²) = x` on
+`[0, 1]` and `0` outside, at every scale. Then `g₁(y)/y` is the indicator of `(0, 1]` — the
+point `y = 0` included, where `g₁(0) = 0` and the junk value of `0/0` is `0` — so the
+Wandzura-Wilczek tail is `1 - max x 0`. That single computation, `integral_tail_modelG1`, is
+what the three discharges rest on.
+
+It also settles a question about `g2WW` that the definition leaves open:
+`g2WW_modelStructureFunctions_of_neg` shows the Wandzura-Wilczek `g₂` is *not* supported in
+`[0, 1]` even when `g₁` is. See the docstring there.
+-/
+
+/-- The explicit `g₁` used below: `x` on the physical support, `0` outside, at every
+scale. -/
+def modelG1 : ℝ → ℝ → ℝ := fun x _ => Set.indicator (Set.Icc (0 : ℝ) 1) id x
+
+/-- An explicit polarized structure-function pair, with `g₂ = 0`. Only `g₁` enters
+`WandzuraWilczekAssumptions`; the twist-2 `g₂` built from this `g₁` is
+`g2WW modelStructureFunctions`. -/
+def modelStructureFunctions : StructureFunctions where
+  g1 := modelG1
+  g2 := fun _ _ => 0
+
+/-- The Wandzura-Wilczek integrand of the model is the indicator of `(0, 1]`. -/
+lemma modelG1_div_eq_indicator (Q2 : ℝ) :
+    (fun y : ℝ => modelStructureFunctions.g1 y Q2 / y)
+      = Set.indicator (Set.Ioc (0 : ℝ) 1) (fun _ => (1 : ℝ)) := by
+  funext y
+  show Set.indicator (Set.Icc (0 : ℝ) 1) id y / y
+      = Set.indicator (Set.Ioc (0 : ℝ) 1) (fun _ => (1 : ℝ)) y
+  by_cases hy : y ∈ Set.Ioc (0 : ℝ) 1
+  · have hmem : y ∈ Set.Icc (0 : ℝ) 1 := ⟨hy.1.le, hy.2⟩
+    have hy0 : y ≠ 0 := hy.1.ne'
+    simp [Set.indicator_apply, hy, hmem, div_self hy0]
+  · rcases lt_trichotomy y 0 with h | h | h
+    · have hIcc : y ∉ Set.Icc (0 : ℝ) 1 := fun hm => absurd hm.1 (not_le.mpr h)
+      simp [Set.indicator_apply, hy, hIcc]
+    · simp [Set.indicator_apply, hy, h]
+    · have hIcc : y ∉ Set.Icc (0 : ℝ) 1 := fun hm => hy ⟨h, hm.2⟩
+      simp [Set.indicator_apply, hy, hIcc]
+
+/-- The Wandzura-Wilczek tail of the model in closed form:
+`∫_(x,1] dy g₁(y, Q²)/y = 1 - max x 0` for every `x ≤ 1`. -/
+lemma integral_tail_modelG1 (Q2 : ℝ) {x : ℝ} (hx : x ≤ 1) :
+    (∫ y in Set.Ioc x 1, modelStructureFunctions.g1 y Q2 / y) = 1 - max x 0 := by
+  have hmax : max x 0 ≤ 1 := max_le hx zero_le_one
+  rw [modelG1_div_eq_indicator Q2,
+    MeasureTheory.setIntegral_indicator measurableSet_Ioc, Set.Ioc_inter_Ioc]
+  simp only [min_self]
+  rw [MeasureTheory.setIntegral_const, Real.volume_real_Ioc_of_le hmax, smul_eq_mul, mul_one]
+
+/-- The model `g₁` is globally integrable: it is an indicator of a compact interval carrying
+a continuous function. -/
+lemma integrable_modelG1 (Q2 : ℝ) :
+    MeasureTheory.Integrable (fun x : ℝ => modelStructureFunctions.g1 x Q2) := by
+  show MeasureTheory.Integrable (Set.indicator (Set.Icc (0 : ℝ) 1) id)
+  exact (MeasureTheory.integrable_indicator_iff measurableSet_Icc).mpr
+    continuous_id.integrableOn_Icc
+
+/-- **All three fields of `WandzuraWilczekAssumptions` hold for the model**, at every scale.
+`prod_integrable` is the one that matters: the integrand is bounded by `1` and both factors
+of the product measure are finite, so Fubini applies with no further hypothesis. -/
+lemma wandzuraWilczekAssumptions_modelStructureFunctions (Q2 : ℝ) :
+    WandzuraWilczekAssumptions modelStructureFunctions Q2 := by
+  haveI hfin : MeasureTheory.IsFiniteMeasure
+      (MeasureTheory.volume.restrict (Set.Icc (0 : ℝ) 1)) :=
+    ⟨by rw [MeasureTheory.Measure.restrict_apply_univ]; exact isCompact_Icc.measure_lt_top⟩
+  have hmeasF : Measurable (fun y : ℝ => modelStructureFunctions.g1 y Q2 / y) := by
+    rw [modelG1_div_eq_indicator Q2]
+    exact measurable_const.indicator measurableSet_Ioc
+  have hifeq : (fun p : ℝ × ℝ =>
+        if p.1 < p.2 then modelStructureFunctions.g1 p.2 Q2 / p.2 else 0)
+      = Set.indicator {p : ℝ × ℝ | p.1 < p.2}
+          (fun p : ℝ × ℝ => modelStructureFunctions.g1 p.2 Q2 / p.2) := by
+    funext p
+    by_cases h : p.1 < p.2
+    · simp [Set.indicator_apply, h]
+    · simp [Set.indicator_apply, h]
+  have hprodmeas : Measurable (fun p : ℝ × ℝ =>
+      if p.1 < p.2 then modelStructureFunctions.g1 p.2 Q2 / p.2 else 0) := by
+    rw [hifeq]
+    exact (hmeasF.comp measurable_snd).indicator
+      (measurableSet_lt measurable_fst measurable_snd)
+  have hbound : ∀ p : ℝ × ℝ,
+      ‖(if p.1 < p.2 then modelStructureFunctions.g1 p.2 Q2 / p.2 else 0)‖ ≤ 1 := by
+    intro p
+    have hval : modelStructureFunctions.g1 p.2 Q2 / p.2
+        = Set.indicator (Set.Ioc (0 : ℝ) 1) (fun _ => (1 : ℝ)) p.2 :=
+      congrFun (modelG1_div_eq_indicator Q2) p.2
+    by_cases h : p.1 < p.2
+    · rw [if_pos h, hval]
+      by_cases hm : p.2 ∈ Set.Ioc (0 : ℝ) 1
+      · simp [Set.indicator_apply, hm]
+      · simp [Set.indicator_apply, hm]
+    · rw [if_neg h]
+      simp
+  refine ⟨(integrable_modelG1 Q2).integrableOn, ?_, ?_⟩
+  · have hcont : Continuous (fun x : ℝ => 1 - max x 0) :=
+      continuous_const.sub (continuous_id.max continuous_const)
+    refine hcont.integrableOn_Icc.congr_fun ?_ measurableSet_Icc
+    intro x hx
+    exact (integral_tail_modelG1 Q2 hx.2).symm
+  · exact MeasureTheory.Integrable.mono' (MeasureTheory.integrable_const (1 : ℝ))
+      hprodmeas.aestronglyMeasurable (Filter.Eventually.of_forall hbound)
+
+/-- **The Burkhardt-Cottingham sum rule, unconditionally, for an explicit pair.**
+`∫₀¹ dx g₂^WW(x, Q²) = 0` at every scale for the Wandzura-Wilczek `g₂` built from `modelG1`,
+with every field of `WandzuraWilczekAssumptions` discharged rather than assumed. -/
+theorem burkhardtCottingham_modelStructureFunctions :
+    BurkhardtCottingham (wandzuraWilczek modelStructureFunctions) :=
+  burkhardtCottingham_wandzuraWilczek modelStructureFunctions
+    wandzuraWilczekAssumptions_modelStructureFunctions
+
+/-- The model pair satisfies `Polarized.Assumptions`, which had no instance anywhere in the
+repository. This is a satisfiability witness for that bundle, nothing more. -/
+lemma assumptions_modelStructureFunctions : Assumptions modelStructureFunctions := by
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
+  · intro x Q2 hx
+    have hIcc : x ∉ Set.Icc (0 : ℝ) 1 := by
+      rcases hx with h | h
+      · exact fun hm => absurd hm.1 (not_le.mpr h)
+      · exact fun hm => absurd hm.2 (not_le.mpr h)
+    show Set.indicator (Set.Icc (0 : ℝ) 1) id x = 0
+    simp [Set.indicator_apply, hIcc]
+  · intro x Q2 _
+    rfl
+  · intro Q2
+    exact (measurable_id.indicator measurableSet_Icc).aestronglyMeasurable
+  · intro Q2
+    exact MeasureTheory.aestronglyMeasurable_const
+  · intro Q2
+    exact (integrable_modelG1 Q2).integrableOn
+  · intro Q2
+    exact MeasureTheory.integrableOn_zero
+
+/-- **`g2WW` is not supported in the physical interval, even when `g₁` is.** For the model,
+`g₂^WW(x, Q²) = 1` at every `x < 0`: the tail `∫_(x,1] dy g₁(y, Q²)/y` does not know that `x`
+is unphysical, and `−g₁(x)` vanishes there, so nothing cancels it.
+
+No sum rule above is affected — every moment here is an integral over `[0, 1]`, where the
+expression is the Wandzura-Wilczek relation of the literature. What it does mean is that
+`wandzuraWilczek G` must not be assumed to satisfy `Polarized.HasPhysicalSupport`, and hence
+not `Polarized.Assumptions` either, however well `G` itself does: compare
+`assumptions_modelStructureFunctions` for the same `g₁`. A `g₂^WW` that vanishes off `[0, 1]`
+needs the tail's lower limit clamped at `max x 0`; that is a change to the definition and is
+left to whoever needs it, since every consumer here integrates over `[0, 1]` only. -/
+lemma g2WW_modelStructureFunctions_of_neg {x : ℝ} (hx : x < 0) (Q2 : ℝ) :
+    g2WW modelStructureFunctions x Q2 = 1 := by
+  have hx1 : x ≤ 1 := by linarith
+  have hg1 : modelStructureFunctions.g1 x Q2 = 0 := by
+    have hIcc : x ∉ Set.Icc (0 : ℝ) 1 := fun hm => absurd hm.1 (not_le.mpr hx)
+    show Set.indicator (Set.Icc (0 : ℝ) 1) id x = 0
+    simp [Set.indicator_apply, hIcc]
+  simp only [g2WW]
+  rw [hg1, integral_tail_modelG1 Q2 hx1, max_eq_right hx.le]
+  ring
+
+/-! ## F. Remaining targets
 
 Two statements in this family are deliberately absent.
 
