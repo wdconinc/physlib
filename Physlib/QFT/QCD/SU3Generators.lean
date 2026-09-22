@@ -20,9 +20,13 @@ about the eighth generator is controlled by `invSqrt3 = 1/√3`; it is kept opaq
 handled through `invSqrt3_mul_self` rather than unfolded, so that the case sweeps stay
 arithmetic in `ℂ`.
 
-As in the `su(2)` module, all three representation-level identities are proved and the
-`Prop`-valued contract fields of `NormalizedGeneratorData` are instantiated to those
-identities instead of to a reflexive triviality.
+Status, stated honestly: the two *generator* identities are proved here — trace
+normalization (`su3TraceStatement`, `T_F = 1/2`) and the fundamental Casimir
+(`su3FundamentalStatement`, `C_F = 4/3`).  The adjoint Casimir
+(`SU3AdjointStatement`, `C_A = 3`) is *stated* but not proved: see the note at the end
+of this file.  No `NormalizedGeneratorData` package is built for `su(3)` yet, because
+building one would mean instantiating its `adjointCasimir` contract field with a
+placeholder — exactly the defect this work exists to remove.
 
 -/
 
@@ -189,69 +193,27 @@ theorem su3FundamentalStatement : SU3FundamentalStatement := by
     simp [invSqrt3_sq, Complex.I_sq] <;>
     ring_nf
 
-/-- The adjoint `su(3)` Casimir: `Σ_{cd} f^{acd} f^{bcd} = 3 δᵃᵇ`, i.e. `C_A = 3`. -/
-theorem su3AdjointStatement : SU3AdjointStatement := by
-  intro a b
-  fin_cases a <;> fin_cases b <;>
-    simp [structConst3, su3DeltaAdj, Fin.sum_univ_eight] <;>
-    ring_nf <;>
-    simp [rt3_sq, rt3_mul_self] <;>
-    ring_nf
+/-! ### The adjoint Casimir is stated but open
 
-/-! ### The package -/
+`SU3AdjointStatement` says `Σ_{cd} f^{acd} f^{bcd} = 3 δᵃᵇ` in the `structConst3` table
+above, and that statement is true — it was checked numerically against the same table
+before this file was written.  It is not proved here.
 
-/-- Normalized generator data for the fundamental representation of `su(3)`: the
-colour algebra of QCD, with `T_F = 1/2`, `C_F = 4/3`, `C_A = 3`.
+The obstruction is elaboration cost, not mathematics.  The proof pattern that works for
+`su(2)` and for the two generator identities above is a full case sweep: `fin_cases a
+<;> fin_cases b` followed by `simp` on the expanded sums.  For this statement that is
+64 goals, each an 8×8 double sum, so roughly 4·10³ products of `structConst3` values,
+each of which `simp` must reduce through a 55-branch pattern match.  At
+`maxHeartbeats 2000000` it does not terminate.
 
-As for `su2NormalizedData`, the generator entries are real matrices and the three
-`Prop`-valued contract fields are instantiated to the actual identities. -/
-def su3NormalizedData : NormalizedGeneratorData where
-  AdjIndex := Fin 8
-  FundIndex := Fin 3
-  adjFintype := inferInstance
-  fundFintype := inferInstance
-  genEntry := su3GenEntry
-  structConst := structConst3
-  deltaAdj := su3DeltaAdj
-  deltaFund := su3DeltaFund
-  tF := 1 / 2
-  cF := 4 / 3
-  cA := 3
-  traceNormalization := SU3TraceStatement
-  hTraceNormalization := su3TraceStatement
-  fundamentalCasimir := SU3FundamentalStatement
-  hFundamentalCasimir := su3FundamentalStatement
-  adjointCasimir := SU3AdjointStatement
-  hAdjointCasimir := su3AdjointStatement
+Closing it wants a different route rather than a bigger budget — for instance deriving
+`f^{abc}` from the generators as `f^{abc} = -2i Tr([Tᵃ,Tᵇ]Tᶜ)` and using total
+antisymmetry to cut the 64 cases to the 9 independent ones, or reformulating the sum as
+a matrix product so that a single `Matrix` computation replaces the sweep.
 
-/-- `su(3)` satisfies the trace-normalization identity of `NormalizedGeneratorData`. -/
-theorem su3NormalizedData_traceIdentity : su3NormalizedData.TraceIdentity :=
-  su3TraceStatement
-
-/-- `su(3)` satisfies the fundamental Casimir identity of `NormalizedGeneratorData`. -/
-theorem su3NormalizedData_fundamentalIdentity :
-    su3NormalizedData.FundamentalCasimirIdentity :=
-  su3FundamentalStatement
-
-/-- `su(3)` satisfies the adjoint Casimir identity of `NormalizedGeneratorData`. -/
-theorem su3NormalizedData_adjointIdentity : su3NormalizedData.AdjointCasimirIdentity :=
-  su3AdjointStatement
-
-/-- The `su(3)` sector carries a full derivation package: all three
-representation-level identities are proved, not assumed. -/
-def su3CasimirDerivationAssumptions :
-    CasimirDerivationAssumptions su3NormalizedData where
-  hTraceIdentity := su3NormalizedData_traceIdentity
-  hFundamentalIdentity := su3NormalizedData_fundamentalIdentity
-  hAdjointIdentity := su3NormalizedData_adjointIdentity
-  traceImpliesContract := fun h => h
-  fundamentalImpliesContract := fun h => h
-  adjointImpliesContract := fun h => h
-
-/-- The colour invariants of the genuine `su(3)` package are the standard QCD ones. -/
-theorem su3NormalizedData_colorInvariants :
-    colorInvariantsOf su3NormalizedData = { cF := 4 / 3, cA := 3, tF := 1 / 2 } := by
-  rfl
+Until then, `su(3)` deliberately has no `NormalizedGeneratorData` package: see
+`su2NormalizedData` in `Physlib.QFT.QCD.SU2Generators` for the shape the completed
+`su(3)` package should take. -/
 
 end RepresentationColor
 end QCD
