@@ -111,12 +111,35 @@ def beta1Of (G : Type) [HasColorInvariants G] (nF : ℝ) : ℝ :=
 def IsAsymptoticallyFree (cf : ColorFactors) : Prop :=
   0 < beta0 cf
 
-/-- Input assumptions used by running-coupling interfaces. -/
-structure RunningCouplingAssumptions (cf : ColorFactors) : Prop where
-  /-- Positive QCD scale proxy (squared scale). -/
-  lambdaQCD2_pos : 0 < (1 : ℝ)
-  /-- One-loop asymptotic freedom in the active-flavor window. -/
-  hAF : IsAsymptoticallyFree cf
+/-- One-loop beta-function coefficient of an `SU(Nc)` color-factor model:
+`β₀ = (11/3) Nc - (2/3) nF`. -/
+lemma beta0_suNColorFactors (nC nF : ℝ) :
+    beta0 (suNColorFactors nC nF) = (11 / 3) * nC - (2 / 3) * nF := by
+  simp only [beta0, suNColorFactors]
+  ring
+
+/-- One-loop asymptotic freedom of an `SU(Nc)` gauge theory in the active-flavor window
+`2 nF < 11 Nc`. For `Nc = 3` this is the familiar `nF < 16.5`. -/
+lemma isAsymptoticallyFree_suNColorFactors (nC nF : ℝ) (h : 2 * nF < 11 * nC) :
+    IsAsymptoticallyFree (suNColorFactors nC nF) := by
+  show (0 : ℝ) < beta0 (suNColorFactors nC nF)
+  rw [beta0_suNColorFactors]
+  linarith
+
+/-- Three-color QCD is one-loop asymptotically free for fewer than `16.5` active flavors. -/
+lemma isAsymptoticallyFree_qcd (nF : ℝ) (h : 2 * nF < 33) :
+    IsAsymptoticallyFree (suNColorFactors 3 nF) := by
+  refine isAsymptoticallyFree_suNColorFactors 3 nF ?_
+  linarith
+
+-- A `RunningCouplingAssumptions` bundle used to sit here. It had no dependent declaration
+-- anywhere in the repository, and its two fields did not survive inspection: the first,
+-- `lambdaQCD2_pos : 0 < (1 : ℝ)`, is a theorem of arithmetic that mentions no parameter of
+-- the structure (the intended `0 < Λ²` cannot be stated, since `Λ²` is not a parameter, and
+-- `oneLoopAlphaS` regularizes the scale as `|Λ²| + 1` so needs no such hypothesis anyway).
+-- The second field was exactly `IsAsymptoticallyFree cf`, which is a standalone definition
+-- above and is usable directly. Nothing that was asserted has been lost; the lemmas above
+-- now discharge that condition for the `SU(Nc)` and QCD color-factor models.
 
 /-- One-loop running-coupling proxy for interfaces.
 The denominator regularization keeps the map total at all inputs while retaining

@@ -58,59 +58,69 @@ structure TreeLevelQuarkAmplitudeAssumptions
   /-- The amplitude-induced kernel matches the declared kernel coefficient function. -/
   kernel_eq : ∀ i x z Q2,
     C i x z Q2 = treeLevelAmplitude diag x Q2 z
-  /-- Measurability contract for the tree-level amplitude kernel. -/
-  measurable_tree : ∀ (i : Flavor) (x Q2 : ℝ),
-    MeasureTheory.AEStronglyMeasurable (fun z : ℝ => treeLevelAmplitude diag x Q2 z)
-  /-- Integrability contract on the unit interval for the tree-level amplitude kernel. -/
-  integrableOnUnit_tree : ∀ (i : Flavor) (x Q2 : ℝ),
-    MeasureTheory.Integrable (fun z : ℝ => Set.indicator (Set.Icc (0 : ℝ) 1)
-      (fun t => treeLevelAmplitude diag x Q2 t) z)
 
-/-- Bridge theorem: tree-level amplitude contracts imply hard-kernel assumptions. -/
+/-- The tree-level Born amplitude is continuous in the momentum-fraction variable: it is
+linear in `z` with a coefficient built from the diagram data and the external kinematics. -/
+lemma continuous_treeLevelAmplitude (diag : TreeLevelQuarkDiagram) (x Q2 : ℝ) :
+    Continuous fun z : ℝ => treeLevelAmplitude diag x Q2 z := by
+  simp only [treeLevelAmplitude]
+  fun_prop
+
+/-- Bridge theorem: tree-level amplitude contracts imply hard-kernel assumptions.
+
+Measurability and integrability are *proved* here from continuity of the tree-level
+amplitude. They were previously additional fields of
+`TreeLevelQuarkAmplitudeAssumptions`, i.e. assumed alongside the kernel identity; the
+bundle now carries only the kernel identity itself. -/
 lemma hardKernelAssumptions_of_treeLevel
     (diag : TreeLevelQuarkDiagram)
     (C : HardKernel Flavor)
     (h : TreeLevelQuarkAmplitudeAssumptions diag C) :
     HardKernelAssumptions C := by
-  refine ⟨?_, ?_⟩
-  · intro i x Q2
-    simpa [h.kernel_eq] using h.measurable_tree i x Q2
-  · intro i x Q2
-    simpa [h.kernel_eq] using h.integrableOnUnit_tree i x Q2
+  refine hardKernelAssumptions_of_continuous C fun i x Q2 => ?_
+  have hEq : (fun z : ℝ => C i x z Q2) = fun z : ℝ => treeLevelAmplitude diag x Q2 z := by
+    funext z
+    exact h.kernel_eq i x z Q2
+  rw [hEq]
+  exact continuous_treeLevelAmplitude diag x Q2
 
-/-- Contract: Free-quark Born process produces a specific coefficient-kernel form. -/
-structure FreeQuarkBornKernelAssumptions
-    (diag : TreeLevelQuarkDiagram)
-    (C : HardKernel Flavor)
-  (f : Physlib.Particles.Parton.PDF.Pdf Flavor) : Type where
-  /-- Amplitude matches the declared tree-level form. -/
-  hAmplitude : TreeLevelQuarkAmplitudeAssumptions diag C
-  /-- Witness that the kernel is physical (placeholder contract). -/
-  isPhysical : Prop
-  /-- Witness that physicality holds. -/
-  hIsPhysical : isPhysical
+/-- Main bridge theorem: a free-quark Born process yields a hard kernel that satisfies the
+structural hard-kernel assumptions, and an LO-factorized structure function.
 
-/-- Main bridge theorem: free-quark Born process yields LO-factorized structure function. -/
+The previous statement took a `FreeQuarkBornKernelAssumptions` bundle whose only content
+beyond the amplitude contract was an arbitrary `Prop` field with a witness, and used neither
+part: it was `loStructureFunction_isFactorized` with unused hypotheses. Both conjuncts here
+follow from the amplitude contract alone. -/
 lemma freeQuarkBornStructureFunction_isLOFactorized
     [Fintype Flavor]
     (diag : TreeLevelQuarkDiagram)
     (C : HardKernel Flavor)
     (f : Physlib.Particles.Parton.PDF.Pdf Flavor)
-  (_h : FreeQuarkBornKernelAssumptions diag C f) :
-    IsLOFactorized (loStructureFunction C f) C f := by
-  exact loStructureFunction_isFactorized C f
+    (h : TreeLevelQuarkAmplitudeAssumptions diag C) :
+    HardKernelAssumptions C ∧ IsLOFactorized (loStructureFunction C f) C f :=
+  ⟨hardKernelAssumptions_of_treeLevel diag C h, loStructureFunction_isFactorized C f⟩
 
-/-- Corollary: Free-quark Born amplitudes directly induce LO factorization. -/
+/-- Corollary: free-quark Born amplitudes induce an LO factorization whose channel
+convolutions are driven by the explicit tree-level amplitude rather than by an abstract
+coefficient kernel. Unlike the previous version, this consumes the amplitude contract. -/
 lemma freeQuarkBorn_defines_loFactorization
     [Fintype Flavor]
     (diag : TreeLevelQuarkDiagram)
     (C : HardKernel Flavor)
     (f : Physlib.Particles.Parton.PDF.Pdf Flavor)
-  (_h : FreeQuarkBornKernelAssumptions diag C f) :
-    ∀ x Q2, loStructureFunction C f x Q2
-      = ∑ i, Convolution.convolveAt (fun x' z => C i x' z Q2) (fun z => f i z Q2) x := by
-  intro x Q2
-  simp [loStructureFunction, loChannel]
+    (h : TreeLevelQuarkAmplitudeAssumptions diag C)
+    (x Q2 : ℝ) :
+    loStructureFunction C f x Q2
+      = ∑ i, Convolution.convolveAt (fun x' z => treeLevelAmplitude diag x' Q2 z)
+          (fun z => f i z Q2) x := by
+  have hK : ∀ i : Flavor,
+      (fun x' z : ℝ => C i x' z Q2) = fun x' z : ℝ => treeLevelAmplitude diag x' Q2 z := by
+    intro i
+    funext x' z
+    exact h.kernel_eq i x' z Q2
+  simp only [loStructureFunction, loChannel]
+  refine Finset.sum_congr rfl fun i _ => ?_
+  rw [hK i]
 
 end DiagrammaticHardKernel
 end DIS
