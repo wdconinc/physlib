@@ -112,8 +112,8 @@ theorem su2FundamentalStatement : SU2FundamentalStatement := by
 theorem su2AdjointStatement : SU2AdjointStatement := by
   intro a b
   fin_cases a <;> fin_cases b <;>
-    simp [epsilon3, su2DeltaAdj, Fin.sum_univ_three, Matrix.cons_val_two, Matrix.cons_val_three,
-      Matrix.head_cons, Matrix.vecHead, Matrix.vecTail] <;>
+    simp [epsilon3, su2DeltaAdj, Fin.sum_univ_three, Matrix.cons_val_two, Matrix.vecHead,
+      Matrix.vecTail] <;>
     norm_num
 
 /-! ### The package -/

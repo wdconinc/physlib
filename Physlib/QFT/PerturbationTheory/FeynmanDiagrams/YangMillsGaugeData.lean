@@ -8,6 +8,7 @@ module
 public import Physlib.QFT.QCD.RepresentationColor
 public import Physlib.QFT.QCD.CasimirDerivation
 public import Physlib.QFT.QCD.SUNDerivation
+public import Physlib.QFT.QCD.SU2Generators
 public import Mathlib.Algebra.Lie.Basic
 public import Mathlib.Algebra.Lie.Matrix
 public import Mathlib.Algebra.Lie.TraceForm
@@ -224,7 +225,14 @@ lemma u1YMColorInvariants_cF_eq (Y : ℝ) :
 The gauge algebra is `su(2)` — a three-dimensional *real* Lie algebra, the Lie
 algebra of the real Lie group SU(2).  The matter module is the fundamental doublet
 `ℂ²`, a complex representation that is nevertheless a `LieModule ℝ su(2) ℂ²`.
-Standard values: `C_F = 3/4`, `C_A = 2`, `T_F = 1/2`. -/
+Standard values: `C_F = 3/4`, `C_A = 2`, `T_F = 1/2`.
+
+The generator entries are the genuine ones, `Tᵃ = σᵃ/2` from
+`Physlib.QFT.QCD.SU2Generators`, and the three `Prop`-valued contract fields are
+instantiated to the identities those generators actually satisfy rather than to
+`True`.  This is what distinguishes this instance from `suNYangMillsGaugeData`, whose
+generator entries are still the placeholder `0` and whose contracts therefore cannot
+be stated truthfully (`0 = T_F = 1/2`). -/
 def su2YangMillsGaugeData :
     YangMillsGaugeData
   ℝ
@@ -233,16 +241,16 @@ def su2YangMillsGaugeData :
   FundBasis := Fin 2
   adjFintype := inferInstance
   fundFintype := inferInstance
-  genEntry := fun _ _ _ => 0 -- Pauli-matrix entries: placeholder for basis expansion
+  genEntry := su2GenEntry    -- (σᵃ/2)ᵢⱼ, from Physlib.QFT.QCD.SU2Generators
   tF := 1 / 2
   cF := 3 / 4
   cA := 2
-  traceNormalization := True
-  hTraceNormalization := trivial
-  fundamentalCasimir := True
-  hFundamentalCasimir := trivial
-  adjointCasimir := True
-  hAdjointCasimir := trivial
+  traceNormalization := SU2TraceStatement
+  hTraceNormalization := su2TraceStatement
+  fundamentalCasimir := SU2FundamentalStatement
+  hFundamentalCasimir := su2FundamentalStatement
+  adjointCasimir := SU2AdjointStatement
+  hAdjointCasimir := su2AdjointStatement
 
 /-- The coupling invariants extracted from SU(2) gauge data. -/
 def su2YMColorInvariants : ColorInvariants :=
