@@ -36,6 +36,56 @@ structure Assumptions (f : Tmd Flavor) : Prop where
   nonneg : ∀ i x kT Q2 ζ, 0 ≤ x → x ≤ 1 → 0 ≤ kT → 0 ≤ f i x kT Q2 ζ
   measurableKT : ∀ i x Q2 ζ, MeasureTheory.AEStronglyMeasurable (fun kT : ℝ => f i x kT Q2 ζ)
 
+/-! ### The analytic/physical split of `Assumptions`
+
+As in the collinear case (`Physlib.Particles.Parton.PDF.IsPartonDensity`) the bundle mixes a
+definition with an obligation. `IsTmdDensity` is the physical half — support in `x` and in
+`k_T`, nonnegativity on the physical region — and is what "transverse-momentum-dependent
+parton density" means. `Regularity` is the analytic half, the single measurability field,
+which a concrete model discharges. `assumptions_iff` records that the split is exact.
+
+The `nonneg` field is not dead weight: it is what `integrateTransverse_nonneg` below
+consumes. The field set of `Assumptions` is unchanged, because
+`Physlib.Particles.Parton.TMD.Reduction` and `Physlib.Particles.Parton.Unified.Basic` take
+it as a hypothesis.
+-/
+
+/-- **What it means to be a transverse-momentum-dependent parton density**: support in the
+physical range of the momentum fraction and at nonnegative transverse-momentum magnitude,
+and nonnegativity on the physical region. A definition, not a theorem. -/
+structure IsTmdDensity (f : Tmd Flavor) : Prop where
+  /-- The density vanishes outside the physical range `[0, 1]` of the momentum fraction. -/
+  supportX : ∀ i x kT Q2 ζ, x < 0 ∨ 1 < x → f i x kT Q2 ζ = 0
+  /-- The density vanishes at negative transverse-momentum magnitude. -/
+  supportKT : ∀ i x kT Q2 ζ, kT < 0 → f i x kT Q2 ζ = 0
+  /-- The density is nonnegative on the physical region. -/
+  nonneg : ∀ i x kT Q2 ζ, 0 ≤ x → x ≤ 1 → 0 ≤ kT → 0 ≤ f i x kT Q2 ζ
+
+/-- **The analytic half of `Assumptions`**: measurability in the transverse-momentum
+magnitude. -/
+structure Regularity (f : Tmd Flavor) : Prop where
+  /-- `f i x · Q2 ζ` is almost-everywhere strongly measurable. -/
+  measurableKT : ∀ i x Q2 ζ,
+    MeasureTheory.AEStronglyMeasurable (fun kT : ℝ => f i x kT Q2 ζ)
+
+/-- The physical half of a full assumption bundle. -/
+lemma Assumptions.isTmdDensity {f : Tmd Flavor} (h : Assumptions f) : IsTmdDensity f :=
+  { supportX := h.supportX, supportKT := h.supportKT, nonneg := h.nonneg }
+
+/-- The analytic half of a full assumption bundle. -/
+lemma Assumptions.regularity {f : Tmd Flavor} (h : Assumptions f) : Regularity f :=
+  { measurableKT := h.measurableKT }
+
+/-- The split is exact: `Assumptions` is the conjunction of the physical and the analytic
+half, with no residue. -/
+lemma assumptions_iff {f : Tmd Flavor} :
+    Assumptions f ↔ IsTmdDensity f ∧ Regularity f :=
+  ⟨fun h => ⟨h.isTmdDensity, h.regularity⟩, fun h =>
+    { supportX := h.1.supportX
+      supportKT := h.1.supportKT
+      nonneg := h.1.nonneg
+      measurableKT := h.2.measurableKT }⟩
+
 /-- Truncated **plain** integration in the transverse-momentum magnitude, with no
 transverse measure: `∫_0^{ktMax} dk_T f`.
 

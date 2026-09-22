@@ -81,6 +81,7 @@ be restated with `‖·‖` in place of `|·|`. That is deliberately deferred.
 - `Physlib.Particles.Parton.PDF.soffer_bound`
 - `Physlib.Particles.Parton.PDF.pdfOfSpinDensity_nonneg`
 - `Physlib.Particles.Parton.PDF.assumptions_pdfOfSpinDensity`
+- `Physlib.Particles.Parton.PDF.spinDensityAssumptions_iff_assumptions`
 
 -/
 
@@ -299,6 +300,29 @@ theorem assumptions_pdfOfSpinDensity (ρ : Flavor → ℝ → ℝ → SpinDensit
     nonneg := fun i x Q2 _ _ => pdfOfSpinDensity_nonneg ρ i x Q2
     measurable := fun i Q2 => h.measurable i Q2
     momentIntegrable := fun n i Q2 => h.momentIntegrable n i Q2 }
+
+/-- `SpinDensityAssumptions` is **not** an extra hypothesis on a spin-density family: it is
+exactly `PDF.Assumptions` of the induced collinear density, no more and no less. The
+left-to-right direction is `assumptions_pdfOfSpinDensity`, which supplies `nonneg` from
+`pdfOfSpinDensity_nonneg`; the right-to-left direction forgets that field again.
+
+The consequence for an audit of this bundle is that there is no content in
+`SpinDensityAssumptions` beyond `PDF.Assumptions`, and hence — by `assumptions_iff` — none
+beyond the support postulate together with `PDF.Regularity` of the induced density. -/
+lemma spinDensityAssumptions_iff_assumptions (ρ : Flavor → ℝ → ℝ → SpinDensity) :
+    SpinDensityAssumptions ρ ↔ Assumptions (pdfOfSpinDensity ρ) := by
+  refine ⟨fun h => assumptions_pdfOfSpinDensity ρ h, fun h => ?_⟩
+  exact { support := fun i x Q2 hx => h.support i x Q2 hx
+          measurable := fun i Q2 => h.measurable i Q2
+          momentIntegrable := fun n i Q2 => h.momentIntegrable n i Q2 }
+
+/-- The analytic/physical split for a spin-density family. The physical half is the support
+postulate on the induced density — its nonnegativity is a theorem here, not a hypothesis —
+and the analytic half is `PDF.Regularity` of the induced density. -/
+lemma spinDensityAssumptions_iff (ρ : Flavor → ℝ → ℝ → SpinDensity) :
+    SpinDensityAssumptions ρ ↔
+      IsPartonDensity (pdfOfSpinDensity ρ) ∧ Regularity (pdfOfSpinDensity ρ) := by
+  rw [spinDensityAssumptions_iff_assumptions, assumptions_iff]
 
 end PDF
 end Parton
