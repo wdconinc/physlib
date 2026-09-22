@@ -134,7 +134,9 @@ lemma not_harmonicOrthogonality_normalizedAngularProjector :
       show (0 : ℝ) - Real.pi = -Real.pi by ring, show Real.pi - Real.pi = 0 by ring]
     simp
   rw [h.sinPhiDiff_self] at hz
-  norm_num at hz
+  -- `hz : (1 : ℝ) / 2 = 0`; make the contradiction explicit rather than relying on
+  -- `norm_num` closing the goal as a side effect of simplifying the hypothesis.
+  exact absurd hz (by norm_num)
 
 /-- A four-node azimuthal quadrature projector with nodes
 `(phi_h, phi_S) ∈ {π/4, 3π/4} × {π/4, -π/4}`.
