@@ -365,6 +365,8 @@ public import Physlib.QFT.QCD.OneLoopDiagrammaticBridge
 public import Physlib.QFT.QCD.OneLoopNumeratorContractions
 public import Physlib.QFT.QCD.Renormalization
 public import Physlib.QFT.QCD.RepresentationColor
+public import Physlib.QFT.QCD.SU2Generators
+public import Physlib.QFT.QCD.SU3Generators
 public import Physlib.QFT.QCD.SUNDerivation
 public import Physlib.QFT.QED.AnomalyCancellation.Basic
 public import Physlib.QFT.QED.AnomalyCancellation.BasisLinear

@@ -148,14 +148,15 @@ lemma beta1Of_eq_beta1_from_derivation
 
 There is a single generator `T = Y` acting on a one-dimensional charge representation,
 and no structure constants.  Both index sets are singletons, so the Kronecker deltas are
-identically `1`.  Unlike `sunNormalizedData`, the generator entries here are the real
-ones, and the three representation-level identities below are theorems about them. -/
+identically `1`.  Unlike `sunNormalizedData`, the generator entries here are the genuine
+ones (the real charge `Y`, coerced into the complex `genEntry` field), and the three
+representation-level identities below are theorems about them. -/
 def u1NormalizedData (Y : ℝ) : NormalizedGeneratorData where
   AdjIndex := Fin 1
   FundIndex := Fin 1
   adjFintype := inferInstance
   fundFintype := inferInstance
-  genEntry := fun _ _ _ => Y
+  genEntry := fun _ _ _ => (Y : ℂ)
   structConst := fun _ _ _ => 0
   deltaAdj := fun _ _ => 1
   deltaFund := fun _ _ => 1
@@ -173,16 +174,18 @@ def u1NormalizedData (Y : ℝ) : NormalizedGeneratorData where
 lemma u1NormalizedData_traceIdentity (Y : ℝ) :
     (u1NormalizedData Y).TraceIdentity := by
   intro a b
-  show (∑ _i : Fin 1, ∑ _j : Fin 1, Y * Y) = Y ^ 2 * 1
+  show (∑ _i : Fin 1, ∑ _j : Fin 1, (Y : ℂ) * (Y : ℂ)) = ((Y ^ 2 : ℝ) : ℂ) * ((1 : ℝ) : ℂ)
   simp only [Fin.sum_univ_one]
+  push_cast
   ring
 
 /-- The U(1) generator satisfies `Σ_a T^a T^a = C_F I` with `C_F = Y²`. -/
 lemma u1NormalizedData_fundamentalIdentity (Y : ℝ) :
     (u1NormalizedData Y).FundamentalCasimirIdentity := by
   intro i j
-  show (∑ _a : Fin 1, ∑ _k : Fin 1, Y * Y) = Y ^ 2 * 1
+  show (∑ _a : Fin 1, ∑ _k : Fin 1, (Y : ℂ) * (Y : ℂ)) = ((Y ^ 2 : ℝ) : ℂ) * ((1 : ℝ) : ℂ)
   simp only [Fin.sum_univ_one]
+  push_cast
   ring
 
 /-- U(1) is abelian: its structure constants vanish, so `f^{acd} f^{bcd} = C_A δ^{ab}`
