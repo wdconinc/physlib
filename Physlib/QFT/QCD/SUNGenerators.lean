@@ -50,8 +50,15 @@ generators, all nine family pairs.  This is the identity that fixes `T_F = 1/2`,
 is what lets `sunNormalizedData` and `suNYangMillsGaugeData` carry real generator
 entries instead of the zero placeholder.
 
-The fundamental Casimir `C_F = (N²-1)/(2N)` and the adjoint Casimir `C_A = N` are not
-proved here; see the closing note.
+`suN_completeness` — the Fierz relation
+`Σₐ (Tᵃ)_{ij} (Tᵃ)_{kl} = (1/2)(δ_{il} δ_{jk} - δ_{ij} δ_{kl}/N)`, for every `N`.
+
+`suNFundamentalStatement` — `Σₐ TᵃTᵃ = C_F · 1` with `C_F = (N²-1)/(2N)`, a short
+consequence of completeness.  Completeness *derives* the scalarity of the Casimir, so
+Schur's lemma is not used anywhere.
+
+The adjoint Casimir `C_A = N` is not proved: the general-`N` structure constants do not
+exist in this development.  See the closing note.
 
 -/
 
@@ -457,23 +464,461 @@ lemma suNTraceStatement (N : ℕ) : SUNTraceStatement N := by
     simp only [suNDeltaAdj, Sum.inr.injEq]
     by_cases h : d = d' <;> simp [h]
 
-/-! ### Status: the two Casimirs
+/-! ### Completeness (Fierz) relation
 
-The trace identity above is the whole of what is proved here.  Two things are not.
+The trace identity fixes the normalization of the basis.  The *completeness* relation
 
-`C_F = (N²-1)/(2N)`, the fundamental Casimir `Σₐ TᵃTᵃ = C_F · 1`, does not follow from
-the trace identity alone.  Tracing the Casimir identity gives `N · C_F = Σₐ Tr(TᵃTᵃ) =
-T_F · (N²-1)`, hence `C_F = T_F (N²-1)/N`, but only *given* that `Σₐ TᵃTᵃ` is a scalar
-matrix — which is Schur's lemma for the fundamental representation and is not available
-at this pin.  Proving it directly means summing over the three families: the
-off-diagonal pairs contribute `(N-1)/2 · 1`, which needs the count `#{(j,k) | j < k with
-j or k = p} = N-1`, and the diagonal family contributes `(N-1)/(2N) · 1`, which needs
-the telescoping sum `Σ_{L>p} 1/(2L(L+1)) + p/(2(p+1)) = (N-1)/(2N)`.  Neither is hard
-mathematics; both are real Lean work, and neither is done.
+```
+Σₐ (Tᵃ)_{ij} (Tᵃ)_{kl} = (1/2) ( δ_{il} δ_{jk} - δ_{ij} δ_{kl} / N )
+```
 
-`C_A = N`, the adjoint Casimir, additionally needs the general-`N` structure constants
-`f^{abc}`, which are not defined in this module at all.  `su(3)` is in the same
-position: see the closing note of `Physlib.QFT.QCD.SU3Generators`. -/
+says that the `N²-1` generators together with the identity matrix span `M_N(ℂ)`.  It is
+strictly stronger than the trace identity, and both Casimirs follow from it.  For `C_F`
+this matters for a specific reason: setting `k = j` and summing over `j` turns the
+right-hand side into `((N²-1)/(2N)) δ_{il}`, so the completeness relation *derives* the
+scalarity of `Σₐ TᵃTᵃ` rather than assuming it.  Assuming it would be Schur's lemma for
+the fundamental representation, which is not available at this pin.
+
+The two off-diagonal families combine to the `δ_{il} δ_{jk}` term — the `-1/N` piece is
+not theirs — and the diagonal family supplies the rest.  The diagonal part is the work:
+its content is the rank-one identity `Σ_d u^d_i u^d_k = (1/2)(δ_{ik} - 1/N)`, which is a
+telescoping sum over the normalizations `1/(2L(L+1))`.  Telescoping is easiest over `ℕ`,
+so the diagonal generators are first transported to natural-number index form (`dWt`,
+`dEnt`, `dVec_eq_dEnt`).
+-/
+
+/-! #### A four-fold Kronecker sum -/
+
+/-- `Σ_p δ_{ip} δ_{lp} δ_{jp} δ_{kp} = δ_{ij} δ_{kl} δ_{ik}`: both sides are `1` exactly
+when all four indices agree.  This is the diagonal correction that the two off-diagonal
+families cannot reach, being indexed by ordered pairs. -/
+lemma kd_quad (i j k l : Fin N) :
+    (∑ p : Fin N, (kd i p * kd l p) * (kd j p * kd k p)) = (kd i j * kd k l) * kd i k := by
+  have h : ∀ p : Fin N, (kd i p * kd l p) * (kd j p * kd k p)
+      = (if p = i then (kd i j * kd k l) * kd i k else 0) := by
+    intro p
+    by_cases hpi : i = p
+    · rw [← hpi, if_pos rfl, kd_self, kd_comm l i, kd_comm j i, kd_comm k i]
+      by_cases hik : i = k
+      · rw [← hik, kd_self]
+        ring
+      · rw [kd_eq_zero hik]
+        ring
+    · rw [if_neg (fun hc => hpi hc.symm), kd_eq_zero hpi]
+      ring
+  rw [Finset.sum_congr rfl (fun p _ => h p), Finset.sum_ite_eq']
+  simp
+
+/-- The Kronecker delta on `Fin N` compared through the underlying naturals. -/
+lemma kd_eq_ite_val (i k : Fin N) : kd i k = (if (i : ℕ) = (k : ℕ) then (1 : ℂ) else 0) := by
+  have h : (i = k) ↔ ((i : ℕ) = (k : ℕ)) := Fin.ext_iff
+  simp only [kd, h]
+
+/-- `kd` is the complexification of `suNDeltaFund`. -/
+lemma kd_eq_deltaFund (i j : Fin N) : kd i j = ((suNDeltaFund i j : ℝ) : ℂ) := by
+  simp only [kd, suNDeltaFund]
+  split_ifs <;> simp
+
+/-! #### Summing a symmetric function over ordered pairs -/
+
+/-- A symmetric function summed over the ordered pairs `j < k` is half of its full
+double sum minus its diagonal.  This is how the two off-diagonal families, which are
+indexed by `OffPair N`, are converted into unrestricted sums over `Fin N × Fin N`. -/
+lemma sum_offPair (h : Fin N → Fin N → ℂ) (hs : ∀ p q, h p q = h q p) :
+    (∑ o : OffPair N, h o.1.1 o.1.2)
+      = (1 / 2 : ℂ) * ((∑ p : Fin N, ∑ q : Fin N, h p q) - ∑ p : Fin N, h p p) := by
+  have hmem : ∀ x : Fin N × Fin N,
+      x ∈ Finset.univ.filter (fun x : Fin N × Fin N => x.1 < x.2) ↔ x.1 < x.2 := by
+    intro x
+    simp
+  have e1 : (∑ o : OffPair N, h o.1.1 o.1.2)
+      = ∑ x ∈ Finset.univ.filter (fun x : Fin N × Fin N => x.1 < x.2), h x.1 x.2 :=
+    (Finset.sum_subtype _ hmem (fun x : Fin N × Fin N => h x.1 x.2)).symm
+  have e2 : (∑ x ∈ Finset.univ.filter (fun x : Fin N × Fin N => x.1 < x.2), h x.1 x.2)
+      = ∑ p : Fin N, ∑ q : Fin N, (if p < q then h p q else 0) := by
+    simp only [Finset.sum_filter, Fintype.sum_prod_type]
+  have key : (∑ p : Fin N, ∑ q : Fin N, (if q < p then h p q else 0))
+      = ∑ p : Fin N, ∑ q : Fin N, (if p < q then h p q else 0) := by
+    rw [Finset.sum_comm]
+    refine Finset.sum_congr rfl (fun y _ => Finset.sum_congr rfl (fun x _ => ?_))
+    rw [hs]
+  have hsplit : ∀ p q : Fin N, (if p < q then h p q else 0) + (if q < p then h p q else 0)
+      = h p q - (if p = q then h p q else 0) := by
+    intro p q
+    rcases lt_trichotomy p q with hc | hc | hc
+    · rw [if_pos hc, if_neg (lt_asymm hc), if_neg (ne_of_lt hc)]; ring
+    · rw [hc, if_neg (lt_irrefl q), if_pos rfl]; ring
+    · rw [if_neg (lt_asymm hc), if_pos hc, if_neg (Ne.symm (ne_of_lt hc))]; ring
+  have hsum : (∑ p : Fin N, ∑ q : Fin N, (if p < q then h p q else 0))
+      + (∑ p : Fin N, ∑ q : Fin N, (if q < p then h p q else 0))
+      = (∑ p : Fin N, ∑ q : Fin N, h p q) - ∑ p : Fin N, h p p := by
+    rw [← Finset.sum_add_distrib]
+    have step : ∀ p : Fin N,
+        (∑ q : Fin N, (if p < q then h p q else 0))
+          + (∑ q : Fin N, (if q < p then h p q else 0))
+          = (∑ q : Fin N, h p q) - h p p := by
+      intro p
+      rw [← Finset.sum_add_distrib, Finset.sum_congr rfl (fun q _ => hsplit p q),
+        Finset.sum_sub_distrib]
+      have hpp : (∑ q : Fin N, (if p = q then h p q else 0)) = h p p := by
+        rw [Finset.sum_ite_eq]; simp
+      rw [hpp]
+    rw [Finset.sum_congr rfl (fun p _ => step p), Finset.sum_sub_distrib]
+  rw [key] at hsum
+  have htwo : (∑ p : Fin N, ∑ q : Fin N, (if p < q then h p q else 0)) * 2
+      = (∑ p : Fin N, ∑ q : Fin N, h p q) - ∑ p : Fin N, h p p := by
+    rw [← hsum]; ring
+  rw [e1, e2, ← htwo]
+  ring
+
+/-! #### The two off-diagonal families -/
+
+/-- The symmetric and antisymmetric generators built on the same ordered pair `(p,q)`
+contribute, to the completeness sum, exactly
+`(1/2)(δ_{ip}δ_{lp}δ_{jq}δ_{kq} + δ_{iq}δ_{lq}δ_{jp}δ_{kp})`.
+
+The `δ_{ip}δ_{jq}δ_{kp}δ_{lq}` terms — the ones that would produce `δ_{ij}δ_{kl}` rather
+than `δ_{il}δ_{jk}` — cancel between the two families, because the antisymmetric pair
+carries `(-i/2)(-i/2) = -1/4` against the symmetric pair's `+1/4`.  That cancellation is
+the only place the factor `i` does any work. -/
+lemma offGen_pair_sum (p q i j k l : Fin N) :
+    offGen (1 / 2) (1 / 2) p q i j * offGen (1 / 2) (1 / 2) p q k l
+      + offGen (-I / 2) (I / 2) p q i j * offGen (-I / 2) (I / 2) p q k l
+      = (1 / 2 : ℂ) * ((kd i p * kd l p) * (kd j q * kd k q)
+          + (kd i q * kd l q) * (kd j p * kd k p)) := by
+  have hI : Complex.I * Complex.I = -1 := Complex.I_mul_I
+  simp only [offGen]
+  linear_combination (kd i p * kd j q * (kd k p * kd l q) / 4
+    - kd i p * kd j q * (kd k q * kd l p) / 4
+    - kd i q * kd j p * (kd k p * kd l q) / 4
+    + kd i q * kd j p * (kd k q * kd l p) / 4) * hI
+
+/-- The off-diagonal families' total contribution to the completeness sum. -/
+lemma sum_offPair_kd (i j k l : Fin N) :
+    (∑ o : OffPair N, ((kd i o.1.1 * kd l o.1.1) * (kd j o.1.2 * kd k o.1.2)
+        + (kd i o.1.2 * kd l o.1.2) * (kd j o.1.1 * kd k o.1.1)))
+      = (kd i l * kd j k) - (kd i j * kd k l) * kd i k := by
+  have hkk : ∀ x y : Fin N, (∑ p : Fin N, kd x p * kd y p) = kd x y := by
+    intro x y
+    have hc : ∀ p : Fin N, kd x p * kd y p = kd p x * kd p y := by
+      intro p; rw [kd_comm x p, kd_comm y p]
+    rw [Finset.sum_congr rfl (fun p _ => hc p), kd_kd_sum]
+  rw [sum_offPair (fun p q => (kd i p * kd l p) * (kd j q * kd k q)
+      + (kd i q * kd l q) * (kd j p * kd k p)) (fun p q => by ring)]
+  have hS : (∑ p : Fin N, ∑ q : Fin N, ((kd i p * kd l p) * (kd j q * kd k q)
+        + (kd i q * kd l q) * (kd j p * kd k p)))
+      = 2 * (kd i l * kd j k) := by
+    have h1 : ∀ p : Fin N, (∑ q : Fin N, ((kd i p * kd l p) * (kd j q * kd k q)
+        + (kd i q * kd l q) * (kd j p * kd k p)))
+        = (kd i p * kd l p) * kd j k + kd i l * (kd j p * kd k p) := by
+      intro p
+      rw [Finset.sum_add_distrib, ← Finset.mul_sum, hkk j k]
+      congr 1
+      rw [← Finset.sum_mul, hkk i l]
+    rw [Finset.sum_congr rfl (fun p _ => h1 p), Finset.sum_add_distrib,
+      ← Finset.sum_mul, hkk i l, ← Finset.mul_sum, hkk j k]
+    ring
+  have hD : (∑ p : Fin N, ((kd i p * kd l p) * (kd j p * kd k p)
+        + (kd i p * kd l p) * (kd j p * kd k p)))
+      = 2 * ((kd i j * kd k l) * kd i k) := by
+    have h2 : ∀ p : Fin N, ((kd i p * kd l p) * (kd j p * kd k p)
+        + (kd i p * kd l p) * (kd j p * kd k p))
+        = 2 * ((kd i p * kd l p) * (kd j p * kd k p)) := by
+      intro p; ring
+    rw [Finset.sum_congr rfl (fun p _ => h2 p), ← Finset.mul_sum, kd_quad]
+  rw [hS, hD]
+  ring
+
+/-! #### The diagonal family over `ℕ` -/
+
+/-- The squared normalization `1/(2(l+1)(l+2))` of the `l`-th diagonal generator, as a
+function of the natural index `l`; see `dNorm_sq_eq`. -/
+def dWt (l : ℕ) : ℂ := ((2 : ℂ) * ((l : ℂ) + 1) * ((l : ℂ) + 2))⁻¹
+
+/-- Entry `p` of the `l`-th unnormalized diagonal vector in natural-number index form:
+`1` for `p ≤ l`, `-(l+1)` at `p = l+1`, and `0` beyond; see `dVec_eq_dEnt`. -/
+def dEnt (p l : ℕ) : ℂ :=
+  (if p < l + 1 then (1 : ℂ) else 0) - (if p = l + 1 then ((l : ℂ) + 1) else 0)
+
+/-- `(n : ℂ) + 1 ≠ 0`.  `Nat.cast_add_one_ne_zero` is stated for ordered semirings, which
+`ℂ` is not; this is the `CharZero` argument instead. -/
+lemma cast_succ_ne_zero (n : ℕ) : ((n : ℂ) + 1) ≠ 0 := by
+  have h : ((n : ℂ) + 1) = ((n + 1 : ℕ) : ℂ) := by push_cast; ring
+  rw [h, Ne, Nat.cast_eq_zero]
+  omega
+
+/-- `(n : ℂ) + 2 ≠ 0`. -/
+lemma cast_add_two_ne_zero (n : ℕ) : ((n : ℂ) + 2) ≠ 0 := by
+  have h : ((n : ℂ) + 2) = ((n + 2 : ℕ) : ℂ) := by push_cast; ring
+  rw [h, Ne, Nat.cast_eq_zero]
+  omega
+
+/-- The telescoping sum of the diagonal weights,
+`Σ_{l ∈ [a, m)} 1/(2(l+1)(l+2)) = 1/(2(a+1)) - 1/(2(m+1))`.  Every statement about the
+diagonal family reduces to this one. -/
+lemma sum_dWt_Ico (a m : ℕ) (h : a ≤ m) :
+    (∑ l ∈ Finset.Ico a m, dWt l)
+      = (2 * ((a : ℂ) + 1))⁻¹ - (2 * ((m : ℂ) + 1))⁻¹ := by
+  induction m, h using Nat.le_induction with
+  | base => simp
+  | succ n hn ih =>
+    rw [Finset.sum_Ico_succ_top hn, ih]
+    simp only [dWt]
+    have h0 := cast_succ_ne_zero a
+    have h1 := cast_succ_ne_zero n
+    have h2 := cast_add_two_ne_zero n
+    have h3 : ((n : ℂ) + 1 + 1) ≠ 0 := by
+      have he : ((n : ℂ) + 1 + 1) = (n : ℂ) + 2 := by ring
+      rw [he]; exact h2
+    push_cast
+    field_simp
+    ring
+
+/-- A `range` sum restricted by a lower threshold is an `Ico` sum. -/
+lemma sum_range_ite_lt (m a : ℕ) (f : ℕ → ℂ) :
+    (∑ l ∈ Finset.range m, if a < l + 1 then f l else 0) = ∑ l ∈ Finset.Ico a m, f l := by
+  rw [← Finset.sum_filter]
+  refine Finset.sum_congr ?_ (fun _ _ => rfl)
+  ext l
+  simp only [Finset.mem_filter, Finset.mem_range, Finset.mem_Ico]
+  omega
+
+/-- The single surviving term of a `range` sum whose condition pins `l = j`. -/
+lemma sum_range_ite_eq_succ (m j : ℕ) (hj : j < m) (f : ℕ → ℂ) :
+    (∑ l ∈ Finset.range m, if j + 1 = l + 1 then f l else 0) = f j := by
+  rw [Finset.sum_eq_single j]
+  · simp
+  · intro b _ hb
+    exact if_neg (by omega)
+  · intro hc
+    exact absurd (Finset.mem_range.mpr hj) hc
+
+/-- The diagonal-family completeness sum on the diagonal `p = q`:
+`Σ_l 1/(2(l+1)(l+2)) · (v^l_p)² = (1/2)(1 - 1/n)`.  The telescoping tail
+`1/(2(p+1)) - 1/(2n)` and the pivot term `p/(2(p+1))` add to `1/2 - 1/(2n)`. -/
+lemma sum_dEnt_diag (n p : ℕ) (hp : p < n) :
+    (∑ l ∈ Finset.range (n - 1), dWt l * (dEnt p l * dEnt p l))
+      = (1 / 2 : ℂ) * (1 - (n : ℂ)⁻¹) := by
+  have hnC : (n : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  have hcast : ((n - 1 : ℕ) : ℂ) + 1 = (n : ℂ) := by
+    rw [Nat.cast_sub (by omega : 1 ≤ n)]
+    push_cast
+    ring
+  have hexp : ∀ l : ℕ, dWt l * (dEnt p l * dEnt p l)
+      = (if p < l + 1 then dWt l else 0)
+        + (if p = l + 1 then dWt l * ((l : ℂ) + 1) ^ 2 else 0) := by
+    intro l
+    simp only [dEnt]
+    split_ifs <;> first
+      | (exfalso; omega)
+      | ring
+  rw [Finset.sum_congr rfl (fun l _ => hexp l), Finset.sum_add_distrib,
+    sum_range_ite_lt, sum_dWt_Ico p (n - 1) (by omega), hcast]
+  rcases Nat.eq_zero_or_pos p with hp0 | hp0
+  · subst hp0
+    have hz : ∀ l ∈ Finset.range (n - 1),
+        (if (0 : ℕ) = l + 1 then dWt l * ((l : ℂ) + 1) ^ 2 else 0) = 0 :=
+      fun l _ => if_neg (by omega)
+    rw [Finset.sum_eq_zero hz, add_zero]
+    push_cast
+    ring
+  · obtain ⟨j, rfl⟩ : ∃ j, p = j + 1 := ⟨p - 1, by omega⟩
+    rw [sum_range_ite_eq_succ (n - 1) j (by omega) (fun l => dWt l * ((l : ℂ) + 1) ^ 2)]
+    simp only [dWt]
+    have h1 := cast_succ_ne_zero j
+    have h2 := cast_add_two_ne_zero j
+    have h3 : ((j : ℂ) + 1 + 1) ≠ 0 := by
+      have he : ((j : ℂ) + 1 + 1) = (j : ℂ) + 2 := by ring
+      rw [he]; exact h2
+    push_cast
+    field_simp
+    ring
+
+/-- The diagonal-family completeness sum off the diagonal, `p < q`:
+`Σ_l 1/(2(l+1)(l+2)) · v^l_p v^l_q = -1/(2n)`.  The telescoping tail and the pivot term
+now cancel exactly, leaving only the endpoint `-1/(2n)`. -/
+lemma sum_dEnt_off (n p q : ℕ) (hq : q < n) (hpq : p < q) :
+    (∑ l ∈ Finset.range (n - 1), dWt l * (dEnt p l * dEnt q l))
+      = (1 / 2 : ℂ) * (0 - (n : ℂ)⁻¹) := by
+  have hnC : (n : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by omega)
+  have hcast : ((n - 1 : ℕ) : ℂ) + 1 = (n : ℂ) := by
+    rw [Nat.cast_sub (by omega : 1 ≤ n)]
+    push_cast
+    ring
+  obtain ⟨j, rfl⟩ : ∃ j, q = j + 1 := ⟨q - 1, by omega⟩
+  have hexp : ∀ l : ℕ, dWt l * (dEnt p l * dEnt (j + 1) l)
+      = (if j + 1 < l + 1 then dWt l else 0)
+        - (if j + 1 = l + 1 then dWt l * ((l : ℂ) + 1) else 0) := by
+    intro l
+    simp only [dEnt]
+    split_ifs <;> first
+      | (exfalso; omega)
+      | ring
+  rw [Finset.sum_congr rfl (fun l _ => hexp l), Finset.sum_sub_distrib,
+    sum_range_ite_lt, sum_dWt_Ico (j + 1) (n - 1) (by omega), hcast,
+    sum_range_ite_eq_succ (n - 1) j (by omega) (fun l => dWt l * ((l : ℂ) + 1))]
+  simp only [dWt]
+  have h1 := cast_succ_ne_zero j
+  have h2 := cast_add_two_ne_zero j
+  have h3 : ((j : ℂ) + 1 + 1) ≠ 0 := by
+    have he : ((j : ℂ) + 1 + 1) = (j : ℂ) + 2 := by ring
+    rw [he]; exact h2
+  push_cast
+  field_simp
+  ring
+
+/-- The diagonal-family completeness sum, in natural-number index form. -/
+lemma sum_dEnt (n p q : ℕ) (hp : p < n) (hq : q < n) :
+    (∑ l ∈ Finset.range (n - 1), dWt l * (dEnt p l * dEnt q l))
+      = (1 / 2 : ℂ) * ((if p = q then (1 : ℂ) else 0) - (n : ℂ)⁻¹) := by
+  rcases lt_trichotomy p q with hc | hc | hc
+  · rw [sum_dEnt_off n p q hq hc, if_neg (by omega : ¬ (p = q))]
+  · rw [hc, sum_dEnt_diag n q hq, if_pos rfl]
+  · have hsymm : ∀ l : ℕ, dWt l * (dEnt p l * dEnt q l) = dWt l * (dEnt q l * dEnt p l) := by
+      intro l; ring
+    rw [Finset.sum_congr rfl (fun l _ => hsymm l), sum_dEnt_off n q p hp hc,
+      if_neg (by omega : ¬ (p = q))]
+
+/-! #### Transporting the diagonal family back to `Fin` -/
+
+/-- `dNorm` squared, in natural-number index form. -/
+lemma dNorm_sq_eq (d : Fin (N - 1)) : dNorm d * dNorm d = dWt (d : ℕ) := by
+  rw [dNorm_mul_self]
+  simp only [dWt]
+  congr 1
+  rw [piv_val]
+  push_cast
+  ring
+
+/-- `dVec` in natural-number index form. -/
+lemma dVec_eq_dEnt (d : Fin (N - 1)) (p : Fin N) : dVec d p = dEnt (p : ℕ) (d : ℕ) := by
+  have h1 : (p < piv d) ↔ ((p : ℕ) < (d : ℕ) + 1) := by rw [Fin.lt_def, piv_val]
+  have h2 : (p = piv d) ↔ ((p : ℕ) = (d : ℕ) + 1) := by rw [Fin.ext_iff, piv_val]
+  simp only [dVec, dEnt, piv_val, h1, h2]
+  push_cast
+  ring
+
+/-- **Diagonal completeness**: `Σ_d u^d_i u^d_k = (1/2)(δ_{ik} - 1/N)`, where
+`u^d = dNorm d • dVec d` is the `d`-th normalized diagonal generator.  This is the piece
+of the completeness relation that supplies the `-1/N`. -/
+lemma dComplete (i k : Fin N) :
+    (∑ d : Fin (N - 1), (dNorm d * dVec d i) * (dNorm d * dVec d k))
+      = (1 / 2 : ℂ) * (kd i k - ((N : ℂ))⁻¹) := by
+  have hterm : ∀ d : Fin (N - 1), (dNorm d * dVec d i) * (dNorm d * dVec d k)
+      = dWt (d : ℕ) * (dEnt (i : ℕ) (d : ℕ) * dEnt (k : ℕ) (d : ℕ)) := by
+    intro d
+    rw [dVec_eq_dEnt, dVec_eq_dEnt, ← dNorm_sq_eq]
+    ring
+  rw [Finset.sum_congr rfl (fun d _ => hterm d),
+    Fin.sum_univ_eq_sum_range (fun l => dWt l * (dEnt (i : ℕ) l * dEnt (k : ℕ) l)) (N - 1),
+    sum_dEnt N (i : ℕ) (k : ℕ) i.isLt k.isLt, kd_eq_ite_val]
+
+/-! ### The completeness relation and the fundamental Casimir -/
+
+/-- **Completeness (Fierz) relation** for the generalized Gell-Mann basis of `su(N)`:
+`Σₐ (Tᵃ)_{ij} (Tᵃ)_{kl} = (1/2)(δ_{il} δ_{jk} - δ_{ij} δ_{kl} / N)`, for every `N`.
+
+The two off-diagonal families give `(1/2)(δ_{il}δ_{jk} - δ_{ij}δ_{kl}δ_{ik})`: the full
+`δ_{il}δ_{jk}` minus the all-indices-equal term they cannot reach, since they are indexed
+by *ordered* pairs `j < k`.  The diagonal family gives
+`δ_{ij}δ_{kl}((1/2)δ_{ik} - 1/(2N))`, whose first half restores exactly that missing
+term. -/
+lemma suN_completeness (i j k l : Fin N) :
+    (∑ a : SUNIndex N, suNGenEntry N a i j * suNGenEntry N a k l)
+      = (1 / 2 : ℂ) * (kd i l * kd j k - ((N : ℂ))⁻¹ * (kd i j * kd k l)) := by
+  rw [Fintype.sum_sum_type, Fintype.sum_sum_type, ← add_assoc]
+  have hcomb : (∑ o : OffPair N, suNGenEntry N (Sum.inl o) i j * suNGenEntry N (Sum.inl o) k l)
+      + (∑ o : OffPair N, suNGenEntry N (Sum.inr (Sum.inl o)) i j
+          * suNGenEntry N (Sum.inr (Sum.inl o)) k l)
+      = (1 / 2 : ℂ) * ((kd i l * kd j k) - (kd i j * kd k l) * kd i k) := by
+    rw [← Finset.sum_add_distrib]
+    have hp : ∀ o : OffPair N,
+        suNGenEntry N (Sum.inl o) i j * suNGenEntry N (Sum.inl o) k l
+          + suNGenEntry N (Sum.inr (Sum.inl o)) i j
+            * suNGenEntry N (Sum.inr (Sum.inl o)) k l
+        = (1 / 2 : ℂ) * ((kd i o.1.1 * kd l o.1.1) * (kd j o.1.2 * kd k o.1.2)
+            + (kd i o.1.2 * kd l o.1.2) * (kd j o.1.1 * kd k o.1.1)) := by
+      intro o
+      simp only [suNGenEntry]
+      exact offGen_pair_sum o.1.1 o.1.2 i j k l
+    rw [Finset.sum_congr rfl (fun o _ => hp o), ← Finset.mul_sum, sum_offPair_kd]
+  have hdiag : (∑ d : Fin (N - 1), suNGenEntry N (Sum.inr (Sum.inr d)) i j
+      * suNGenEntry N (Sum.inr (Sum.inr d)) k l)
+      = (kd i j * kd k l) * ((1 / 2 : ℂ) * (kd i k - ((N : ℂ))⁻¹)) := by
+    have hp : ∀ d : Fin (N - 1), suNGenEntry N (Sum.inr (Sum.inr d)) i j
+        * suNGenEntry N (Sum.inr (Sum.inr d)) k l
+        = (kd i j * kd k l) * ((dNorm d * dVec d i) * (dNorm d * dVec d k)) := by
+      intro d
+      simp only [suNGenEntry]
+      ring
+    rw [Finset.sum_congr rfl (fun d _ => hp d), ← Finset.mul_sum, dComplete]
+  rw [hcomb, hdiag]
+  ring
+
+/-- Fundamental Casimir for `su(N)`: `Σₐ TᵃTᵃ = ((N²-1)/(2N)) · 1`, so `C_F = (N²-1)/(2N)`.
+An identity in `ℂ`, matching `NormalizedGeneratorData.FundamentalCasimirIdentity`. -/
+def SUNFundamentalStatement (N : ℕ) : Prop :=
+  ∀ i j : Fin N,
+    (∑ a : SUNIndex N, ∑ k : Fin N, suNGenEntry N a i k * suNGenEntry N a k j)
+      = ((((N : ℝ) ^ 2 - 1) / (2 * N) : ℝ) : ℂ) * ((suNDeltaFund i j : ℝ) : ℂ)
+
+/-- The generalized Gell-Mann generators of `su(N)` satisfy the fundamental Casimir
+identity with `C_F = (N²-1)/(2N)`, for every `N`.
+
+This is the completeness relation with `k = j`, summed over `j`: the `δ_{ij}δ_{kk}` term
+contributes `N δ_{il}` and the `δ_{ik}δ_{kj}` term contributes `δ_{il}/N`.  Scalarity of
+`Σₐ TᵃTᵃ` is an output of that computation, not an input, so Schur's lemma is nowhere
+used. -/
+lemma suNFundamentalStatement (N : ℕ) : SUNFundamentalStatement N := by
+  intro i j
+  have hN : (N : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (by have := i.isLt; omega)
+  rw [Finset.sum_comm]
+  have hterm : ∀ k : Fin N, (∑ a : SUNIndex N, suNGenEntry N a i k * suNGenEntry N a k j)
+      = (1 / 2 : ℂ) * (kd i j * kd k k - ((N : ℂ))⁻¹ * (kd i k * kd k j)) :=
+    fun k => suN_completeness i k k j
+  rw [Finset.sum_congr rfl (fun k _ => hterm k), ← Finset.mul_sum, Finset.sum_sub_distrib]
+  have h1 : (∑ k : Fin N, kd i j * kd k k) = (N : ℂ) * kd i j := by
+    have hc : ∀ k : Fin N, kd i j * kd k k = kd i j := by
+      intro k; rw [kd_self, mul_one]
+    rw [Finset.sum_congr rfl (fun k _ => hc k), Finset.sum_const, Finset.card_univ,
+      Fintype.card_fin, nsmul_eq_mul]
+  have h2 : (∑ k : Fin N, ((N : ℂ))⁻¹ * (kd i k * kd k j)) = ((N : ℂ))⁻¹ * kd i j := by
+    rw [← Finset.mul_sum]
+    congr 1
+    have hc : ∀ k : Fin N, kd i k * kd k j = kd k i * kd k j := by
+      intro k; rw [kd_comm i k]
+    rw [Finset.sum_congr rfl (fun k _ => hc k), kd_kd_sum]
+  have hscal : (1 / 2 : ℂ) * ((N : ℂ) - ((N : ℂ))⁻¹)
+      = ((N : ℂ) ^ 2 - 1) / (2 * (N : ℂ)) := by
+    field_simp
+  have hcast : ((((N : ℝ) ^ 2 - 1) / (2 * N) : ℝ) : ℂ) = ((N : ℂ) ^ 2 - 1) / (2 * (N : ℂ)) := by
+    push_cast
+    ring
+  rw [h1, h2, hcast, ← kd_eq_deltaFund]
+  linear_combination (kd i j) * hscal
+
+/-! ### Status: the adjoint Casimir
+
+`C_F` is proved above.  `C_A = N` is not, and the obstruction is not the Casimir sum
+itself: it is that the general-`N` structure constants `f^{abc}` do not exist in this
+development.  `su(2)` and `su(3)` carry them as finite tables (`epsilon3`,
+`structConst3`); for arbitrary `N` the only available definition is through the trace,
+
+```
+f^{abc} = -2i · Tr([Tᵃ, Tᵇ] Tᶜ),
+```
+
+which is well posed precisely because `suNTraceStatement` is proved.  With that
+definition `Σ_{c,d} f^{acd} f^{bcd} = N δ^{ab}` follows from `suN_completeness` applied
+twice — once to collapse the `d` sum, once for `c` — but each application first needs the
+four-generator trace expanded over the three families and the sum over the adjoint index
+`SUNIndex N` handled as a sum type, which is a module's worth of work rather than a
+lemma's.  `su(3)`'s analogue fell only to a trick specific to a finite table (rewriting
+the lookup as vector literals), which does not generalize.
+
+The single named goal is therefore: define `suNStructConst : SUNIndex N → SUNIndex N →
+SUNIndex N → ℝ` by the trace formula above, and prove
+`Σ_{c,d} f^{acd} f^{bcd} = N · δ^{ab}`. -/
 
 end SUNGen
 

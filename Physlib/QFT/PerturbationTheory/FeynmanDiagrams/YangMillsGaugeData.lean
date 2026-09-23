@@ -293,9 +293,14 @@ for every `n`.  The adjoint index set is therefore `SUNGen.SUNIndex n` — the t
 generator families as a sum type — rather than `Fin (n²-1)`; the two have the same
 cardinality but only the former carries the construction.
 
-The two Casimir contracts are still the vacuous `True`: `C_F` and `C_A` are *stored* as
-the standard values, and the identities that would justify them are not proved for
-general `n`.  See the closing note of `Physlib.QFT.QCD.SUNGenerators`. -/
+The fundamental Casimir contract is likewise the identity the generators satisfy,
+`SUNGen.SUNFundamentalStatement n` with `C_F = (n²-1)/(2n)`, proved for every `n` from
+the completeness (Fierz) relation `SUNGen.suN_completeness`.
+
+Only the adjoint Casimir contract is still the vacuous `True`: `C_A = n` is *stored* as
+the standard value, but the general-`n` structure constants `f^{abc}` that the identity
+`Σ_{cd} f^{acd} f^{bcd} = C_A δ^{ab}` quantifies over do not exist in this development.
+See the closing note of `Physlib.QFT.QCD.SUNGenerators`. -/
 def suNYangMillsGaugeData (n : ℕ) (_hn : 1 < n) :
     YangMillsGaugeData
   ℝ
@@ -310,14 +315,29 @@ def suNYangMillsGaugeData (n : ℕ) (_hn : 1 < n) :
   cA := n
   traceNormalization := SUNGen.SUNTraceStatement n
   hTraceNormalization := SUNGen.suNTraceStatement n
-  fundamentalCasimir := True
-  hFundamentalCasimir := trivial
+  fundamentalCasimir := SUNGen.SUNFundamentalStatement n
+  hFundamentalCasimir := SUNGen.suNFundamentalStatement n
   adjointCasimir := True
   hAdjointCasimir := trivial
 
 /-- The coupling invariants extracted from SU(N) gauge data. -/
 def suNYMColorInvariants (n : ℕ) (hn : 1 < n) : ColorInvariants :=
   yMColorInvariants (suNYangMillsGaugeData n hn)
+
+/-- The `NormalizedGeneratorData` lifted from SU(N) gauge data satisfies the fundamental
+Casimir identity that its `fundamentalCasimir` contract field stands for, with the
+*stored* `C_F = (n²-1)/(2n)`.  This is what makes the stored coefficient honest: it is
+the same number that the generator entries actually produce.
+
+The lifted package's `deltaFund` is the classically-defined delta of
+`yMNormalizedGeneratorData` rather than `SUNGen.suNDeltaFund`, so this is not literally
+the contract field; the two deltas agree, which is the `congr`. -/
+lemma suNYMNormalizedGeneratorData_fundamentalIdentity (n : ℕ) (hn : 1 < n) :
+    (yMNormalizedGeneratorData (suNYangMillsGaugeData n hn)).FundamentalCasimirIdentity := by
+  intro i j
+  refine (SUNGen.suNFundamentalStatement n i j).trans ?_
+  congr 1
+  simp [yMNormalizedGeneratorData, suNYangMillsGaugeData, SUNGen.suNDeltaFund]
 
 /-! ### Specialization Theorems -/
 
