@@ -209,6 +209,16 @@ lemma sum_lt_lt {L M : Fin N} (h : L ≤ M) :
     simp [hp, hpm]
   · simp [hp]
 
+lemma sum_lt_gt {L M : Fin N} (h : M ≤ L) :
+    (∑ p : Fin N, (if p < L then (1 : ℂ) else 0) * (if p < M then (1 : ℂ) else 0))
+      = ((M : ℕ) : ℂ) := by
+  rw [← sum_lt_card M]
+  refine Finset.sum_congr rfl (fun p _ => ?_)
+  by_cases hp : p < M
+  · have hpl : p < L := lt_of_lt_of_le hp h
+    simp [hp, hpl]
+  · simp [hp]
+
 lemma sum_lt_eq (L M : Fin N) (c : ℂ) :
     (∑ p : Fin N, (if p < L then (1 : ℂ) else 0) * (if p = M then c else 0))
       = if M < L then c else 0 := by
@@ -266,21 +276,17 @@ lemma dVec_orth (l m : Fin (N - 1)) :
   rcases lt_trichotomy l m with h | h | h
   · have hlt : (piv l : Fin N) < piv m := piv_lt_piv h
     have hne : (piv l : Fin N) ≠ piv m := ne_of_lt hlt
-    rw [sum_lt_lt (le_of_lt hlt)]
-    rw [if_neg (not_lt_of_gt hlt), if_pos hlt, if_neg hne, if_neg (ne_of_lt h)]
-    rw [piv_val, piv_val]
-    push_cast
+    rw [sum_lt_lt (le_of_lt hlt), if_neg (lt_asymm hlt), if_pos hlt, if_neg hne,
+      if_neg (ne_of_lt h)]
     ring
   · subst h
-    rw [sum_lt_lt (le_refl (piv l : Fin N))]
-    rw [if_neg (lt_irrefl _), if_neg (lt_irrefl _), if_pos rfl, if_pos rfl]
+    rw [sum_lt_lt (le_refl (piv l : Fin N)), if_neg (lt_irrefl (piv l : Fin N)),
+      if_pos (rfl : (piv l : Fin N) = piv l), if_pos (rfl : l = l)]
     ring
   · have hlt : (piv m : Fin N) < piv l := piv_lt_piv h
     have hne : (piv l : Fin N) ≠ piv m := (ne_of_lt hlt).symm
-    rw [sum_lt_lt (le_of_lt hlt)]
-    rw [if_pos hlt, if_neg (not_lt_of_gt hlt), if_neg hne, if_neg (ne_of_gt h)]
-    rw [piv_val, piv_val]
-    push_cast
+    rw [sum_lt_gt (le_of_lt hlt), if_pos hlt, if_neg (lt_asymm hlt), if_neg hne,
+      if_neg (Ne.symm (ne_of_lt h))]
     ring
 
 /-- The normalized diagonal generators are trace-orthonormal with `T_F = 1/2`. -/
@@ -350,8 +356,7 @@ lemma sum_diag_off (c₁ c₂ : ℂ) {j k : Fin N} (hjk : j ≠ k) (r : Fin N �
         + c₂ * (kd i j * (kd l k * (kd i l * r i))) := by
     intro i l; simp only [offGen]; ring
   simp_rw [h, Finset.sum_add_distrib, ← Finset.mul_sum, kd_sum]
-  simp_rw [← Finset.mul_sum, kd_sum]
-  rw [kd_comm j k, kd_eq_zero hjk]
+  rw [kd_eq_zero hjk, kd_eq_zero (Ne.symm hjk)]
   ring
 
 lemma sum_diag_diag (r r' : Fin N → ℂ) :
@@ -361,8 +366,8 @@ lemma sum_diag_diag (r r' : Fin N → ℂ) :
   have h : ∀ l : Fin N, (kd i l * r i) * (kd l i * r' l) = kd l i * (r i * r' l) := by
     intro l
     by_cases hl : i = l
-    · subst hl; simp [kd_self]; ring
-    · simp [kd_eq_zero hl]
+    · subst hl; simp [kd_self]
+    · simp [kd_eq_zero hl, kd_eq_zero (Ne.symm hl)]
   rw [Finset.sum_congr rfl (fun l _ => h l), kd_sum]
 
 /-! ### The trace identity -/
@@ -400,8 +405,6 @@ lemma suNTraceStatement (N : ℕ) : SUNTraceStatement N := by
     rw [if_neg (by simp)]
     push_cast
     ring_nf
-    simp [Complex.I_sq]
-    ring
   -- symmetric × diagonal
   · obtain ⟨⟨j, k⟩, hjk⟩ := o
     simp only [suNGenEntry]
@@ -418,15 +421,14 @@ lemma suNTraceStatement (N : ℕ) : SUNTraceStatement N := by
     rw [if_neg (by simp)]
     push_cast
     ring_nf
-    simp [Complex.I_sq]
-    ring
   -- antisymmetric × antisymmetric
   · obtain ⟨⟨j, k⟩, hjk⟩ := o
     obtain ⟨⟨j', k'⟩, hjk'⟩ := o'
     simp only [suNGenEntry]
     rw [trace_offGen, kd_cross hjk hjk', kd_pair]
     simp only [suNDeltaAdj, Sum.inr.injEq, Sum.inl.injEq, Subtype.mk.injEq, Prod.mk.injEq]
-    by_cases h : j = j' ∧ k = k' <;> simp [h, Complex.I_sq] <;> ring
+    by_cases h : j = j' ∧ k = k' <;> simp [h] <;>
+      linear_combination (-1 / 2 : ℂ) * Complex.I_mul_I
   -- antisymmetric × diagonal
   · obtain ⟨⟨j, k⟩, hjk⟩ := o
     simp only [suNGenEntry]
