@@ -9,6 +9,7 @@ public import Physlib.QFT.QCD.RepresentationColor
 public import Physlib.QFT.QCD.CasimirDerivation
 public import Physlib.QFT.QCD.SUNDerivation
 public import Physlib.QFT.QCD.SU2Generators
+public import Physlib.QFT.QCD.SUNGenerators
 public import Mathlib.Algebra.Lie.Basic
 public import Mathlib.Algebra.Lie.Matrix
 public import Mathlib.Algebra.Lie.TraceForm
@@ -133,10 +134,17 @@ def yMColorInvariants
   cA := D.cA
   tF := D.tF
 
+open Classical in
 /-- Lift Yang-Mills gauge data into `RepresentationColor.NormalizedGeneratorData`.
 
 This is the bridge between the generic gauge-theory layer and the existing
-color-factor derivation infrastructure. -/
+color-factor derivation infrastructure.
+
+The two Kronecker deltas are the genuine ones.  They used to be the zero function, which
+was harmless only while every `D` carried `genEntry = 0`: with real generator entries the
+lifted `NormalizedGeneratorData.TraceIdentity` would then read `Tr(TᵃTᵇ) = T_F · 0 = 0`,
+which is false at `a = b`.  `D` carries no `DecidableEq`, so the deltas are defined
+classically; the whole file is already `noncomputable`. -/
 def yMNormalizedGeneratorData
     {L M : Type*}
     (D : YangMillsGaugeData L M) : NormalizedGeneratorData where
@@ -146,8 +154,8 @@ def yMNormalizedGeneratorData
   fundFintype := D.fundFintype
   genEntry := D.genEntry
   structConst := fun _ _ _ => 0     -- structure constants not carried by `D`
-  deltaAdj := fun _ _ => 0          -- Kronecker δ placeholder
-  deltaFund := fun _ _ => 0         -- Kronecker δ placeholder
+  deltaAdj := fun a b => if a = b then 1 else 0
+  deltaFund := fun i j => if i = j then 1 else 0
   tF := D.tF
   cF := D.cF
   cA := D.cA
@@ -276,21 +284,32 @@ The gauge algebra is `su(n)` — a real Lie algebra of dimension `n²-1`, realiz
 `specialUnitaryGroup (Fin n) ℂ` (skew-Hermitian traceless matrices, closed under the
 commutator with real structure constants).  The matter module is the fundamental
 representation on `Fin n → ℂ`, a complex vector space carrying a real-linear action.
-Standard values: `C_F = (N²-1)/(2N)`, `C_A = N`, `T_F = 1/2`. -/
+Standard values: `C_F = (N²-1)/(2N)`, `C_A = N`, `T_F = 1/2`.
+
+The generator entries are the generalized Gell-Mann basis of
+`Physlib.QFT.QCD.SUNGenerators`, and the trace-normalization contract is instantiated
+to the identity those generators actually satisfy, `SUNGen.SUNTraceStatement n`, proved
+for every `n`.  The adjoint index set is therefore `SUNGen.SUNIndex n` — the three
+generator families as a sum type — rather than `Fin (n²-1)`; the two have the same
+cardinality but only the former carries the construction.
+
+The two Casimir contracts are still the vacuous `True`: `C_F` and `C_A` are *stored* as
+the standard values, and the identities that would justify them are not proved for
+general `n`.  See the closing note of `Physlib.QFT.QCD.SUNGenerators`. -/
 def suNYangMillsGaugeData (n : ℕ) (_hn : 1 < n) :
     YangMillsGaugeData
   ℝ
   ℂ where
-  AdjBasis := Fin (n ^ 2 - 1)      -- dimension of su(n)
+  AdjBasis := SUNGen.SUNIndex n
   FundBasis := Fin n
   adjFintype := inferInstance
   fundFintype := inferInstance
-  genEntry := fun _ _ _ => 0       -- placeholder for explicit basis expansion
+  genEntry := SUNGen.suNGenEntry n
   tF := 1 / 2
   cF := ((n : ℝ) ^ 2 - 1) / (2 * n)
   cA := n
-  traceNormalization := True
-  hTraceNormalization := trivial
+  traceNormalization := SUNGen.SUNTraceStatement n
+  hTraceNormalization := SUNGen.suNTraceStatement n
   fundamentalCasimir := True
   hFundamentalCasimir := trivial
   adjointCasimir := True
