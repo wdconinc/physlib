@@ -134,6 +134,7 @@ def yMColorInvariants
   cA := D.cA
   tF := D.tF
 
+open Classical in
 /-- Lift Yang-Mills gauge data into `RepresentationColor.NormalizedGeneratorData`.
 
 This is the bridge between the generic gauge-theory layer and the existing
@@ -144,7 +145,6 @@ was harmless only while every `D` carried `genEntry = 0`: with real generator en
 lifted `NormalizedGeneratorData.TraceIdentity` would then read `Tr(TᵃTᵇ) = T_F · 0 = 0`,
 which is false at `a = b`.  `D` carries no `DecidableEq`, so the deltas are defined
 classically; the whole file is already `noncomputable`. -/
-open Classical in
 def yMNormalizedGeneratorData
     {L M : Type*}
     (D : YangMillsGaugeData L M) : NormalizedGeneratorData where
