@@ -30,6 +30,18 @@ namespace RepresentationColor
 This is a lightweight interface model: index sets and generator entries are
 minimal placeholders, while the color coefficients and their contracts are
 instantiated to the standard `SU(Nc)` values.
+
+**The generator entries here are zero and this package does not satisfy the trace
+identity**, even though `Physlib.QFT.QCD.SUNGenerators` now supplies real `su(N)`
+generators that do.  The obstruction is the signature: `nC` is a *real* parameter, so
+there is no `N : ℕ` from which to build `Fin N` index sets, and `AdjIndex`/`FundIndex`
+are `Unit`.  Narrowing `nC` to `ℕ` would break `colorFactorsOf_suN_eq_from_representation`
+and its consumers in `Physlib.QFT.Factorization.Evolution.QCDCore`,
+`Physlib.QFT.QCD.OneLoopBeta` and `Physlib.QFT.QCD.OneLoopDiagrammaticBridge`, all of
+which pass a real `nC`.  The honest package for integer `N` is
+`RepresentationColor.SUNGen.suNGenEntry` together with
+`RepresentationColor.SUNGen.suNTraceStatement`; see also `suNYangMillsGaugeData`, which
+takes `n : ℕ` and therefore does carry the real entries.
 -/
 def sunNormalizedData (nC : ℝ) : NormalizedGeneratorData where
   AdjIndex := Unit
@@ -60,8 +72,11 @@ those targets were `Prop`-valued parameters instantiated to `1/2 = 1/2` and frie
 Now that `CasimirDerivationAssumptions` carries the real identities, the claim is false
 for this package: with `genEntry = 0` and `deltaAdj = 1`, the trace identity reads
 `0 = T_F = 1/2`.  The obstruction is the placeholder generator entries, not the identity
-— a genuine package needs `su(n)` generator matrices, which this library does not have.
-See `u1NormalizedData` in `CasimirDerivation` for a sector where the identities hold. -/
+— a genuine package needs `su(n)` generator matrices.  Those now exist, for every `n`,
+in `Physlib.QFT.QCD.SUNGenerators` (`SUNGen.suNGenEntry`, with the trace identity proved
+as `SUNGen.suNTraceStatement`); what is missing here is an integer `N`, since this package
+is parameterized by a real `nC`.  See the docstring of `sunNormalizedData` above, and
+`u1NormalizedData` in `CasimirDerivation` for a sector where the identities hold. -/
 
 /-- The three normalized-generator contracts hold for `sunNormalizedData`.
 

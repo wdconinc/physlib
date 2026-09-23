@@ -395,7 +395,8 @@ lemma suNTraceStatement (N : ℕ) : SUNTraceStatement N := by
     simp only [suNGenEntry]
     rw [trace_offGen, kd_cross hjk hjk', kd_pair]
     simp only [suNDeltaAdj, Sum.inl.injEq, Subtype.mk.injEq, Prod.mk.injEq]
-    by_cases h : j = j' ∧ k = k' <;> simp [h] <;> ring
+    by_cases h : j = j' ∧ k = k' <;> simp [h]
+    all_goals ring
   -- symmetric × antisymmetric
   · obtain ⟨⟨j, k⟩, hjk⟩ := o
     obtain ⟨⟨j', k'⟩, hjk'⟩ := o'
@@ -427,8 +428,8 @@ lemma suNTraceStatement (N : ℕ) : SUNTraceStatement N := by
     simp only [suNGenEntry]
     rw [trace_offGen, kd_cross hjk hjk', kd_pair]
     simp only [suNDeltaAdj, Sum.inr.injEq, Sum.inl.injEq, Subtype.mk.injEq, Prod.mk.injEq]
-    by_cases h : j = j' ∧ k = k' <;> simp [h] <;>
-      linear_combination (-1 / 2 : ℂ) * Complex.I_mul_I
+    by_cases h : j = j' ∧ k = k' <;> simp [h]
+    all_goals linear_combination (-1 / 2 : ℂ) * Complex.I_mul_I
   -- antisymmetric × diagonal
   · obtain ⟨⟨j, k⟩, hjk⟩ := o
     simp only [suNGenEntry]
