@@ -94,14 +94,14 @@ def SU2AdjointStatement : Prop :=
 /-! ### Proofs of the identities -/
 
 /-- The fundamental `su(2)` generators `σᵃ/2` are trace-normalized with `T_F = 1/2`. -/
-theorem su2TraceStatement : SU2TraceStatement := by
+lemma su2TraceStatement : SU2TraceStatement := by
   intro a b
   fin_cases a <;> fin_cases b <;>
     simp [su2GenEntry, su2DeltaAdj, Fin.sum_univ_two, pauliMatrix, Complex.ext_iff] <;>
     norm_num
 
 /-- The fundamental `su(2)` Casimir: `Σₐ (σᵃ/2)(σᵃ/2) = (3/4) · 1`. -/
-theorem su2FundamentalStatement : SU2FundamentalStatement := by
+lemma su2FundamentalStatement : SU2FundamentalStatement := by
   intro i j
   fin_cases i <;> fin_cases j <;>
     simp [su2GenEntry, su2DeltaFund, Fin.sum_univ_two, Fin.sum_univ_three, pauliMatrix,
@@ -109,7 +109,7 @@ theorem su2FundamentalStatement : SU2FundamentalStatement := by
     norm_num
 
 /-- The adjoint `su(2)` Casimir: `Σ_{cd} ε^{acd} ε^{bcd} = 2 δᵃᵇ`, i.e. `C_A = 2`. -/
-theorem su2AdjointStatement : SU2AdjointStatement := by
+lemma su2AdjointStatement : SU2AdjointStatement := by
   intro a b
   fin_cases a <;> fin_cases b <;>
     simp [epsilon3, su2DeltaAdj, Fin.sum_univ_three, Matrix.cons_val_two, Matrix.vecHead,
@@ -144,16 +144,16 @@ def su2NormalizedData : NormalizedGeneratorData where
   hAdjointCasimir := su2AdjointStatement
 
 /-- `su(2)` satisfies the trace-normalization identity of `NormalizedGeneratorData`. -/
-theorem su2NormalizedData_traceIdentity : su2NormalizedData.TraceIdentity :=
+lemma su2NormalizedData_traceIdentity : su2NormalizedData.TraceIdentity :=
   su2TraceStatement
 
 /-- `su(2)` satisfies the fundamental Casimir identity of `NormalizedGeneratorData`. -/
-theorem su2NormalizedData_fundamentalIdentity :
+lemma su2NormalizedData_fundamentalIdentity :
     su2NormalizedData.FundamentalCasimirIdentity :=
   su2FundamentalStatement
 
 /-- `su(2)` satisfies the adjoint Casimir identity of `NormalizedGeneratorData`. -/
-theorem su2NormalizedData_adjointIdentity : su2NormalizedData.AdjointCasimirIdentity :=
+lemma su2NormalizedData_adjointIdentity : su2NormalizedData.AdjointCasimirIdentity :=
   su2AdjointStatement
 
 /-- The `su(2)` sector carries a full derivation package: all three
@@ -169,7 +169,7 @@ def su2CasimirDerivationAssumptions :
   adjointImpliesContract := fun h => h
 
 /-- The colour invariants of the genuine `su(2)` package are the standard ones. -/
-theorem su2NormalizedData_colorInvariants :
+lemma su2NormalizedData_colorInvariants :
     colorInvariantsOf su2NormalizedData = { cF := 3 / 4, cA := 2, tF := 1 / 2 } := by
   rfl
 
