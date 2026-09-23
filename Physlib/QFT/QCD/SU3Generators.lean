@@ -20,13 +20,16 @@ about the eighth generator is controlled by `invSqrt3 = 1/√3`; it is kept opaq
 handled through `invSqrt3_mul_self` rather than unfolded, so that the case sweeps stay
 arithmetic in `ℂ`.
 
-Status, stated honestly: the two *generator* identities are proved here — trace
-normalization (`su3TraceStatement`, `T_F = 1/2`) and the fundamental Casimir
-(`su3FundamentalStatement`, `C_F = 4/3`).  The adjoint Casimir
-(`SU3AdjointStatement`, `C_A = 3`) is *stated* but not proved: see the note at the end
-of this file.  No `NormalizedGeneratorData` package is built for `su(3)` yet, because
-building one would mean instantiating its `adjointCasimir` contract field with a
-placeholder — exactly the defect this work exists to remove.
+All three identities are proved here: trace normalization (`su3TraceStatement`,
+`T_F = 1/2`), the fundamental Casimir (`su3FundamentalStatement`, `C_F = 4/3`) and the
+adjoint Casimir (`su3AdjointStatement`, `C_A = 3`).  `su3NormalizedData` therefore
+instantiates every contract field of `NormalizedGeneratorData` with the corresponding
+identity rather than with a placeholder, and `su3CasimirDerivationAssumptions` carries
+the full derivation package with identity bridges.
+
+The adjoint Casimir needs one piece of machinery the other two do not: see
+`structConst3Vec` below for why the case sweep is run against a vector-literal copy of
+the structure-constant table.
 
 -/
 
@@ -153,6 +156,89 @@ def su3DeltaAdj (a b : Fin 8) : ℝ := if a = b then 1 else 0
 /-- Kronecker delta on the fundamental index set of `su(3)`. -/
 def su3DeltaFund (i j : Fin 3) : ℝ := if i = j then 1 else 0
 
+/-- The `structConst3` table again, as nested vector literals.
+
+This is not a second definition of the structure constants: `structConst3_eq_vec`
+identifies it with `structConst3` entry by entry.  It exists for a purely
+proof-engineering reason.  `structConst3` is a pattern match with a catch-all branch,
+so its equation lemma for the (overwhelmingly common) zero entries carries one
+disequality side goal per explicit branch; `simp` then spends its whole heartbeat
+budget on a *single* entry such as `structConst3 5 5 5 = 0`, which `rfl` settles
+instantly.  A vector literal has no catch-all, so `Matrix.cons_val_*` evaluates an
+entry in a handful of rewrites, and the 64-case sweep in `su3AdjointStatement`
+becomes tractable. -/
+def structConst3Vec : Fin 8 → Fin 8 → Fin 8 → ℝ :=
+  ![
+    ![![0, 0, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 1, 0, 0, 0, 0, 0],
+      ![0, -1, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 0, 0, 0, 0, 1 / 2, 0],
+      ![0, 0, 0, 0, 0, -(1 / 2), 0, 0],
+      ![0, 0, 0, 0, 1 / 2, 0, 0, 0],
+      ![0, 0, 0, -(1 / 2), 0, 0, 0, 0],
+      ![0, 0, 0, 0, 0, 0, 0, 0]],
+    ![![0, 0, -1, 0, 0, 0, 0, 0],
+      ![0, 0, 0, 0, 0, 0, 0, 0],
+      ![1, 0, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 0, 0, 0, 1 / 2, 0, 0],
+      ![0, 0, 0, 0, 0, 0, 1 / 2, 0],
+      ![0, 0, 0, -(1 / 2), 0, 0, 0, 0],
+      ![0, 0, 0, 0, -(1 / 2), 0, 0, 0],
+      ![0, 0, 0, 0, 0, 0, 0, 0]],
+    ![![0, 1, 0, 0, 0, 0, 0, 0],
+      ![-1, 0, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 0, 0, 1 / 2, 0, 0, 0],
+      ![0, 0, 0, -(1 / 2), 0, 0, 0, 0],
+      ![0, 0, 0, 0, 0, 0, -(1 / 2), 0],
+      ![0, 0, 0, 0, 0, 1 / 2, 0, 0],
+      ![0, 0, 0, 0, 0, 0, 0, 0]],
+    ![![0, 0, 0, 0, 0, 0, -(1 / 2), 0],
+      ![0, 0, 0, 0, 0, -(1 / 2), 0, 0],
+      ![0, 0, 0, 0, -(1 / 2), 0, 0, 0],
+      ![0, 0, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 1 / 2, 0, 0, 0, 0, rt3 / 2],
+      ![0, 1 / 2, 0, 0, 0, 0, 0, 0],
+      ![1 / 2, 0, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 0, 0, -(rt3 / 2), 0, 0, 0]],
+    ![![0, 0, 0, 0, 0, 1 / 2, 0, 0],
+      ![0, 0, 0, 0, 0, 0, -(1 / 2), 0],
+      ![0, 0, 0, 1 / 2, 0, 0, 0, 0],
+      ![0, 0, -(1 / 2), 0, 0, 0, 0, -(rt3 / 2)],
+      ![0, 0, 0, 0, 0, 0, 0, 0],
+      ![-(1 / 2), 0, 0, 0, 0, 0, 0, 0],
+      ![0, 1 / 2, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 0, rt3 / 2, 0, 0, 0, 0]],
+    ![![0, 0, 0, 0, -(1 / 2), 0, 0, 0],
+      ![0, 0, 0, 1 / 2, 0, 0, 0, 0],
+      ![0, 0, 0, 0, 0, 0, 1 / 2, 0],
+      ![0, -(1 / 2), 0, 0, 0, 0, 0, 0],
+      ![1 / 2, 0, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 0, 0, 0, 0, 0, 0],
+      ![0, 0, -(1 / 2), 0, 0, 0, 0, rt3 / 2],
+      ![0, 0, 0, 0, 0, 0, -(rt3 / 2), 0]],
+    ![![0, 0, 0, 1 / 2, 0, 0, 0, 0],
+      ![0, 0, 0, 0, 1 / 2, 0, 0, 0],
+      ![0, 0, 0, 0, 0, -(1 / 2), 0, 0],
+      ![-(1 / 2), 0, 0, 0, 0, 0, 0, 0],
+      ![0, -(1 / 2), 0, 0, 0, 0, 0, 0],
+      ![0, 0, 1 / 2, 0, 0, 0, 0, -(rt3 / 2)],
+      ![0, 0, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 0, 0, 0, rt3 / 2, 0, 0]],
+    ![![0, 0, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 0, 0, 0, 0, 0, 0],
+      ![0, 0, 0, 0, rt3 / 2, 0, 0, 0],
+      ![0, 0, 0, -(rt3 / 2), 0, 0, 0, 0],
+      ![0, 0, 0, 0, 0, 0, rt3 / 2, 0],
+      ![0, 0, 0, 0, 0, -(rt3 / 2), 0, 0],
+      ![0, 0, 0, 0, 0, 0, 0, 0]]]
+
+/-- The vector-literal table agrees with `structConst3` at every index.  Both sides
+reduce to a numeral at ground indices, so each of the 512 cases is closed by `rfl`. -/
+lemma structConst3_eq_vec (a c d : Fin 8) : structConst3 a c d = structConst3Vec a c d := by
+  fin_cases a <;> fin_cases c <;> fin_cases d <;> rfl
+
 /-! ### The three identities, stated concretely -/
 
 /-- Trace normalization for `su(3)`: `Σᵢⱼ (Tᵃ)ᵢⱼ (Tᵇ)ⱼᵢ = (1/2) δᵃᵇ`. -/
@@ -193,27 +279,74 @@ lemma su3FundamentalStatement : SU3FundamentalStatement := by
     simp [invSqrt3_sq, Complex.I_sq] <;>
     ring_nf
 
-/-! ### The adjoint Casimir is stated but open
+/-- The `su(3)` adjoint Casimir: `Σ_{cd} f^{acd} f^{bcd} = 3 δᵃᵇ`, so `C_A = 3`.
 
-`SU3AdjointStatement` says `Σ_{cd} f^{acd} f^{bcd} = 3 δᵃᵇ` in the `structConst3` table
-above, and that statement is true — it was checked numerically against the same table
-before this file was written.  It is not proved here.
+The sweep runs against `structConst3Vec` rather than `structConst3` itself; see the
+docstring there for why.  With that substitution each of the 64 `(a, b)` goals is an
+explicit 64-term sum of numerals and multiples of `rt3`, closed by `simp` followed by
+`ring_nf` and `rt3_sq`. -/
+lemma su3AdjointStatement : SU3AdjointStatement := by
+  intro a b
+  fin_cases a <;> fin_cases b <;>
+    simp [structConst3_eq_vec, structConst3Vec, su3DeltaAdj, Fin.sum_univ_eight] <;>
+    ring_nf <;>
+    simp [rt3_sq] <;>
+    ring_nf
 
-The obstruction is elaboration cost, not mathematics.  The proof pattern that works for
-`su(2)` and for the two generator identities above is a full case sweep: `fin_cases a
-<;> fin_cases b` followed by `simp` on the expanded sums.  For this statement that is
-64 goals, each an 8×8 double sum, so roughly 4·10³ products of `structConst3` values,
-each of which `simp` must reduce through a 55-branch pattern match.  At
-`maxHeartbeats 2000000` it does not terminate.
+/-! ### The genuine `su(3)` package -/
 
-Closing it wants a different route rather than a bigger budget — for instance deriving
-`f^{abc}` from the generators as `f^{abc} = -2i Tr([Tᵃ,Tᵇ]Tᶜ)` and using total
-antisymmetry to cut the 64 cases to the 9 independent ones, or reformulating the sum as
-a matrix product so that a single `Matrix` computation replaces the sweep.
+/-- Genuine normalized generator data for `su(3)`: Gell-Mann generators `λᵃ/2`, the
+standard structure constants, and `T_F = 1/2`, `C_F = 4/3`, `C_A = 3`.  Every contract
+field is instantiated with the corresponding concrete identity, and every witness is a
+proof of that identity — no placeholders. -/
+def su3NormalizedData : NormalizedGeneratorData where
+  AdjIndex := Fin 8
+  FundIndex := Fin 3
+  adjFintype := inferInstance
+  fundFintype := inferInstance
+  genEntry := su3GenEntry
+  structConst := structConst3
+  deltaAdj := su3DeltaAdj
+  deltaFund := su3DeltaFund
+  tF := 1 / 2
+  cF := 4 / 3
+  cA := 3
+  traceNormalization := SU3TraceStatement
+  hTraceNormalization := su3TraceStatement
+  fundamentalCasimir := SU3FundamentalStatement
+  hFundamentalCasimir := su3FundamentalStatement
+  adjointCasimir := SU3AdjointStatement
+  hAdjointCasimir := su3AdjointStatement
 
-Until then, `su(3)` deliberately has no `NormalizedGeneratorData` package: see
-`su2NormalizedData` in `Physlib.QFT.QCD.SU2Generators` for the shape the completed
-`su(3)` package should take. -/
+/-- `su(3)` satisfies the trace-normalization identity of `NormalizedGeneratorData`. -/
+lemma su3NormalizedData_traceIdentity : su3NormalizedData.TraceIdentity :=
+  su3TraceStatement
+
+/-- `su(3)` satisfies the fundamental Casimir identity of `NormalizedGeneratorData`. -/
+lemma su3NormalizedData_fundamentalIdentity :
+    su3NormalizedData.FundamentalCasimirIdentity :=
+  su3FundamentalStatement
+
+/-- `su(3)` satisfies the adjoint Casimir identity of `NormalizedGeneratorData`. -/
+lemma su3NormalizedData_adjointIdentity : su3NormalizedData.AdjointCasimirIdentity :=
+  su3AdjointStatement
+
+/-- The `su(3)` sector carries a full derivation package: all three
+representation-level identities are proved, not assumed, and the contract bridges are
+the identity map because the contracts *are* the identities. -/
+def su3CasimirDerivationAssumptions :
+    CasimirDerivationAssumptions su3NormalizedData where
+  hTraceIdentity := su3NormalizedData_traceIdentity
+  hFundamentalIdentity := su3NormalizedData_fundamentalIdentity
+  hAdjointIdentity := su3NormalizedData_adjointIdentity
+  traceImpliesContract := fun h => h
+  fundamentalImpliesContract := fun h => h
+  adjointImpliesContract := fun h => h
+
+/-- The colour invariants of the genuine `su(3)` package are the standard QCD ones. -/
+lemma su3NormalizedData_colorInvariants :
+    colorInvariantsOf su3NormalizedData = { cF := 4 / 3, cA := 3, tF := 1 / 2 } := by
+  rfl
 
 end RepresentationColor
 end QCD
