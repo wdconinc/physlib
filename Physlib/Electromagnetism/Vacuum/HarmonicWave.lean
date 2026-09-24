@@ -60,7 +60,6 @@ open Space Module
 open Time
 open ClassicalMechanics
 
-variable (OM : OpticalMedium)
 open Matrix
 open Real
 
