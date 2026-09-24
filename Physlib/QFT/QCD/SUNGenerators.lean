@@ -897,6 +897,100 @@ lemma suNFundamentalStatement (N : ℕ) : SUNFundamentalStatement N := by
   rw [h1, h2, hcast, ← kd_eq_deltaFund]
   linear_combination (kd i j) * hscal
 
+/-! ### Tracelessness and Hermiticity
+
+Two further properties of the generalized Gell-Mann basis.  Neither is needed for the
+trace identity or for completeness, but both are needed to define the general-`N`
+structure constants `f^{abc} = -2i Tr([Tᵃ,Tᵇ]Tᶜ)` and to see that they are real; see
+`Physlib.QFT.QCD.SUNStructureConstants`. -/
+
+/-- The diagonal entries of a general off-diagonal generator sum to `(c₁ + c₂) δ_{jk}`.
+On an ordered pair `j < k` the delta vanishes, so both off-diagonal families are
+traceless; the antisymmetric family is traceless even entrywise, since
+`c₁ + c₂ = -i/2 + i/2 = 0`. -/
+lemma sum_offGen_diag (c₁ c₂ : ℂ) (j k : Fin N) :
+    (∑ i : Fin N, offGen c₁ c₂ j k i i) = (c₁ + c₂) * kd j k := by
+  have h : ∀ i : Fin N, offGen c₁ c₂ j k i i = (c₁ + c₂) * (kd i j * kd i k) := by
+    intro i; simp only [offGen]; ring
+  rw [Finset.sum_congr rfl (fun i _ => h i), ← Finset.mul_sum, kd_kd_sum]
+
+/-- The unnormalized diagonal vectors are traceless: the `L` leading ones cancel the
+single entry `-L` at the pivot. -/
+lemma sum_dVec (d : Fin (N - 1)) : (∑ p : Fin N, dVec d p) = 0 := by
+  have hpiv : (∑ p : Fin N, (if p = piv d then ((((piv d : Fin N) : ℕ)) : ℂ) else 0))
+      = ((((piv d : Fin N) : ℕ)) : ℂ) := by
+    rw [Finset.sum_ite_eq']
+    simp
+  simp only [dVec]
+  rw [Finset.sum_sub_distrib, sum_lt_card, hpiv, sub_self]
+
+/-- **Tracelessness**: every generalized Gell-Mann generator of `su(N)` has vanishing
+trace, `Σᵢ (Tᵃ)ᵢᵢ = 0`.  This is what makes `f^{abc}` collapse to the adjoint Casimir:
+the trace of a commutator is automatically zero, but the `-1/N` term of the completeness
+relation is killed only by the tracelessness of the individual generators. -/
+lemma sum_suNGenEntry_diag (a : SUNIndex N) : (∑ i : Fin N, suNGenEntry N a i i) = 0 := by
+  rcases a with o | o | d
+  · obtain ⟨⟨j, k⟩, hjk⟩ := o
+    simp only [suNGenEntry]
+    rw [sum_offGen_diag, kd_eq_zero (ne_of_lt hjk), mul_zero]
+  · obtain ⟨⟨j, k⟩, hjk⟩ := o
+    simp only [suNGenEntry]
+    rw [sum_offGen_diag]
+    ring
+  · simp only [suNGenEntry]
+    have h : ∀ i : Fin N, kd i i * (dNorm d * dVec d i) = dNorm d * dVec d i := by
+      intro i; rw [kd_self, one_mul]
+    rw [Finset.sum_congr rfl (fun i _ => h i), ← Finset.mul_sum, sum_dVec, mul_zero]
+
+/-- Complex conjugation fixes the Kronecker delta, whose values are `0` and `1`. -/
+lemma conj_kd (i j : Fin N) : (starRingEnd ℂ) (kd i j) = kd i j := by
+  simp only [kd]
+  split_ifs <;> simp
+
+/-- Complex conjugation fixes the diagonal normalization, which is a real scalar. -/
+lemma conj_dNorm (d : Fin (N - 1)) : (starRingEnd ℂ) (dNorm d) = dNorm d := by
+  simp only [dNorm]
+  exact Complex.conj_ofReal _
+
+/-- Complex conjugation fixes the unnormalized diagonal vectors, whose entries are
+integers. -/
+lemma conj_dVec (d : Fin (N - 1)) (p : Fin N) :
+    (starRingEnd ℂ) (dVec d p) = dVec d p := by
+  simp only [dVec, map_sub]
+  congr 1
+  · split_ifs <;> simp
+  · split_ifs <;> simp
+
+/-- **Hermiticity**: `conj (Tᵃ)_{ij} = (Tᵃ)_{ji}`.  The symmetric off-diagonal family has
+real entries and is symmetric; the antisymmetric family picks up the sign of `i` exactly
+where it swaps the two matrix units; the diagonal family is real and diagonal.  This is
+what makes the structure constants real. -/
+lemma conj_suNGenEntry (a : SUNIndex N) (i j : Fin N) :
+    (starRingEnd ℂ) (suNGenEntry N a i j) = suNGenEntry N a j i := by
+  have hhalf : (starRingEnd ℂ) (1 / 2 : ℂ) = 1 / 2 := by
+    rw [show (1 / 2 : ℂ) = ((1 / 2 : ℝ) : ℂ) by norm_num]
+    exact Complex.conj_ofReal _
+  rcases a with o | o | d
+  · obtain ⟨⟨p, q⟩, hpq⟩ := o
+    simp only [suNGenEntry, offGen, map_add, map_mul, conj_kd, hhalf]
+    ring
+  · obtain ⟨⟨p, q⟩, hpq⟩ := o
+    have h1 : (starRingEnd ℂ) (-I / 2 : ℂ) = I / 2 := by
+      rw [show (-I / 2 : ℂ) = -I * (1 / 2) by ring, map_mul, map_neg, Complex.conj_I,
+        hhalf]
+      ring
+    have h2 : (starRingEnd ℂ) (I / 2 : ℂ) = -I / 2 := by
+      rw [show (I / 2 : ℂ) = I * (1 / 2) by ring, map_mul, Complex.conj_I, hhalf]
+      ring
+    simp only [suNGenEntry, offGen, map_add, map_mul, conj_kd, h1, h2]
+    ring
+  · simp only [suNGenEntry, map_mul, conj_kd, conj_dNorm, conj_dVec]
+    by_cases h : i = j
+    · subst h
+      rfl
+    · rw [kd_eq_zero h, kd_eq_zero (Ne.symm h)]
+      ring
+
 /-! ### Status: the adjoint Casimir
 
 `C_F` is proved above.  `C_A = N` is not, and the obstruction is not the Casimir sum

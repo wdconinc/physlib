@@ -372,6 +372,7 @@ public import Physlib.QFT.QCD.SU2Generators
 public import Physlib.QFT.QCD.SU3Generators
 public import Physlib.QFT.QCD.SUNDerivation
 public import Physlib.QFT.QCD.SUNGenerators
+public import Physlib.QFT.QCD.SUNStructureConstants
 public import Physlib.QFT.QED.AnomalyCancellation.Basic
 public import Physlib.QFT.QED.AnomalyCancellation.BasisLinear
 public import Physlib.QFT.QED.AnomalyCancellation.ConstAbs
