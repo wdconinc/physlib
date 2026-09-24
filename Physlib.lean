@@ -80,6 +80,8 @@ public import Physlib.Electromagnetism.Dynamics.Hamiltonian
 public import Physlib.Electromagnetism.Dynamics.IsExtrema
 public import Physlib.Electromagnetism.Dynamics.KineticTerm
 public import Physlib.Electromagnetism.Dynamics.Lagrangian
+public import Physlib.Electromagnetism.Interface.Basic
+public import Physlib.Electromagnetism.Interface.SnellsLaw
 public import Physlib.Electromagnetism.Kinematics.Boosts
 public import Physlib.Electromagnetism.Kinematics.EMPotential
 public import Physlib.Electromagnetism.Kinematics.ElectricField
