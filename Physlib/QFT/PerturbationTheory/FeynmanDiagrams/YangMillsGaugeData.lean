@@ -10,6 +10,7 @@ public import Physlib.QFT.QCD.CasimirDerivation
 public import Physlib.QFT.QCD.SUNDerivation
 public import Physlib.QFT.QCD.SU2Generators
 public import Physlib.QFT.QCD.SUNGenerators
+public import Physlib.QFT.QCD.SUNStructureConstants
 public import Mathlib.Algebra.Lie.Basic
 public import Mathlib.Algebra.Lie.Matrix
 public import Mathlib.Algebra.Lie.TraceForm
@@ -238,9 +239,9 @@ Standard values: `C_F = 3/4`, `C_A = 2`, `T_F = 1/2`.
 The generator entries are the genuine ones, `Tᵃ = σᵃ/2` from
 `Physlib.QFT.QCD.SU2Generators`, and the three `Prop`-valued contract fields are
 instantiated to the identities those generators actually satisfy rather than to
-`True`.  This is what distinguishes this instance from `suNYangMillsGaugeData`, whose
-generator entries are still the placeholder `0` and whose contracts therefore cannot
-be stated truthfully (`0 = T_F = 1/2`). -/
+`True`.  The same is now true of `suNYangMillsGaugeData`; this instance remains because
+`su(2)`'s tables give the three identities directly, without the generalized Gell-Mann
+construction. -/
 def su2YangMillsGaugeData :
     YangMillsGaugeData
   ℝ
@@ -297,10 +298,12 @@ The fundamental Casimir contract is likewise the identity the generators satisfy
 `SUNGen.SUNFundamentalStatement n` with `C_F = (n²-1)/(2n)`, proved for every `n` from
 the completeness (Fierz) relation `SUNGen.suN_completeness`.
 
-Only the adjoint Casimir contract is still the vacuous `True`: `C_A = n` is *stored* as
-the standard value, but the general-`n` structure constants `f^{abc}` that the identity
-`Σ_{cd} f^{acd} f^{bcd} = C_A δ^{ab}` quantifies over do not exist in this development.
-See the closing note of `Physlib.QFT.QCD.SUNGenerators`. -/
+The adjoint Casimir contract is likewise the identity the generators satisfy,
+`SUNGen.SUNAdjointStatement n` with `C_A = n`, proved for every `n` in
+`Physlib.QFT.QCD.SUNStructureConstants` from the structure constants
+`f^{abc} = -2i Tr([Tᵃ,Tᵇ]Tᶜ)` that module defines.  All three contract fields of this
+instance therefore carry concrete identities in the stored coefficients; none is
+`True`. -/
 def suNYangMillsGaugeData (n : ℕ) (_hn : 1 < n) :
     YangMillsGaugeData
   ℝ
@@ -317,8 +320,8 @@ def suNYangMillsGaugeData (n : ℕ) (_hn : 1 < n) :
   hTraceNormalization := SUNGen.suNTraceStatement n
   fundamentalCasimir := SUNGen.SUNFundamentalStatement n
   hFundamentalCasimir := SUNGen.suNFundamentalStatement n
-  adjointCasimir := True
-  hAdjointCasimir := trivial
+  adjointCasimir := SUNGen.SUNAdjointStatement n
+  hAdjointCasimir := SUNGen.suNAdjointStatement n
 
 /-- The coupling invariants extracted from SU(N) gauge data. -/
 def suNYMColorInvariants (n : ℕ) (hn : 1 < n) : ColorInvariants :=

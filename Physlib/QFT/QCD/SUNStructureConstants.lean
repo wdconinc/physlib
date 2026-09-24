@@ -366,7 +366,7 @@ lemma suNStructConst_coe (a b c : SUNIndex N) :
   have hre := trace_genCommM_mul_re a b c
   simp only [suNStructConst, suNStructConstC]
   apply Complex.ext <;>
-    simp [Complex.mul_re, Complex.mul_im, hre] <;> ring
+    simp [Complex.mul_re, Complex.mul_im, hre]
 
 /-! ### The adjoint Casimir -/
 

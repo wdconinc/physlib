@@ -57,8 +57,10 @@ entries instead of the zero placeholder.
 consequence of completeness.  Completeness *derives* the scalarity of the Casimir, so
 Schur's lemma is not used anywhere.
 
-The adjoint Casimir `C_A = N` is not proved: the general-`N` structure constants do not
-exist in this development.  See the closing note.
+`sum_suNGenEntry_diag` and `conj_suNGenEntry` — the generators are traceless and
+Hermitian.  Neither is needed above; both are needed to define the general-`N` structure
+constants, and hence for the adjoint Casimir `C_A = N`, which is proved in
+`Physlib.QFT.QCD.SUNStructureConstants`.  See the closing note.
 
 -/
 
@@ -993,26 +995,21 @@ lemma conj_suNGenEntry (a : SUNIndex N) (i j : Fin N) :
 
 /-! ### Status: the adjoint Casimir
 
-`C_F` is proved above.  `C_A = N` is not, and the obstruction is not the Casimir sum
-itself: it is that the general-`N` structure constants `f^{abc}` do not exist in this
-development.  `su(2)` and `su(3)` carry them as finite tables (`epsilon3`,
-`structConst3`); for arbitrary `N` the only available definition is through the trace,
+`T_F`, `C_F` and completeness are proved above.  `C_A = N` is proved in
+`Physlib.QFT.QCD.SUNStructureConstants`, which is where the general-`N` structure
+constants live: no finite table generalizes from `su(2)` and `su(3)`, so `f^{abc}` is
+defined there through the trace,
 
 ```
 f^{abc} = -2i · Tr([Tᵃ, Tᵇ] Tᶜ),
 ```
 
-which is well posed precisely because `suNTraceStatement` is proved.  With that
-definition `Σ_{c,d} f^{acd} f^{bcd} = N δ^{ab}` follows from `suN_completeness` applied
-twice — once to collapse the `d` sum, once for `c` — but each application first needs the
-four-generator trace expanded over the three families and the sum over the adjoint index
-`SUNIndex N` handled as a sum type, which is a module's worth of work rather than a
-lemma's.  `su(3)`'s analogue fell only to a trick specific to a finite table (rewriting
-the lookup as vector literals), which does not generalize.
-
-The single named goal is therefore: define `suNStructConst : SUNIndex N → SUNIndex N →
-SUNIndex N → ℝ` by the trace formula above, and prove
-`Σ_{c,d} f^{acd} f^{bcd} = N · δ^{ab}`. -/
+which is well posed precisely because `suNTraceStatement` is proved, and real because of
+`conj_suNGenEntry` above.  The adjoint Casimir then follows from `suN_completeness`
+applied twice — once to collapse the `d` sum, once for `c` — in the matrix forms
+`SUNGen.sum_genM_sandwich` and `SUNGen.sum_genM_proj_apply`.  The three colour invariants
+of `su(N)` are therefore all derived, for every `N`, from the generator construction of
+this module. -/
 
 end SUNGen
 
