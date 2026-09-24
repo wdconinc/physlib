@@ -192,7 +192,8 @@ def GenEvent.numVertices (e : GenEvent) : Nat :=
   let explicit := e.body.countP fun r => match r with | .vertex _ => true | .particle _ => false
   let implicit := e.body.foldl (init := ([] : List Int)) fun acc r =>
     match r with
-    | .particle p => if p.parent > 0 && !acc.contains p.parent then p.parent :: acc else acc
+    | .particle p =>
+      if decide (0 < p.parent) && !acc.contains p.parent then p.parent :: acc else acc
     | .vertex _ => acc
   explicit + implicit.length
 

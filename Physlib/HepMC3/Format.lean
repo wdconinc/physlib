@@ -118,11 +118,11 @@ Non-finite inputs render as `nan`, `inf` and `-inf`, again matching `printf`.  N
 keeps its sign, as it does there. -/
 def formatScientific (prec : Nat) (x : Float) : String :=
   if x.isNaN then "nan"
+  else if !x.isFinite then (if x < 0 then "-" else "") ++ "inf"
   else
     let p := floatParts x
     let sign := if p.neg then "-" else ""
-    if !x.isFinite then sign ++ "inf"
-    else if p.m == 0 then
+    if p.m == 0 then
       sign ++ "0." ++ String.ofList (List.replicate prec '0') ++ "e+00"
     else
       let (ds, E) := sciDigits p.m p.e prec
