@@ -190,6 +190,71 @@ def yMBeta0
 
 -- #### U(1) sector
 
+/-! The U(1) contracts.  These mirror `SU2TraceStatement` and friends: the generator entries
+are named so that the statements below and the data in `u1YangMillsGaugeData` are provably the
+same object, rather than two copies that could drift apart. -/
+
+/-- Generator entries of the U(1) hypercharge sector: a single `1 × 1` generator with entry `Y`.
+The "algebra index" and the "colour index" both range over `Fin 1`. -/
+def u1GenEntry (Y : ℝ) : Fin 1 → Fin 1 → Fin 1 → ℂ := fun _ _ _ => (Y : ℂ)
+
+/-- Kronecker delta on the single U(1) algebra index. -/
+def u1DeltaAdj (a b : Fin 1) : ℝ := if a = b then 1 else 0
+
+/-- Kronecker delta on the single U(1) charge index. -/
+def u1DeltaFund (i j : Fin 1) : ℝ := if i = j then 1 else 0
+
+/-- Trace normalization for U(1): `Tr(T^a T^b) = Y² δ^{ab}`. -/
+def U1TraceStatement (Y : ℝ) : Prop :=
+  ∀ a b : Fin 1,
+    (∑ i : Fin 1, ∑ j : Fin 1, u1GenEntry Y a i j * u1GenEntry Y b j i)
+      = ((Y ^ 2 : ℝ) : ℂ) * ((u1DeltaAdj a b : ℝ) : ℂ)
+
+/-- Fundamental Casimir for U(1): `Σ_a (T^a T^a)_{ij} = Y² δ_{ij}`, so `C_F = Y²`. -/
+def U1FundamentalStatement (Y : ℝ) : Prop :=
+  ∀ i j : Fin 1,
+    (∑ a : Fin 1, ∑ k : Fin 1, u1GenEntry Y a i k * u1GenEntry Y a k j)
+      = ((Y ^ 2 : ℝ) : ℂ) * ((u1DeltaFund i j : ℝ) : ℂ)
+
+/-- Adjoint Casimir for U(1): `C_A = 0`.
+
+This is stated so that the vanishing is *derived* rather than stipulated.  Quantifying over
+every totally antisymmetric `f` says: whatever the structure constants of a one-dimensional
+gauge algebra are, antisymmetry alone forces them to vanish, hence the adjoint Casimir is zero.
+Writing instead `Σ_{cd} 0 · 0 = 0` with the structure constants hard-coded to zero would assume
+the conclusion. -/
+def U1AdjointStatement : Prop :=
+  ∀ f : Fin 1 → Fin 1 → Fin 1 → ℝ, (∀ a b c, f a b c = -f b a c) →
+    ∀ a b : Fin 1,
+      (∑ c : Fin 1, ∑ d : Fin 1, f a c d * f b c d) = (0 : ℝ) * u1DeltaAdj a b
+
+/-- The U(1) generator entries are trace-normalized with `T_F = Y²`. -/
+lemma u1TraceStatement (Y : ℝ) : U1TraceStatement Y := by
+  intro a b
+  simp only [u1GenEntry, u1DeltaAdj, Finset.sum_const, Finset.card_univ,
+    Fintype.card_fin, one_smul, if_pos (Subsingleton.elim a b)]
+  push_cast
+  ring
+
+/-- The U(1) fundamental Casimir is `C_F = Y²`. -/
+lemma u1FundamentalStatement (Y : ℝ) : U1FundamentalStatement Y := by
+  intro i j
+  simp only [u1GenEntry, u1DeltaFund, Finset.sum_const, Finset.card_univ,
+    Fintype.card_fin, one_smul, if_pos (Subsingleton.elim i j)]
+  push_cast
+  ring
+
+/-- The U(1) adjoint Casimir vanishes: total antisymmetry forces the structure constants of a
+one-dimensional algebra to be identically zero. -/
+lemma u1AdjointStatement : U1AdjointStatement := by
+  intro f hf a b
+  have h0 : f 0 0 0 = 0 := by have h := hf 0 0 0; linarith
+  have hz : ∀ x y z : Fin 1, f x y z = 0 := by
+    intro x y z
+    rw [Subsingleton.elim x 0, Subsingleton.elim y 0, Subsingleton.elim z 0]
+    exact h0
+  simp [hz]
+
 /-- Yang-Mills gauge data for the U(1) hypercharge sector of the Standard Model.
 
 The gauge algebra is `u(1) ≅ ℝ` — a one-dimensional *real* abelian Lie algebra.
@@ -202,16 +267,16 @@ def u1YangMillsGaugeData (Y : ℝ) :
   FundBasis := Fin 1         -- one-dimensional charge representation
   adjFintype := inferInstance
   fundFintype := inferInstance
-  genEntry := fun _ _ _ => (Y : ℂ)
+  genEntry := u1GenEntry Y
   tF := Y ^ 2
   cF := Y ^ 2
   cA := 0                    -- abelian: no adjoint self-coupling
-  traceNormalization := True
-  hTraceNormalization := trivial
-  fundamentalCasimir := True
-  hFundamentalCasimir := trivial
-  adjointCasimir := True
-  hAdjointCasimir := trivial
+  traceNormalization := U1TraceStatement Y
+  hTraceNormalization := u1TraceStatement Y
+  fundamentalCasimir := U1FundamentalStatement Y
+  hFundamentalCasimir := u1FundamentalStatement Y
+  adjointCasimir := U1AdjointStatement
+  hAdjointCasimir := u1AdjointStatement
 
 /-- The coupling invariants extracted from U(1) gauge data with charge `Y`. -/
 def u1YMColorInvariants (Y : ℝ) : ColorInvariants :=
