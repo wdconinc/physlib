@@ -133,10 +133,10 @@ lemma sum_sub₂ (f g : Fin N → Fin N → ℂ) :
     (∑ j : Fin N, ∑ k : Fin N, (f j k - g j k))
       = (∑ j : Fin N, ∑ k : Fin N, f j k) - ∑ j : Fin N, ∑ k : Fin N, g j k := by
   rw [← Finset.sum_sub_distrib]
-  exact Finset.sum_congr rfl fun _ _ => Finset.sum_sub_distrib
+  exact Finset.sum_congr rfl fun j _ => Finset.sum_sub_distrib (f j) (g j)
 
 /-- Contracting a matrix against two Kronecker deltas on opposite sides. -/
-lemma sum_kd_sandwich (X : Fin N → Fin N → ℂ) (i l : Fin N) :
+lemma sum_kd_sandwich (X : Matrix (Fin N) (Fin N) ℂ) (i l : Fin N) :
     (∑ j : Fin N, ∑ k : Fin N, X j k * (kd i j * kd k l)) = X i l := by
   have h1 : ∀ j : Fin N, (∑ k : Fin N, X j k * (kd i j * kd k l)) = kd j i * X j l := by
     intro j
@@ -147,7 +147,7 @@ lemma sum_kd_sandwich (X : Fin N → Fin N → ℂ) (i l : Fin N) :
   rw [Finset.sum_congr rfl fun j _ => h1 j, kd_sum (fun j => X j l) i]
 
 /-- Contracting a matrix against a Kronecker delta on both indices gives its trace. -/
-lemma sum_kd_trace (X : Fin N → Fin N → ℂ) :
+lemma sum_kd_trace (X : Matrix (Fin N) (Fin N) ℂ) :
     (∑ j : Fin N, ∑ k : Fin N, X j k * kd j k) = ∑ j : Fin N, X j j := by
   refine Finset.sum_congr rfl fun j _ => ?_
   have h : ∀ k : Fin N, X j k * kd j k = kd k j * X j k := by
@@ -273,13 +273,12 @@ computation needs only one primitive. -/
 lemma sum_genM_sq :
     (∑ c : SUNIndex N, genM N c * genM N c)
       = ((2 : ℂ)⁻¹ * ((N : ℂ) - ((N : ℂ))⁻¹)) • (1 : Matrix (Fin N) (Fin N) ℂ) := by
-  ext i l
-  rw [Matrix.sum_apply]
-  have h : ∀ c : SUNIndex N, (genM N c * genM N c) i l = (genM N c * 1 * genM N c) i l := by
-    intro c; rw [mul_one]
-  rw [Finset.sum_congr rfl fun c _ => h c, sum_genM_sandwich_apply, Matrix.trace_one,
-    Matrix.smul_apply, smul_eq_mul, Fintype.card_fin]
-  simp only [one_apply_kd]
+  have h : (∑ c : SUNIndex N, genM N c * genM N c)
+      = ∑ c : SUNIndex N, genM N c * 1 * genM N c :=
+    Finset.sum_congr rfl fun c _ => by rw [mul_one]
+  rw [h, sum_genM_sandwich, Matrix.trace_one, Fintype.card_fin, smul_sub, smul_smul,
+    smul_smul, ← sub_smul]
+  congr 1
   ring
 
 /-- `Σₐ Tr(X Tᵃ) Tr(Y Tᵃ) = (1/2)(Tr(YX) - Tr(X)Tr(Y)/N)`: the projection form paired
@@ -338,7 +337,7 @@ lemma trace_genCommM_mul_re (a b c : SUNIndex N) :
   have hK : (genCommM N a b)ᴴ = -genCommM N a b := by
     simp only [genCommM, Matrix.conjTranspose_sub, Matrix.conjTranspose_mul,
       genM_conjTranspose]
-    ring
+    rw [neg_sub]
   have h1 : (genCommM N a b * genM N c)ᴴ = -(genM N c * genCommM N a b) := by
     rw [Matrix.conjTranspose_mul, genM_conjTranspose, hK, mul_neg]
   have h2 : star (Matrix.trace (genCommM N a b * genM N c))
@@ -365,13 +364,9 @@ def suNStructConst (N : ℕ) (a b c : SUNIndex N) : ℝ :=
 lemma suNStructConst_coe (a b c : SUNIndex N) :
     ((suNStructConst N a b c : ℝ) : ℂ) = suNStructConstC N a b c := by
   have hre := trace_genCommM_mul_re a b c
-  have hz : Matrix.trace (genCommM N a b * genM N c)
-      = (((Matrix.trace (genCommM N a b * genM N c)).im : ℝ) : ℂ) * I := by
-    apply Complex.ext <;> simp [hre]
-  rw [suNStructConstC, suNStructConst, hz]
-  push_cast
-  linear_combination
-    (2 * ((Matrix.trace (genCommM N a b * genM N c)).im : ℂ)) * Complex.I_sq
+  simp only [suNStructConst, suNStructConstC]
+  apply Complex.ext <;>
+    simp [Complex.mul_re, Complex.mul_im, hre] <;> ring
 
 /-! ### The adjoint Casimir -/
 
