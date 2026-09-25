@@ -62,7 +62,7 @@ def main (args : List String) : IO UInt32 := do
     IO.println s!"physlib_gen: {cfg.nEvents} events, seed {cfg.seed}"
     IO.println s!"  lepton: pdg {cfg.lepton.pdg} at {cfg.lepton.energy} GeV"
     IO.println s!"  hadron: pdg {cfg.hadron.pdg} at {cfg.hadron.energy} GeV"
-    IO.println s!"  s = {cfg.sHat} GeV^2, sqrt(s) = {cfg.roots} GeV"
+    IO.println s!"  s = {cfg.sTotal} GeV^2, sqrt(s) = {cfg.roots} GeV"
     let events ← trivialRun cfg
     if events.length != cfg.nEvents then
       IO.eprintln s!"physlib_gen: built {events.length} of {cfg.nEvents} events"

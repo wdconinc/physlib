@@ -18,9 +18,13 @@ Everything is `Float` and executable — this is Layer N.  The beam energies are
 laboratory energies in GeV, and the two beams are taken head-on along `±z`, which is the
 only configuration Phase 1 needs.
 
-## On the massless approximation
+## On the massless approximation, and on the name
 
-`sHat` below uses the massless expression `s = 4 E₁ E₂` for head-on beams.  For the
+`sTotal` below uses the massless expression `s = 4 E₁ E₂` for head-on beams.  It is named
+`sTotal` rather than with a hatted name: by convention `ŝ` is the *partonic* invariant of the
+subsystem that actually collides, which for DIS is a fraction `x` of this one.  Phase 1
+introduces that quantity, so reserving the hatted name for it avoids a collision that would
+be actively misleading.  For the
 reference configuration in the plan — 9 GeV electrons on 100 GeV protons — that gives
 `s = 3600 GeV²` and `√s = 60 GeV` exactly, which is a useful arithmetic anchor for the first
 test.  The exact expression including masses is `s = (E₁+E₂)² - (p₁+p₂)²`; with masses
@@ -70,14 +74,16 @@ structure RunConfig where
   q2Min : Float := 1.0
 deriving Repr, Inhabited
 
-/-- Squared centre-of-mass energy in the massless head-on approximation, `s = 4 E₁ E₂`.
+/-- Squared total centre-of-mass energy in the massless head-on approximation, `s = 4 E₁ E₂`.
+
+This is the **hadronic** invariant; the partonic `ŝ` of Phase 1 is a fraction of it.
 
 For the default configuration this is exactly `3600.0`. -/
-def RunConfig.sHat (c : RunConfig) : Float :=
+def RunConfig.sTotal (c : RunConfig) : Float :=
   4.0 * c.lepton.energy * c.hadron.energy
 
 /-- Centre-of-mass energy `√s` in GeV; exactly `60.0` for the default configuration. -/
-def RunConfig.roots (c : RunConfig) : Float := c.sHat.sqrt
+def RunConfig.roots (c : RunConfig) : Float := c.sTotal.sqrt
 
 /-- Four-momentum of the lepton beam, travelling along `-z`, in the massless approximation. -/
 def RunConfig.leptonP (c : RunConfig) : FourVector :=
