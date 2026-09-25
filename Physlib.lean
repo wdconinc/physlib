@@ -112,9 +112,12 @@ public import Physlib.FluidDynamics.FluidFlow.Newtonian
 public import Physlib.FluidDynamics.ThermodynamicCauchyFlow.Basic
 public import Physlib.FluidDynamics.ThermodynamicCauchyFlow.Bernoulli
 public import Physlib.FluidDynamics.ThermodynamicCauchyFlow.Isentropic
+public import Physlib.Generator.Config
+public import Physlib.Generator.Event
 public import Physlib.HepMC3.Ascii
 public import Physlib.HepMC3.Basic
 public import Physlib.HepMC3.Format
+public import Physlib.HepMC3.Graph
 public import Physlib.LatticeQFT.Basic
 public import Physlib.Mathematics.Calculus.AdjFDeriv
 public import Physlib.Mathematics.Calculus.Divergence
@@ -188,6 +191,7 @@ public import Physlib.Meta.Sorry
 public import Physlib.Meta.TODO.Basic
 public import Physlib.Meta.TODO.Global
 public import Physlib.Meta.TransverseTactics
+public import Physlib.Numerics.Random
 public import Physlib.Optics.Basic
 public import Physlib.Optics.Polarization.Basic
 public import Physlib.Particles.BeyondTheStandardModel.GeorgiGlashow.Basic

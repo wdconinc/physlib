@@ -163,3 +163,8 @@ srcDir = "scripts"
 [[lean_exe]]
 name = "no_docs"
 srcDir = "scripts/MetaPrograms"
+
+[[lean_exe]]
+name = "physlib_gen"
+root = "Main"
+srcDir = "generator"
