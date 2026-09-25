@@ -86,9 +86,11 @@ def trivialRun (c : RunConfig) : IO (List GenEvent) :=
     let mut out : List GenEvent := []
     for i in [0:c.nEvents] do
       match ← trivialEvent c (i + 1) with
-      | some e => out := out ++ [e]
+      | some e => out := e :: out
       | none => pure ()
-    pure out
+    -- Prepend and reverse once; see the note in DISEvent.loRun. Appending per event is
+    -- O(n) each time and makes the whole run O(n^2).
+    pure out.reverse
 
 end Generator
 end Physlib

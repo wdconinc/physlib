@@ -143,9 +143,12 @@ def loRun (c : RunConfig) : IO (List GenEvent × SampleStats) :=
       let (ev?, used, viol) ← loEvent c r wMax (i + 1)
       st := st.record ev?.isSome used viol
       match ev? with
-      | some ev => evs := evs ++ [ev]
+      | some ev => evs := ev :: evs
       | none => pure ()
-    pure (evs, st)
+    -- Prepend and reverse once: `evs ++ [ev]` walks the whole list on every event, which
+    -- makes generation quadratic. Measured before the fix: 7649 events/s at N=5000 but
+    -- 1283 events/s at N=50000 -- the rate FELL as N grew, which is the signature.
+    pure (evs.reverse, st)
 
 end Generator
 end Physlib
