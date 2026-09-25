@@ -154,7 +154,7 @@ noncomputable def repGaugeGroupI : Representation ℂ GaugeGroupI LeptonDoublet 
     simp [valLinEquiv_symm_apply]
   map_mul' g₁ g₂ := by
     ext l
-    simp [smul_smul, mul_comm, TensorProduct.map_map, valLinEquiv_symm_apply]
+    simp [smul_smul, TensorProduct.map_map, valLinEquiv_symm_apply]
     ring_nf
 
 /-- The gauge action on a pure spinor–weak tensor. -/
