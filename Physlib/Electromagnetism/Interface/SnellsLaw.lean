@@ -73,7 +73,29 @@ open Space
   surface charge or current). It is taken here as a hypothesis rather than derived from a
   discontinuous-medium Maxwell formulation — matching the scope note in
   `Electromagnetism.ThreeDimension.MaxwellEquations`, which already excludes boundary
-  conditions and constitutive laws for material media. -/
+  conditions and constitutive laws for material media.
+
+  Strategy for a future derivation of this hypothesis from literal field continuity of
+  `harmonicWaveDirection`-style waves (worked out by hand, not yet formalized): project the
+  continuity equation onto a tangential test direction to get, for each such direction, an
+  identity `A cos(ωᵢτ+φᵢ) + B cos(ωᵣτ+φᵣ) = C cos(ω_tτ+φ_t)` holding for all `τ` in a real
+  parameter (time, or an affine spatial coordinate along the tested tangential direction).
+  Expand via Euler's formula into six complex exponential characters `χ_ω(τ) = e^{iωτ}` at
+  `ω ∈ {±ωᵢ, ±ωᵣ, ±ω_t}`. Mathlib's `linearIndependent_monoidHom` (Dedekind's linear
+  independence of characters, viewing `(ℝ, +)` as `Multiplicative ℝ` and the characters as
+  `Multiplicative ℝ →* ℂ`) makes these linearly independent whenever the six exponents are
+  pairwise distinct; combined with `linearIndependent_iff'`, a vanishing combination with all
+  six pairwise distinct forces every one of `A, B, C` to be zero. Given `A, B, C ≠ 0`
+  (a nondegeneracy hypothesis on the wave amplitudes), this rules out "exactly two of
+  `ωᵢ, ωᵣ, ω_t` coincide" case by case (each such case reduces to a 2-term identity with the
+  same contradiction), leaving "all three coincide" as the only possibility. Applying this
+  once (at a fixed interface point) gives equal frequency; applying it for every tangential
+  test direction gives equal tangential wavevector. The Lean obstacle is bookkeeping: the
+  Finset of six characters collapses whenever two exponents coincide, so the argument needs
+  a `by_cases` split into a 4-element and a 6-element `Finset` with hand-proven pairwise
+  distinctness in each branch, plus the same `Space d`/`EuclideanSpace ℝ (Fin d)` type
+  bridging already handled once in `Vacuum.HarmonicWaveDirection` for the amplitude
+  nondegeneracy hypothesis. -/
 def PhaseMatchedAtInterface {d : ℕ} (n̂ : Direction d) (𝓕₁ : FreeSpace) (κ_i : ℝ)
     (s_i : Direction d) (κ_r : ℝ) (s_r : Direction d) (𝓕₂ : FreeSpace) (κ_t : ℝ)
     (s_t : Direction d) : Prop :=
