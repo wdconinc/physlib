@@ -96,6 +96,7 @@ public import Physlib.Electromagnetism.ThreeDimension.Basic
 public import Physlib.Electromagnetism.ThreeDimension.MaxwellEquations
 public import Physlib.Electromagnetism.Vacuum.Constant
 public import Physlib.Electromagnetism.Vacuum.HarmonicWave
+public import Physlib.Electromagnetism.Vacuum.HarmonicWaveDirection
 public import Physlib.Electromagnetism.Vacuum.IsPlaneWave
 public import Physlib.FluidDynamics.Basic
 public import Physlib.FluidDynamics.CauchyFlow.Basic
