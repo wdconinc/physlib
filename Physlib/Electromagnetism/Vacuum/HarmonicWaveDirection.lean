@@ -188,14 +188,14 @@ lemma harmonicWave_electricField (𝓕 : FreeSpace) (κ : ℝ) (hκ : κ ≠ 0) 
     (E₀ : EuclideanSpace ℝ (Fin d)) (φ : ℝ) :
     (harmonicWave 𝓕 κ s E₀ φ).electricField 𝓕.c =
     planeWave (fun u => harmonicWaveEAmp κ φ u • E₀) 𝓕.c.val s := by
-  ext t x
+  ext t x i
   rw [electricField_eq]
-  simp only [harmonicWave_scalarPotential_eq_zero, Pi.zero_apply, Space.grad_zero, zero_sub]
+  simp only [harmonicWave_scalarPotential_eq_zero, Pi.zero_apply, Space.grad_zero, zero_sub,
+    neg_zero]
   rw [harmonicWave_vectorPotential,
     planeWave_time_deriv (harmonicWaveAmp_smul_differentiable 𝓕 κ φ E₀)]
-  simp only [Pi.neg_apply, neg_smul, neg_neg, planeWave_eq,
-    harmonicWaveAmp_smul_fderiv 𝓕 κ φ _ hκ E₀, smul_smul]
-  congr 1
+  simp only [Pi.neg_apply, neg_smul, neg_neg, planeWave_eq, Pi.smul_apply, PiLp.smul_apply,
+    smul_eq_mul, harmonicWaveAmp_smul_fderiv 𝓕 κ φ _ hκ E₀]
   unfold harmonicWaveEAmp
   field_simp [𝓕.c.val_ne_zero]
 
