@@ -97,10 +97,6 @@ structure ShowerResult where
   exhausted : Bool := false
 deriving Repr, Inhabited
 
-/-- Euclidean length of the three-momentum. -/
-def FourMom.p3 (a : FourMom) : Float :=
-  (a.px * a.px + a.py * a.py + a.pz * a.pz).sqrt
-
 /-- A unit vector perpendicular to `(nx, ny, nz)`, which must be non-zero.
 
 Built by projecting out whichever axis is least aligned with the input, so the subtraction

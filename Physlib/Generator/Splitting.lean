@@ -69,12 +69,34 @@ A real generator runs this with thresholds at the quark masses; holding it at fi
 simplification of the same kind as the toy `F₂`, and is wrong below the bottom threshold. -/
 def nFlavour : Float := 5.0
 
-/-- The QCD scale `Λ` in GeV, chosen so that `α_s(m_Z²) ≈ 0.118` at one loop with five
-flavours.  Not fitted; back-solved from that one value. -/
-def lambdaQCD : Float := 0.21
+/-- The measured strong coupling at the `Z` mass, the anchor everything else is fixed from.
+PDG value. -/
+def alphaSMZ : Float := 0.118
+
+/-- The `Z` mass in GeV, used only as the scale at which `alphaSMZ` is quoted. -/
+def mZ : Float := 91.1876
 
 /-- One-loop `β₀`, in the normalization where `α_s(t) = 1 / (β₀ ln(t/Λ²))`. -/
 def beta0 : Float := (33.0 - 2.0 * nFlavour) / (12.0 * 3.141592653589793)
+
+/-- The QCD scale `Λ` in GeV, **derived** from the anchor rather than tabulated:
+inverting `α_s(m_Z²) = 1/(β₀ ln(m_Z²/Λ²))` gives `Λ = m_Z exp(-1/(2 β₀ α_s(m_Z²)))`.
+
+Deriving it is the point.  A literal here would be a second place for the calibration to
+live, and a claim about `α_s(m_Z²)` in this docstring could then drift away from what the
+code computes — which is exactly what happened in the first version of this file, where a
+tabulated `Λ = 0.21` sat under a comment claiming it gave `0.118`.  It does not: at one
+loop with five flavours, `Λ = 0.21` gives `α_s(m_Z²) ≈ 0.135`.
+
+The two numbers are both "right" and answer different questions. `Λ^(5) ≈ 0.21 GeV` is the
+conventional MS-bar value, but it reproduces `α_s(m_Z²) = 0.118` only with *higher-order*
+running; forced through the one-loop formula it overshoots by 14%.  Matching the measured
+coupling at one loop instead needs `Λ ≈ 0.088 GeV`, which is what this expression evaluates
+to.  Since the shower uses `α_s` at scales of order 1–100 GeV² rather than at `m_Z`, and the
+one-loop form is wrong there anyway, anchoring to the measured coupling is the less
+arbitrary of the two — but it does mean this `Λ` should not be compared with a tabulated
+one. -/
+def lambdaQCD : Float := mZ * (-1.0 / (2.0 * beta0 * alphaSMZ)).exp
 
 /-- The one-loop running coupling at scale `t = μ²` in GeV².
 

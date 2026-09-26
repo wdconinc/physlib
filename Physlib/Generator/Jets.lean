@@ -69,21 +69,15 @@ def durhamY (a b : FourMom) (q2 : Float) : Float :=
 /-- The closest pair under `durhamY`, as `(y, i, j)` with `i < j`.  `none` for fewer than
 two entries. -/
 def closestPair (ps : Array FourMom) (q2 : Float) : Option (Float × Nat × Nat) :=
-  let n := ps.size
-  let rec outer (i : Nat) (best : Option (Float × Nat × Nat)) : Option (Float × Nat × Nat) :=
-    if h : i < n then
-      let rec inner (j : Nat) (b : Option (Float × Nat × Nat)) : Option (Float × Nat × Nat) :=
-        if hj : j < n then
-          let y := durhamY ps[i]! ps[j]! q2
-          let b' := match b with
-            | none => some (y, i, j)
-            | some (yb, ib, jb) => if y < yb then some (y, i, j) else some (yb, ib, jb)
-          inner (j + 1) b'
-        else b
-      outer (i + 1) (inner (i + 1) best)
-    else best
-  outer 0 none
-decreasing_by all_goals simp_wf; omega
+  let pairs : List (Float × Nat × Nat) :=
+    (List.range ps.size).flatMap fun i =>
+      (List.range ps.size).filterMap fun j =>
+        if i < j then some (durhamY ps[i]! ps[j]! q2, i, j) else none
+  pairs.foldl
+    (fun best c => match best with
+      | none => some c
+      | some b => if c.1 < b.1 then some c else some b)
+    none
 
 /-- One clustering step: merge the closest pair by four-momentum addition.  `none` when
 there is nothing left to merge. -/
@@ -92,7 +86,9 @@ def mergeClosest (ps : Array FourMom) (q2 : Float) : Option (Float × Array Four
   | none => none
   | some (y, i, j) =>
     let merged := FourMom.add ps[i]! ps[j]!
-    let rest := (ps.zipIdx.filter fun p => p.2 != i && p.2 != j).map Prod.fst
+    let rest : Array FourMom :=
+      ((List.range ps.size).filterMap fun k =>
+        if k == i || k == j then none else some ps[k]!).toArray
     some (y, rest.push merged)
 
 /-- Cluster until every pair is separated by more than `yCut`, returning the jets.
