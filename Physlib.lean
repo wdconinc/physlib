@@ -440,6 +440,7 @@ public import Physlib.QFT.Scattering.DIS.SIDIS.Asymmetries.Harmonics
 public import Physlib.QFT.Scattering.DIS.SIDIS.Basic
 public import Physlib.QFT.Scattering.DIS.Tensors.Basic
 public import Physlib.QFT.Scattering.DIS.Tensors.Longitudinal
+public import Physlib.QFT.Shower.Sudakov
 public import Physlib.QuantumMechanics.Blackbody.PlancksLaw
 public import Physlib.QuantumMechanics.FiniteTarget
 public import Physlib.QuantumMechanics.FreeParticle.Basic
