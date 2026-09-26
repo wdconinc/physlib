@@ -158,6 +158,7 @@ public import Physlib.Mathematics.SO3.Basic
 public import Physlib.Mathematics.SchurTriangulation
 public import Physlib.Mathematics.SpecialFunctions.EllipticIntegral
 public import Physlib.Mathematics.SpecialFunctions.PhysHermite
+public import Physlib.Mathematics.Trigonometry.CharacterIndependence
 public import Physlib.Mathematics.Trigonometry.SinSq
 public import Physlib.Mathematics.Trigonometry.Tanh
 public import Physlib.Mathematics.VariationalCalculus.Basic
