@@ -8,6 +8,7 @@ module
 public import Mathlib.Analysis.SpecialFunctions.Exponential
 public import Mathlib.Analysis.SpecificLimits.Normed
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
+public import Physlib.Mathematics.OrderedSimplexIntegral
 
 /-!
 # Sudakov form factors and the veto algorithm
@@ -48,18 +49,26 @@ it is meant to, with no hypotheses beyond `a` and `b` being real numbers.  That 
 the whole content of the claim, and `sudakov_veto_eq` and `vetoDensity_eq` state it in the
 shower's own vocabulary.
 
-**Not proved: that the algorithm's output law equals that series.** Getting there needs one
-further step, worth naming precisely rather than leaving vague. The per-term formula above
-comes from an *ordered* `n`-fold integral,
+**The ordered-integral step is now proved; the probabilistic step is not.** The per-term
+formula above comes from an *ordered* `n`-fold integral,
 
   `∫_{T > t₁ > ... > tₙ > t} ∏ᵢ (G - K) tᵢ dt₁ ... dtₙ = (1/n!) (∫_t^T (G - K))^n`,
 
-which holds because the integrand is symmetric and the `n!` orderings of the simplex
-partition the cube.  That symmetrization lemma is the missing piece.  It is a statement of
-integral geometry with no physics in it, it is not in `Mathlib` at the pinned revision as
-far as a search shows, and proving it is a self-contained project of its own.  Until it
-exists, the chain from "the algorithm" to "the series" is arithmetic done on paper, and
-only the series-to-Sudakov half is machine-checked.
+and that identity is now `Physlib.OrderedSimplex.orderedProdIntegral_eq`, proved for
+continuous integrands in `Physlib/Mathematics/OrderedSimplexIntegral.lean` — by induction on
+`n` with the fundamental theorem of calculus, not by the symmetrization argument the formula
+is usually justified with.  `vetoWeight_eq_ordered` below assembles it into the per-term
+weight and `sudakov_veto_ordered` sums the assembled terms to the true Sudakov factor, so
+the chain from the ordered rejection integrals to `Δ_K` is machine-checked end to end.
+
+Two things that chain does **not** establish, and neither should be read into it.  First,
+`orderedProdIntegral` is the *iterated* interval integral, smallest variable outermost;
+identifying it with the integral of the product over the ordered subset of `ℝ^n` is a Fubini
+argument that is not formalized.  Second, and more substantially, there is no probability
+space anywhere in this file: that the veto algorithm's output law *is* the ordered rejection
+integral remains arithmetic done on paper, because the sampler itself is not modelled in
+`Lean`.  What has changed is that the remaining step is now purely probabilistic — the
+analysis half of the gap is closed, the measure-theoretic and probabilistic halves are not.
 
 Everything here is real-valued.  The executable shower is a `Float` transcription and is
 not connected to these theorems by any proof; see the generator plan for why that bridge is
@@ -165,6 +174,37 @@ about a sum of probabilities rather than only as a formal identity. -/
 lemma vetoWeight_summable (b d : ℝ) : Summable (vetoWeight b d) := by
   unfold vetoWeight
   exact (Real.summable_pow_div_factorial d).mul_right _
+
+/-- The weight of the veto chain with exactly `n` rejections, *derived* from the ordered
+`n`-fold integral of the excess `G - K` rather than postulated.
+
+The left-hand side is the shape the algorithm produces: the overestimate's no-emission
+factor times the integral of `∏ᵢ (G - K) tᵢ` over the ordered region `T > t₁ > ⋯ > tₙ > t`.
+The right-hand side is `vetoWeight`, whose `1 / n !` was previously justified only on paper.
+Continuity of `K` and `G` is what `Physlib.OrderedSimplex.orderedProdIntegral_eq` needs, and
+it also turns `∫ (G - K)` into `∫ G - ∫ K`. -/
+theorem vetoWeight_eq_ordered {K G : ℝ → ℝ} (hK : Continuous K) (hG : Continuous G)
+    (t T : ℝ) (n : ℕ) :
+    Real.exp (-(∫ s in t..T, G s)) *
+        OrderedSimplex.orderedProdIntegral (fun s => G s - K s) T n t
+      = vetoWeight (∫ s in t..T, G s) ((∫ s in t..T, G s) - ∫ s in t..T, K s) n := by
+  have hGK : Continuous fun s => G s - K s := hG.fun_sub hK
+  rw [vetoWeight, OrderedSimplex.orderedProdIntegral_eq hGK,
+    intervalIntegral.integral_sub (hG.intervalIntegrable _ _) (hK.intervalIntegrable _ _)]
+  ring
+
+/-- **The veto density from the ordered rejection integrals.** Summing the assembled weights
+over the number of rejections gives the Sudakov form factor of the *true* kernel.
+
+This is the analysis half of the veto argument end to end: no step between the ordered
+`n`-fold integrals and `Δ_K` is left on paper.  The step that remains on paper is
+probabilistic — that the algorithm's output law is this sum — and is not addressed here;
+see the module docstring. -/
+theorem sudakov_veto_ordered {K G : ℝ → ℝ} (hK : Continuous K) (hG : Continuous G) (t T : ℝ) :
+    ∑' n : ℕ, Real.exp (-(∫ s in t..T, G s)) *
+        OrderedSimplex.orderedProdIntegral (fun s => G s - K s) T n t = sudakov K t T := by
+  rw [← sudakov_veto_eq K G t T]
+  exact tsum_congr fun n => vetoWeight_eq_ordered hK hG t T n
 
 end Shower
 end QFT
