@@ -162,9 +162,7 @@ private lemma two_mul_cos_eq_exp_add_exp (D ω φ τ : ℝ) :
 private lemma injective_two_signed {v₀ v₁ : ℝ} (h₀ : 0 < v₀) (h₁ : 0 < v₁) (hne : v₀ ≠ v₁) :
     Function.Injective (![v₀, -v₀, v₁, -v₁] : Fin 4 → ℝ) := by
   intro i j hij
-  fin_cases i <;> fin_cases j <;>
-    simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_two,
-      Matrix.cons_val_three, Matrix.cons_val_succ, Matrix.head_cons, Matrix.tail_cons] at hij ⊢ <;>
+  fin_cases i <;> fin_cases j <;> simp at hij ⊢ <;>
     first | rfl | (exfalso; nlinarith [h₀, h₁])
 
 /-- Three pairwise distinct positive frequencies give six pairwise distinct signed frequencies. -/
@@ -172,10 +170,7 @@ private lemma injective_three_signed {v₀ v₁ v₂ : ℝ} (h₀ : 0 < v₀) (h
     (h01 : v₀ ≠ v₁) (h02 : v₀ ≠ v₂) (h12 : v₁ ≠ v₂) :
     Function.Injective (![v₀, -v₀, v₁, -v₁, v₂, -v₂] : Fin 6 → ℝ) := by
   intro i j hij
-  fin_cases i <;> fin_cases j <;>
-    simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_two,
-      Matrix.cons_val_three, Matrix.cons_val_four, Matrix.cons_val_succ, Matrix.head_cons,
-      Matrix.tail_cons] at hij ⊢ <;>
+  fin_cases i <;> fin_cases j <;> simp at hij ⊢ <;>
     first | rfl | (exfalso; nlinarith [h₀, h₁, h₂])
 
 /-- If `A cos (ω₁τ+φ₁) + B cos (ω₂τ+φ₂) = C cos (ω₃τ+φ₃)` for every real `τ`, with `A, B, C ≠ 0`
