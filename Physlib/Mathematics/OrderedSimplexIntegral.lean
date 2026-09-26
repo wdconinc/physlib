@@ -134,7 +134,7 @@ integral `∫ s in t..T, f s`.
 
 No inequality between `t` and `T` is required: `intervalIntegral` is signed, and both sides
 change sign together when the endpoints are swapped. -/
-theorem orderedProdIntegral_eq (hf : Continuous f) (T : ℝ) (n : ℕ) (t : ℝ) :
+lemma orderedProdIntegral_eq (hf : Continuous f) (T : ℝ) (n : ℕ) (t : ℝ) :
     orderedProdIntegral f T n t = (∫ s in t..T, f s) ^ n / n ! := by
   induction n generalizing t with
   | zero => simp

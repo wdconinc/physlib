@@ -183,7 +183,7 @@ factor times the integral of `∏ᵢ (G - K) tᵢ` over the ordered region `T > 
 The right-hand side is `vetoWeight`, whose `1 / n !` was previously justified only on paper.
 Continuity of `K` and `G` is what `Physlib.OrderedSimplex.orderedProdIntegral_eq` needs, and
 it also turns `∫ (G - K)` into `∫ G - ∫ K`. -/
-theorem vetoWeight_eq_ordered {K G : ℝ → ℝ} (hK : Continuous K) (hG : Continuous G)
+lemma vetoWeight_eq_ordered {K G : ℝ → ℝ} (hK : Continuous K) (hG : Continuous G)
     (t T : ℝ) (n : ℕ) :
     Real.exp (-(∫ s in t..T, G s)) *
         OrderedSimplex.orderedProdIntegral (fun s => G s - K s) T n t
@@ -200,7 +200,7 @@ This is the analysis half of the veto argument end to end: no step between the o
 `n`-fold integrals and `Δ_K` is left on paper.  The step that remains on paper is
 probabilistic — that the algorithm's output law is this sum — and is not addressed here;
 see the module docstring. -/
-theorem sudakov_veto_ordered {K G : ℝ → ℝ} (hK : Continuous K) (hG : Continuous G) (t T : ℝ) :
+lemma sudakov_veto_ordered {K G : ℝ → ℝ} (hK : Continuous K) (hG : Continuous G) (t T : ℝ) :
     ∑' n : ℕ, Real.exp (-(∫ s in t..T, G s)) *
         OrderedSimplex.orderedProdIntegral (fun s => G s - K s) T n t = sudakov K t T := by
   rw [← sudakov_veto_eq K G t T]
