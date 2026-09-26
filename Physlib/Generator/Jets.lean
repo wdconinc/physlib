@@ -62,22 +62,36 @@ def durhamY (a b : FourMom) (q2 : Float) : Float :=
   let nb := b.p3
   if na <= 0.0 || nb <= 0.0 || q2 <= 0.0 then 0.0
   else
-    let cosTheta := (a.px * b.px + a.py * b.py + a.pz * b.pz) / (na * nb)
+    -- Clamped: the quotient can exceed 1 in magnitude by rounding for nearly collinear or
+    -- nearly back-to-back pairs, and an unclamped `1 - cosTheta` then goes slightly negative.
+    -- That is not a harmless small error -- `closestPair` takes a minimum over these, so a
+    -- spuriously negative distance wins and the algorithm merges the wrong pair first,
+    -- changing the jet history rather than perturbing a number.
+    let raw := (a.px * b.px + a.py * b.py + a.pz * b.pz) / (na * nb)
+    let cosTheta := if raw > 1.0 then 1.0 else if raw < -1.0 then -1.0 else raw
     let emin2 := if a.e < b.e then a.e * a.e else b.e * b.e
     2.0 * emin2 * (1.0 - cosTheta) / q2
 
 /-- The closest pair under `durhamY`, as `(y, i, j)` with `i < j`.  `none` for fewer than
 two entries. -/
 def closestPair (ps : Array FourMom) (q2 : Float) : Option (Float × Nat × Nat) :=
-  let pairs : List (Float × Nat × Nat) :=
-    (List.range ps.size).flatMap fun i =>
-      (List.range ps.size).filterMap fun j =>
-        if i < j then some (durhamY ps[i]! ps[j]! q2, i, j) else none
-  pairs.foldl
-    (fun best c => match best with
-      | none => some c
-      | some b => if c.1 < b.1 then some c else some b)
-    none
+  -- Folded in place rather than materializing every pair.  The previous form built an
+  -- `O(n²)` list of `(Float × Nat × Nat)` per call and then folded it, and `mergeScales`
+  -- calls this once per merge, so it was `O(n³)` tuple allocations per event.  High parton
+  -- multiplicity is not hypothetical here: the shower's tail reaches a few hundred partons
+  -- in one event.  Two `List.range` spines per level remain; removing those too would need
+  -- a recursion on index counters and a termination argument, which is not worth it at
+  -- these multiplicities.  The traversal order and the strict `<` comparison are unchanged,
+  -- so the pair selected -- including which of two exactly-equal distances wins -- is
+  -- identical to before.
+  (List.range ps.size).foldl (fun best i =>
+    (List.range ps.size).foldl (fun best j =>
+      if i < j then
+        let y := durhamY ps[i]! ps[j]! q2
+        match best with
+        | none => some (y, i, j)
+        | some b => if y < b.1 then some (y, i, j) else best
+      else best) best) none
 
 /-- One clustering step: merge the closest pair by four-momentum addition.  `none` when
 there is nothing left to merge. -/

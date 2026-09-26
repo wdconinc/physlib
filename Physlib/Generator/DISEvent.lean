@@ -198,9 +198,13 @@ def showeredEventOfPoint (c : RunConfig) (n : Nat) (pt : HardPoint) (phi : Float
       -- The beam remnant is excluded: the algorithm is exclusive and has no beam jet.
       { target := 0, name := "nJets",
         value := toString (jetMultiplicity products pt.q2 0.01) },
+      -- y23 is the 3 -> 2 merge, which is the SECOND-to-last entry: with `n` partons
+      -- `mergeScales` returns `n-1` entries and its docstring specifies index `n-3`, i.e.
+      -- `ms.size - 2`.  `ms.size - 1` is the final 2 -> 1 merge, which is y12.
+      -- Needs at least three partons, hence `ms.size ≥ 2`, not `≥ 1`.
       { target := 0, name := "y23",
         value := formatScientific 16 (let ms := mergeScales products pt.q2
-                                      if ms.size ≥ 1 then ms[ms.size - 1]! else 0.0) } ]
+                                      if ms.size ≥ 2 then ms[ms.size - 2]! else 0.0) } ]
   GenEvent.ofGraph? (n : Int) (fixed ++ showered) verts (weights := [1.0]) (attributes := attrs)
 
 /-- Sample one showered event: the leading-order point, then the final-state shower off the
