@@ -11,56 +11,60 @@ public import Physlib.Numerics.Random
 /-!
 # A final-state parton shower off the struck quark
 
-Virtuality-ordered `q → q g` evolution by the veto algorithm, from the hard scale down to a
-fixed cutoff.
+Virtuality-ordered evolution by the veto algorithm, with `q → qg`, `g → gg` and `g → qq̄`,
+from the hard scale down to a fixed cutoff.
 
 ## What this implements, and what it does not
 
-Only `q → q g`.  Emitted gluons do not branch further: there is no `g → gg` or `g → qq̄`, so
-this is a single evolving quark line radiating gluons, not a full cascade.  The other three
-kernels exist in `Physlib.Generator.Splitting` and are unused here.  Also absent: angular
-ordering or any other coherence treatment, spin correlations, and the matching to the
-one-emission matrix element that fixes the hardest emission.  Each of those changes real
-distributions, so nothing here should be compared to a tuned generator and read as agreement
-or disagreement about physics.
+All three final-state channels branch, so emitted gluons are themselves evolved and the
+result is a cascade rather than a single radiating line.  Still absent, and each changes
+real distributions: angular ordering or any other coherence treatment, spin correlations,
+and matching to the one-emission matrix element that fixes the hardest emission.  Nothing
+here should be compared to a tuned generator and read as agreement or disagreement about
+physics.
+
+Initial-state (backward) evolution is not here either, and is a separate phase: it has to
+be done against the PDF, which this generator does not yet have.
 
 ## The veto loop, and its relation to the proof
 
 `Physlib.QFT.Shower.Sudakov` proves `vetoSeries_eq_exp_neg`: summed over rejection count,
-the veto chain gives exactly the Sudakov factor of the *true* kernel, with the overestimate
+the veto chain gives exactly the Sudakov factor of the *true* kernel, the overestimate
 cancelling identically.  `vetoDensity_eq` restates it as the emission density being
-`K t · Δ_K t` with the overestimate absent.
+`K t · Δ_K t`, with the overestimate absent.
 
-`evolveQuark` below is the algorithm that theorem is about, and the correspondence is
-one-to-one in one direction only: the theorem says *if* you sample the next scale from the
-overestimate's Sudakov and accept with the ratio, *then* the result is distributed by the
-true kernel.  It does **not** certify this code — the gap named in the plan's Phase 2, that
-the algorithm's output law equals the series, needs a symmetrization lemma mathlib does not
-have.  What the theorem does buy is that the acceptance rule below is not a heuristic to be
-tuned: it is pinned, and getting it wrong is a bug rather than a modelling choice.
+`cascade` below is the algorithm that theorem is about.  The correspondence runs one way
+only: the theorem says *if* you draw the next scale from the overestimate's Sudakov and
+accept with the ratio, *then* the result is distributed by the true kernel.  It does not
+certify this code — the gap named in the plan's Phase 2, that the algorithm's output law
+equals the series, needs a symmetrization lemma mathlib does not have.  What it does buy is
+that the acceptance rule is pinned rather than tunable: getting it wrong is a bug.
 
-The one line that carries the whole argument is the rejection branch: on a failed acceptance
-test the loop continues **from the rejected scale**, not from the original one.  Restarting
-from the original would resample the overestimate's distribution instead of the true one.
+The line carrying the whole argument is the rejection branch, which continues **from the
+rejected scale**.  Restarting from the original scale would sample the overestimate's
+distribution instead of the true one.
+
+For a gluon the overestimate is a sum over two channels.  The scale is drawn from the
+*combined* integral and the channel chosen afterwards in proportion to its share, which is
+the multi-channel form of the same argument: the combined overestimate dominates the
+combined kernel, so the veto identity applies to the sum.
 
 ## Momentum: what is conserved exactly and what is not
 
-Each splitting conserves **energy exactly** and three-momentum only to the accuracy of the
-collinear approximation.  Given a massless parent of energy `E` along `n̂`, the daughters get
-energies `zE` and `(1-z)E` and directions tilted by `±k_T` with `|k_T|² = z(1-z)t`, each then
-normalized so that `|p| = E` and every parton stays exactly massless and on shell.
+Each splitting conserves **energy exactly** and three-momentum only to collinear accuracy.
+Given a massless parent of energy `E` along `n̂`, the daughters take energies `zE` and
+`(1-z)E` with directions tilted by `±k_T`, `|k_T|² = z(1-z)t`, each renormalized so that
+`|p| = E` and every parton stays exactly massless.
 
-The alternative — conserving three-momentum exactly by keeping `p_q + p_g = p` — forces the
-daughters' energies to sum to *more* than the parent's, since two massless momenta at an
-angle have more energy than their massless sum.  The remnant would then have to supply
-negative energy.  Conserving energy and letting a small three-momentum imbalance accumulate
-is the direction that stays physical.
+Conserving three-momentum instead is not available: two massless momenta at an angle carry
+more energy than their massless sum, so `p_q + p_g = p` would force the daughters' energies
+above the parent's and the remnant would have to supply negative energy.
 
-The imbalance is absorbed by the beam remnant, exactly as Phase 1 already defines the remnant
-by subtraction, so the **event as a whole conserves four-momentum identically** whatever the
-shower does.  That is bookkeeping, not physics: it means a conservation check on the final
-event cannot detect a shower kinematics bug, which is why `showerQuark` reports the imbalance
-it generated rather than hiding it.
+The imbalance is absorbed by the beam remnant, which Phase 1 already defines by subtraction,
+so the **event** conserves four-momentum identically whatever the shower does.  That is
+bookkeeping rather than physics: a conservation check on the final event cannot detect a
+shower kinematics bug, which is why the imbalance is reported and written out rather than
+left implicit.
 -/
 
 @[expose] public section
@@ -78,22 +82,33 @@ structure ShowerConfig where
   /-- `z` is sampled on `[z0, 1 - z0]`.  A crude stand-in for the `k_T`-derived limits: the
   physical bound depends on the scale, this does not. -/
   z0 : Float := 0.01
-  /-- Maximum veto-loop iterations per quark, counting rejections.  Exhaustion is reported,
-  never silently truncated. -/
-  fuel : Nat := 10000
+  /-- Maximum veto-loop iterations for the whole cascade, rejections included.  Shared
+  across every parton in the event, so one runaway line cannot be hidden by short ones.
+  Exhaustion is reported, never silently truncated. -/
+  fuel : Nat := 100000
+deriving Repr, Inhabited
+
+/-- A parton waiting to be evolved: its momentum, its identity, and the scale it was
+produced at, which is where its own evolution starts. -/
+structure ShowerParton where
+  /-- Four-momentum, massless. -/
+  mom : FourMom
+  /-- PDG code: `21` for a gluon, `±1..±5` for a quark or antiquark. -/
+  pdg : Int
+  /-- Production scale in GeV²; evolution runs downward from here. -/
+  tStart : Float
 deriving Repr, Inhabited
 
 /-- What one shower produced. -/
 structure ShowerResult where
-  /-- The quark after all emissions. -/
-  quark : FourMom
-  /-- Emitted gluons, hardest first in emission order (decreasing scale). -/
-  gluons : List FourMom
-  /-- Veto-loop iterations consumed, accepted and rejected together.  With the acceptance
-  probability this is the efficiency the overestimate cost. -/
+  /-- Final partons, each with its PDG code.  Order is the order they left the cascade and
+  carries no physical meaning. -/
+  partons : List (FourMom × Int) := []
+  /-- Veto-loop iterations consumed across the whole cascade, accepted and rejected
+  together.  With the acceptance probability this is what the overestimates cost. -/
   trials : Nat := 0
-  /-- True if the loop ran out of fuel before reaching the cutoff.  The event is then
-  incompletely showered and should not be used. -/
+  /-- True if the cascade ran out of fuel with partons still unevolved.  Such an event never
+  reached the cutoff, so it is incompletely evolved and must not be used. -/
   exhausted : Bool := false
 deriving Repr, Inhabited
 
@@ -108,9 +123,8 @@ def perpUnit (nx ny nz : Float) : Float × Float × Float :=
   let n := (vx * vx + vy * vy + vz * vz).sqrt
   if n <= 0.0 then (1.0, 0.0, 0.0) else (vx / n, vy / n, vz / n)
 
-/-- Split a massless parton of energy `E` along its own direction into a quark carrying
-energy fraction `z` and a gluon carrying `1 - z`, with transverse momentum
-`|k_T| = √(z(1-z)t)` at azimuth `φ`.
+/-- Split a massless parton of energy `E` into daughters carrying energy fractions `z` and
+`1 - z`, with transverse momentum `|k_T| = √(z(1-z)t)` at azimuth `φ`.
 
 Both daughters come back exactly massless.  Energy is exactly conserved; three-momentum is
 not (module docstring). -/
@@ -128,67 +142,109 @@ def splitOnce (p : FourMom) (z t phi : Float) : FourMom × FourMom :=
       (kt * (phi.cos * ux + phi.sin * wx),
        kt * (phi.cos * uy + phi.sin * wy),
        kt * (phi.cos * uz + phi.sin * wz))
-    let eq := z * e
-    let eg := (1.0 - z) * e
-    -- tilt each daughter by ±k_T, then rescale to keep it massless at its assigned energy
-    let dirq := (eq * nx + cx, eq * ny + cy, eq * nz + cz)
-    let dirg := (eg * nx - cx, eg * ny - cy, eg * nz - cz)
-    let nq := (dirq.1 * dirq.1 + dirq.2.1 * dirq.2.1 + dirq.2.2 * dirq.2.2).sqrt
-    let ng := (dirg.1 * dirg.1 + dirg.2.1 * dirg.2.1 + dirg.2.2 * dirg.2.2).sqrt
-    let q : FourMom :=
-      if nq <= 0.0 then { px := 0.0, py := 0.0, pz := 0.0, e := eq }
-      else { px := eq * dirq.1 / nq, py := eq * dirq.2.1 / nq, pz := eq * dirq.2.2 / nq, e := eq }
-    let g : FourMom :=
-      if ng <= 0.0 then { px := 0.0, py := 0.0, pz := 0.0, e := eg }
-      else { px := eg * dirg.1 / ng, py := eg * dirg.2.1 / ng, pz := eg * dirg.2.2 / ng, e := eg }
-    (q, g)
+    let e1 := z * e
+    let e2 := (1.0 - z) * e
+    let d1 := (e1 * nx + cx, e1 * ny + cy, e1 * nz + cz)
+    let d2 := (e2 * nx - cx, e2 * ny - cy, e2 * nz - cz)
+    let n1 := (d1.1 * d1.1 + d1.2.1 * d1.2.1 + d1.2.2 * d1.2.2).sqrt
+    let n2 := (d2.1 * d2.1 + d2.2.1 * d2.2.1 + d2.2.2 * d2.2.2).sqrt
+    let a : FourMom :=
+      if n1 <= 0.0 then { px := 0.0, py := 0.0, pz := 0.0, e := e1 }
+      else { px := e1 * d1.1 / n1, py := e1 * d1.2.1 / n1, pz := e1 * d1.2.2 / n1, e := e1 }
+    let b : FourMom :=
+      if n2 <= 0.0 then { px := 0.0, py := 0.0, pz := 0.0, e := e2 }
+      else { px := e2 * d2.1 / n2, py := e2 * d2.2.1 / n2, pz := e2 * d2.2.2 / n2, e := e2 }
+    (a, b)
 
 /-- Draw the next virtuality from the overestimate's Sudakov factor.
 
-With the coupling frozen at its overestimate `α̂` and the `z` integral `Î` done in closed
-form, `Δ̂(t) = exp(-(α̂/2π) Î ln(t_max/t))`, so solving `Δ̂(t) = r` gives
-`t = t_max · r^{2π/(α̂ Î)}`.  This is the step that needs the overestimate to be invertible,
-and the only reason it is allowed to be crude. -/
+With the coupling frozen at its overestimate `α̂` and the `z` integral `Î` in closed form,
+`Δ̂(t) = exp(-(α̂/2π) Î ln(t_prev/t))`, so solving `Δ̂(t) = r` gives
+`t = t_prev · r^{2π/(α̂ Î)}`.  This is the step that needs the overestimate to be
+invertible, and the only reason it is allowed to be crude. -/
 def nextScale (tPrev aHat iHat r : Float) : Float :=
   let c := 2.0 * 3.141592653589793 / (aHat * iHat)
   tPrev * (r.pow c)
 
-/-- Evolve one massless quark from `tMax` down to the cutoff, emitting gluons.
+/-- Map a uniform draw onto one of the five active flavours, as `(quark, antiquark)` PDG
+codes.  Flavour is chosen only after `g → qq̄` is accepted, which is why the overestimate
+carries the factor `n_f`. -/
+def pickFlavour (r : Float) : Int × Int :=
+  let i := (r * nFlavour).floor
+  let f : Int := if i < 1.0 then 1 else if i < 2.0 then 2 else if i < 3.0 then 3
+                 else if i < 4.0 then 4 else 5
+  (f, -f)
 
-The veto loop: sample the next scale from the overestimate's Sudakov, sample `z` from the
-overestimate in `z`, accept with the product of the two ratios, and **on rejection continue
-from the rejected scale** — the line the correctness argument turns on. -/
-def evolveQuark {g : Type} [RandomGen g] [Monad m]
-    (cfg : ShowerConfig) (q0 : FourMom) (tMax : Float) :
-    RandGT g m ShowerResult := do
-  let aHat := alphaS cfg.tCut
-  let iHat := pQQOverIntegral cfg.z0
-  if aHat <= 0.0 || iHat <= 0.0 then
-    pure { quark := q0, gluons := [], trials := 0 }
-  else
-    let rec go (fuel : Nat) (t : Float) (q : FourMom) (acc : List FourMom) (used : Nat) :
-        RandGT g m ShowerResult := do
-      match fuel with
-      | 0 => pure { quark := q, gluons := acc.reverse, trials := used, exhausted := true }
-      | k + 1 => do
-        let r ← uniform01
-        let tNew := nextScale t aHat iHat r
-        if tNew <= cfg.tCut then
-          pure { quark := q, gluons := acc.reverse, trials := used + 1 }
-        else do
-          let rz ← uniform01
-          let z := pQQOverSample cfg.z0 rz
-          let ra ← uniform01
-          let w := pQQAccept z * alphaS tNew / aHat
+/-- Evolve a whole cascade: pop a parton, take one veto step on it, and recurse.
+
+`fuel` counts veto steps across every parton in the event, so the recursion is structural
+and one runaway line cannot hide behind short ones.  A parton whose next scale falls below
+the cutoff is finished and moves to the output; an accepted branching replaces it with the
+continuing daughter and pushes the sibling; a rejected one puts it back at the rejected
+scale. -/
+def cascade {g : Type} [RandomGen g] [Monad m] (cfg : ShowerConfig) :
+    Nat → List ShowerParton → List (FourMom × Int) → Nat →
+    RandGT g m (List (FourMom × Int) × Nat × Bool)
+  | 0, queue, acc, used =>
+    -- out of fuel with work left: report it, and hand back what exists so the caller can
+    -- see the event rather than an empty one
+    pure (acc ++ queue.map (fun q => (q.mom, q.pdg)), used, true)
+  | _ + 1, [], acc, used => pure (acc, used, false)
+  | k + 1, p :: rest, acc, used => do
+    let aHat := alphaS cfg.tCut
+    let isG := p.pdg == 21
+    let iHat := if isG then gluonOverIntegral cfg.z0 else pQQOverIntegral cfg.z0
+    if aHat <= 0.0 || iHat <= 0.0 then
+      cascade cfg k rest ((p.mom, p.pdg) :: acc) (used + 1)
+    else do
+      let r ← uniform01
+      let tNew := nextScale p.tStart aHat iHat r
+      if tNew <= cfg.tCut then
+        cascade cfg k rest ((p.mom, p.pdg) :: acc) (used + 1)
+      else do
+        let rz ← uniform01
+        let ra ← uniform01
+        let coupling := alphaS tNew / aHat
+        if isG then do
+          -- choose channel in proportion to its share of the combined overestimate
+          let rc ← uniform01
+          let gg := pGGOverIntegral cfg.z0
+          let toGG := rc * gluonOverIntegral cfg.z0 < gg
+          let rb ← uniform01
+          let z := if toGG then pGGOverSample cfg.z0 rz (rb < 0.5)
+                   else cfg.z0 + rz * (1.0 - 2.0 * cfg.z0)
+          let w := (if toGG then pGGAccept z else pQGAccept z) * coupling
           if ra < w then do
             let rp ← uniform01
-            let phi := 6.283185307179586 * rp
-            let (qNew, gNew) := splitOnce q z tNew phi
-            go k tNew qNew (gNew :: acc) (used + 1)
+            -- a fresh variate for the flavour: reusing the `z` draw would tie which quark
+            -- pair is made to how the momentum was shared between them
+            let rf ← uniform01
+            let (d1, d2) := splitOnce p.mom z tNew (6.283185307179586 * rp)
+            let (pdg1, pdg2) : Int × Int := if toGG then (21, 21) else pickFlavour rf
+            cascade cfg k
+              ({ mom := d1, pdg := pdg1, tStart := tNew } ::
+               { mom := d2, pdg := pdg2, tStart := tNew } :: rest) acc (used + 1)
           else
-            -- vetoed: continue from `tNew`, not from `t`
-            go k tNew q acc (used + 1)
-    go cfg.fuel tMax q0 [] 0
+            cascade cfg k ({ p with tStart := tNew } :: rest) acc (used + 1)
+        else do
+          let z := pQQOverSample cfg.z0 rz
+          if ra < pQQAccept z * coupling then do
+            let rp ← uniform01
+            let (dq, dg) := splitOnce p.mom z tNew (6.283185307179586 * rp)
+            cascade cfg k
+              ({ mom := dq, pdg := p.pdg, tStart := tNew } ::
+               { mom := dg, pdg := 21, tStart := tNew } :: rest) acc (used + 1)
+          else
+            cascade cfg k ({ p with tStart := tNew } :: rest) acc (used + 1)
+
+/-- Evolve one massless quark from `tMax` down to the cutoff, showering everything it
+produces. -/
+def evolveQuark {g : Type} [RandomGen g] [Monad m]
+    (cfg : ShowerConfig) (q0 : FourMom) (pdg : Int) (tMax : Float) :
+    RandGT g m ShowerResult := do
+  let (parts, used, exh) ←
+    cascade cfg cfg.fuel [{ mom := q0, pdg := pdg, tStart := tMax }] [] 0
+  pure { partons := parts, trials := used, exhausted := exh }
 
 end Generator
 end Physlib

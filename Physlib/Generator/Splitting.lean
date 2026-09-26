@@ -147,5 +147,49 @@ Lies in `[1/2, 1]` on `[0,1]`, so the `z` overestimate alone is never worse than
 two in efficiency — the coupling overestimate is the expensive one. -/
 def pQQAccept (z : Float) : Float := (1.0 + z * z) / 2.0
 
+/-- Overestimate of `P_gg`: `2 C_A [1/z + 1/(1-z)]`.
+
+Dominates because `z/(1-z) + (1-z)/z + z(1-z) ≤ 1/z + 1/(1-z)`, and the ratio works out to
+the compact `z² + (1-z)² + z²(1-z)²`, which is `1` at the endpoints and `9/16` at `z = 1/2`.
+Both poles are kept: unlike `P_qq`, `P_gg` is singular at *both* ends because either gluon
+can be the soft one. -/
+def pGGOver (z : Float) : Float := 2.0 * cA * (1.0 / z + 1.0 / (1.0 - z))
+
+/-- `∫ pGGOver` over `[z₀, 1 - z₀]`.  The two poles contribute equally, giving
+`4 C_A ln((1 - z₀)/z₀)`. -/
+def pGGOverIntegral (z0 : Float) : Float := 4.0 * cA * ((1.0 - z0) / z0).log
+
+/-- Sample `z` from `pGGOver` on `[z₀, 1 - z₀]`, given a uniform `r` and a fair coin `c`.
+
+The two poles have equal weight, so pick one with probability a half and invert that branch
+alone — the standard way to sample a sum of invertible pieces without inverting the sum. -/
+def pGGOverSample (z0 r : Float) (c : Bool) : Float :=
+  let a := z0 * ((1.0 - z0) / z0).pow r
+  if c then a else 1.0 - a
+
+/-- Acceptance for the `P_gg` overestimate: `z² + (1-z)² + z²(1-z)²`, in `[9/16, 1]`. -/
+def pGGAccept (z : Float) : Float :=
+  z * z + (1.0 - z) * (1.0 - z) + z * z * (1.0 - z) * (1.0 - z)
+
+/-- Overestimate of the flavour-summed `g → qq̄` kernel: the constant `n_f T_R`.
+
+`P_qg` has no pole — it is bounded by `T_R` on `[0,1]` — so the overestimate is flat and `z`
+is sampled uniformly.  Summed over `n_f` flavours because the shower picks which pair to
+make only after the branching is accepted. -/
+def pQGOver : Float := nFlavour * tR
+
+/-- `∫ pQGOver` over `[z₀, 1 - z₀]`, i.e. `n_f T_R (1 - 2 z₀)`. -/
+def pQGOverIntegral (z0 : Float) : Float := pQGOver * (1.0 - 2.0 * z0)
+
+/-- Acceptance for the `g → qq̄` overestimate: `z² + (1-z)²`, in `[1/2, 1]`. -/
+def pQGAccept (z : Float) : Float := z * z + (1.0 - z) * (1.0 - z)
+
+/-- Total overestimate integral for a gluon, both channels together.
+
+The veto sampler draws the next scale from this sum and only then picks a channel, with
+probability proportional to each channel's share — a gluon that branches at all is much more
+likely to make two gluons than a quark pair, and this is where that ratio enters. -/
+def gluonOverIntegral (z0 : Float) : Float := pGGOverIntegral z0 + pQGOverIntegral z0
+
 end Generator
 end Physlib

@@ -157,7 +157,7 @@ def showeredEventOfPoint (c : RunConfig) (n : Nat) (pt : HardPoint) (phi : Float
   let pIn := FourMom.smul pt.x p
   let qOut := FourMom.add pIn q
   -- everything the shower produced, quark first
-  let products : List FourMom := sr.quark :: sr.gluons
+  let products : List FourMom := sr.partons.map Prod.fst
   let visible := products.foldl FourMom.add kPrime
   -- remnant by subtraction: this is what makes the event conserve exactly
   let remnant := FourMom.sub (FourMom.add k p) visible
@@ -165,9 +165,9 @@ def showeredEventOfPoint (c : RunConfig) (n : Nat) (pt : HardPoint) (phi : Float
   let imbalance :=
     FourMom.sub (products.foldl FourMom.add { px := 0.0, py := 0.0, pz := 0.0, e := 0.0 })
       qOut
-  let nG := sr.gluons.length
-  let quarkId : Nat := 7
-  let gluonIds : List Nat := (List.range nG).map (fun i => 8 + i)
+  -- one emission adds one parton, so the cascade's parton count less the original quark
+  let nEmit := sr.partons.length - 1
+  let outIds : List Nat := (List.range sr.partons.length).map (fun i => 7 + i)
   let fixed : List GraphParticle :=
     [ { id := 1, pdg := c.lepton.pdg, momentum := k.toFourVector, mass := 0.0, status := 4 },
       { id := 2, pdg := c.hadron.pdg, momentum := p.toFourVector, mass := 0.0, status := 4 },
@@ -175,22 +175,23 @@ def showeredEventOfPoint (c : RunConfig) (n : Nat) (pt : HardPoint) (phi : Float
       { id := 4, pdg := 2101, momentum := remnant.toFourVector, mass := 0.0, status := 1 },
       { id := 5, pdg := c.lepton.pdg, momentum := kPrime.toFourVector, mass := 0.0, status := 1 },
       -- the quark leaving the hard vertex, now an internal line the shower resolves
-      { id := 6, pdg := 2, momentum := qOut.toFourVector, mass := 0.0, status := 2 },
-      { id := quarkId, pdg := 2, momentum := sr.quark.toFourVector, mass := 0.0, status := 1 } ]
-  let gluons : List GraphParticle :=
-    (sr.gluons.zip gluonIds).map fun (g, i) =>
-      { id := i, pdg := 21, momentum := g.toFourVector, mass := 0.0, status := 1 }
+      { id := 6, pdg := 2, momentum := qOut.toFourVector, mass := 0.0, status := 2 } ]
+  let showered : List GraphParticle :=
+    (sr.partons.zip outIds).map fun ((mom, pdg), i) =>
+      { id := i, pdg := pdg, momentum := mom.toFourVector, mass := 0.0, status := 1 }
   let verts : List GraphVertex :=
     [ { id := -1, incoming := [2], outgoing := [3, 4] },
       { id := -2, incoming := [1, 3], outgoing := [5, 6] },
       -- the shower, collapsed to a single vertex: the branching history is not recorded,
       -- so this is not a cascade of 1 -> 2 vertices and carries no emission ordering
-      { id := -3, incoming := [6], outgoing := quarkId :: gluonIds } ]
+      { id := -3, incoming := [6], outgoing := outIds } ]
   let attrs : List Attribute :=
     [ { target := 0, name := "xBj", value := formatScientific 16 pt.x },
       { target := 0, name := "Q2", value := formatScientific 16 pt.q2 },
       { target := 0, name := "yInel", value := formatScientific 16 pt.y },
-      { target := 0, name := "nEmissions", value := toString nG },
+      { target := 0, name := "nEmissions", value := toString nEmit },
+      { target := 0, name := "nGluons",
+        value := toString (sr.partons.filter (fun p => p.2 == 21)).length },
       { target := 0, name := "showerTrials", value := toString sr.trials },
       { target := 0, name := "showerImbalance", value := formatScientific 16 (imbalance.p3) },
       -- Durham observables on the shower products, normalized to the photon virtuality.
@@ -200,7 +201,7 @@ def showeredEventOfPoint (c : RunConfig) (n : Nat) (pt : HardPoint) (phi : Float
       { target := 0, name := "y23",
         value := formatScientific 16 (let ms := mergeScales products pt.q2
                                       if ms.size ≥ 1 then ms[ms.size - 1]! else 0.0) } ]
-  GenEvent.ofGraph? (n : Int) (fixed ++ gluons) verts (weights := [1.0]) (attributes := attrs)
+  GenEvent.ofGraph? (n : Int) (fixed ++ showered) verts (weights := [1.0]) (attributes := attrs)
 
 /-- Sample one showered event: the leading-order point, then the final-state shower off the
 struck quark evolved from `Q²` down to the cutoff. -/
@@ -218,8 +219,8 @@ def showeredEvent {g : Type} [RandomGen g] [Monad m]
     let p : FourMom := { px := 0.0, py := 0.0, pz := c.hadron.energy, e := c.hadron.energy }
     let kPrime := scatteredLepton c.lepton.energy pt phi
     let qOut := FourMom.add (FourMom.smul pt.x p) (FourMom.sub k kPrime)
-    let sr ← evolveQuark sc qOut pt.q2
-    pure (showeredEventOfPoint c n pt phi sr, used, viol, sr.gluons.length, sr.exhausted)
+    let sr ← evolveQuark sc qOut 2 pt.q2
+    pure (showeredEventOfPoint c n pt phi sr, used, viol, sr.partons.length - 1, sr.exhausted)
 
 /-- Sample one leading-order event.  Returns the event, the trials it cost, and the number of
 weight-bound violations seen while producing it. -/
