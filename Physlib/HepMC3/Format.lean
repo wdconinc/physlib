@@ -80,6 +80,30 @@ def divRoundHalfEven (num den : Nat) : Nat :=
   else if 2 * r < den then q
   else if q % 2 == 0 then q else q + 1
 
+/-- Walk `E` downward until `10^E ≤ m·2^e`, returning `none` if the fuel runs out first.
+
+A top-level definition rather than a `let rec` inside `decExp`: Lean lifts a `let rec` to
+`decExp.down`, and the repository's documentation linter requires a docstring on it, which
+there is no syntax to attach to a `let rec`.
+
+**Why `Option` rather than `private`.** Review of #45 rightly objected that a lifted helper
+carrying a fuel precondition is an exported footgun: given too little fuel it used to
+return an `E` that quietly fails the postcondition in this very sentence.  `private` is not
+available as the remedy — Lean's module system forbids an exposed `def` body from
+referencing a private name, and `decExp` is exposed all the way out through
+`formatScientific`, which `Physlib.HepMC3.Ascii` calls.  So the precondition is encoded in
+the return type instead: exhausting the fuel is `none`, which no caller can mistake for an
+answer. -/
+def decExpDown (m : Nat) (e : Int) (E : Int) : Nat → Option Int
+  | 0 => none
+  | n + 1 => if geTenPow m e E then some E else decExpDown m e (E - 1) n
+
+/-- Walk `E` upward while `10^(E+1) ≤ m·2^e`, returning `none` if the fuel runs out first.
+Lifted, and `Option`-valued, for the same reasons as `decExpDown`. -/
+def decExpUp (m : Nat) (e : Int) (E : Int) : Nat → Option Int
+  | 0 => none
+  | n + 1 => if geTenPow m e (E + 1) then decExpUp m e (E + 1) n else some E
+
 /-- The greatest `E` with `10^E ≤ m * 2^e`, for `m ≠ 0`.
 
 Seeded from `log₂(m·2^e) · log₁₀2` and then corrected exactly.  The correction loops are
@@ -87,13 +111,10 @@ fuel-bounded rather than `partial`: a double has `|E| ≤ 324`, so the seed is n
 than a few steps out and the supplied fuel is ample. -/
 def decExp (m : Nat) (e : Int) : Int :=
   let seed : Int := ((Nat.log2 m : Int) + e) * 30103 / 100000
-  let rec down (E : Int) : Nat → Int
-    | 0 => E
-    | n + 1 => if geTenPow m e E then E else down (E - 1) n
-  let rec up (E : Int) : Nat → Int
-    | 0 => E
-    | n + 1 => if geTenPow m e (E + 1) then up (E + 1) n else E
-  up (down seed 2200) 2200
+  -- 2200 against a worst case of `|E| ≤ 324` for a double, so neither `none` branch is
+  -- reachable from here; the fallback to the unrefined seed only discharges the
+  -- `Option` and is never taken.
+  ((decExpDown m e seed 2200).bind fun E => decExpUp m e E 2200).getD seed
 
 /-- The significand digits and decimal exponent of `m * 2^e` at `prec` digits after the
 point: returns `(digits, E)` with `digits` the `prec + 1` significant digits and the value
