@@ -7,6 +7,7 @@ module
 
 public import Physlib.Generator.Config
 public import Physlib.Generator.Sampler
+public import Physlib.Generator.Jets
 public import Physlib.Generator.Shower
 public import Physlib.HepMC3.Format
 public import Physlib.HepMC3.Graph
@@ -191,7 +192,14 @@ def showeredEventOfPoint (c : RunConfig) (n : Nat) (pt : HardPoint) (phi : Float
       { target := 0, name := "yInel", value := formatScientific 16 pt.y },
       { target := 0, name := "nEmissions", value := toString nG },
       { target := 0, name := "showerTrials", value := toString sr.trials },
-      { target := 0, name := "showerImbalance", value := formatScientific 16 (imbalance.p3) } ]
+      { target := 0, name := "showerImbalance", value := formatScientific 16 (imbalance.p3) },
+      -- Durham observables on the shower products, normalized to the photon virtuality.
+      -- The beam remnant is excluded: the algorithm is exclusive and has no beam jet.
+      { target := 0, name := "nJets",
+        value := toString (jetMultiplicity products pt.q2 0.01) },
+      { target := 0, name := "y23",
+        value := formatScientific 16 (let ms := mergeScales products pt.q2
+                                      if h : ms.size ≥ 1 then ms[ms.size - 1]! else 0.0) } ]
   GenEvent.ofGraph? (n : Int) (fixed ++ gluons) verts (weights := [1.0]) (attributes := attrs)
 
 /-- Sample one showered event: the leading-order point, then the final-state shower off the
