@@ -162,6 +162,7 @@ public import Physlib.Mathematics.List.InsertIdx
 public import Physlib.Mathematics.List.InsertionSort
 public import Physlib.Mathematics.OneParameterSubgroups.Basic
 public import Physlib.Mathematics.OneParameterSubgroups.Unitary
+public import Physlib.Mathematics.OrderedSimplexIntegral
 public import Physlib.Mathematics.OrthogonalMatrix
 public import Physlib.Mathematics.PiTensorProduct
 public import Physlib.Mathematics.RatComplexNum
