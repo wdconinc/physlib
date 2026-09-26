@@ -197,7 +197,7 @@ lemma harmonicWave_electricField (𝓕 : FreeSpace) (κ : ℝ) (hκ : κ ≠ 0) 
     harmonicWaveAmp_smul_fderiv 𝓕 κ φ _ hκ E₀, smul_smul]
   congr 1
   unfold harmonicWaveEAmp
-  field_simp
+  field_simp [𝓕.c.val_ne_zero]
 
 /-!
 
