@@ -88,24 +88,24 @@ theorem freq_eq_of_tangentialE_continuity_at_origin {d : ℕ} (n : Direction d)
       (∑ k, w.unit k * (harmonicWave 𝓕₁ κ_r s_r E₀_r φ_r).electricField 𝓕₁.c t 0 k) =
       ∑ k, w.unit k * (harmonicWave 𝓕₂ κ_t s_t E₀_t φ_t).electricField 𝓕₂.c t 0 k) :
     κ_i * 𝓕₁.c.val = κ_r * 𝓕₁.c.val ∧ κ_r * 𝓕₁.c.val = κ_t * 𝓕₂.c.val := by
-  have hcos : ∀ t : Time,
-      (∑ k, w.unit k * E₀_i k) * Real.cos (κ_i * 𝓕₁.c.val * t + φ_i) +
-      (∑ k, w.unit k * E₀_r k) * Real.cos (κ_r * 𝓕₁.c.val * t + φ_r) =
-      (∑ k, w.unit k * E₀_t k) * Real.cos (κ_t * 𝓕₂.c.val * t + φ_t) := by
-    intro t
-    have e1 := hcont t
+  have hcos : ∀ τ : ℝ,
+      (∑ k, w.unit k * E₀_i k) * Real.cos (κ_i * 𝓕₁.c.val * τ + φ_i) +
+      (∑ k, w.unit k * E₀_r k) * Real.cos (κ_r * 𝓕₁.c.val * τ + φ_r) =
+      (∑ k, w.unit k * E₀_t k) * Real.cos (κ_t * 𝓕₂.c.val * τ + φ_t) := by
+    intro τ
+    have e1 := hcont (τ : Time)
     rw [harmonicWave_electricField 𝓕₁ κ_i hκ_i.ne' s_i E₀_i φ_i,
       harmonicWave_electricField 𝓕₁ κ_r hκ_r.ne' s_r E₀_r φ_r,
       harmonicWave_electricField 𝓕₂ κ_t hκ_t.ne' s_t E₀_t φ_t] at e1
-    simp only [planeWave_eq, inner_zero_left, zero_sub, Pi.smul_apply, PiLp.smul_apply,
-      smul_eq_mul, ← Finset.mul_sum] at e1
+    simp only [planeWave_eq, inner_zero_left, zero_sub, PiLp.smul_apply,
+      smul_eq_mul, Time.realCast_val, ← Finset.mul_sum] at e1
     unfold harmonicWaveEAmp at e1
-    rw [show (-κ_i * (0 - 𝓕₁.c.val * t.val) + φ_i) = κ_i * 𝓕₁.c.val * t.val + φ_i from by ring,
-      show (-κ_r * (0 - 𝓕₁.c.val * t.val) + φ_r) = κ_r * 𝓕₁.c.val * t.val + φ_r from by ring,
-      show (-κ_t * (0 - 𝓕₂.c.val * t.val) + φ_t) = κ_t * 𝓕₂.c.val * t.val + φ_t from by ring] at e1
-    linarith [e1, mul_comm (∑ k, w.unit k * E₀_i k) (Real.cos (κ_i * 𝓕₁.c.val * t.val + φ_i)),
-      mul_comm (∑ k, w.unit k * E₀_r k) (Real.cos (κ_r * 𝓕₁.c.val * t.val + φ_r)),
-      mul_comm (∑ k, w.unit k * E₀_t k) (Real.cos (κ_t * 𝓕₂.c.val * t.val + φ_t))]
+    rw [show (-κ_i * -(𝓕₁.c.val * τ) + φ_i) = κ_i * 𝓕₁.c.val * τ + φ_i from by ring,
+      show (-κ_r * -(𝓕₁.c.val * τ) + φ_r) = κ_r * 𝓕₁.c.val * τ + φ_r from by ring,
+      show (-κ_t * -(𝓕₂.c.val * τ) + φ_t) = κ_t * 𝓕₂.c.val * τ + φ_t from by ring] at e1
+    linarith [e1, mul_comm (∑ k, w.unit k * E₀_i k) (Real.cos (κ_i * 𝓕₁.c.val * τ + φ_i)),
+      mul_comm (∑ k, w.unit k * E₀_r k) (Real.cos (κ_r * 𝓕₁.c.val * τ + φ_r)),
+      mul_comm (∑ k, w.unit k * E₀_t k) (Real.cos (κ_t * 𝓕₂.c.val * τ + φ_t))]
   have main := Real.eq_of_forall_cos_add_cos_eq_cos hAi hAr hAt
     (mul_pos hκ_i 𝓕₁.c.pos) (mul_pos hκ_r 𝓕₁.c.pos) (mul_pos hκ_t 𝓕₂.c.pos) hcos
   exact ⟨main.1.trans main.2.symm, main.2⟩
