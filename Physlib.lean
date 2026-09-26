@@ -116,6 +116,7 @@ public import Physlib.Generator.Config
 public import Physlib.Generator.CrossSection
 public import Physlib.Generator.DISEvent
 public import Physlib.Generator.Event
+public import Physlib.Generator.Jets
 public import Physlib.Generator.Kinematics
 public import Physlib.Generator.Sampler
 public import Physlib.Generator.Shower
