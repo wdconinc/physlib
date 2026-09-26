@@ -98,7 +98,7 @@ theorem freq_eq_of_tangentialE_continuity_at_origin {d : ℕ} (n : Direction d)
       harmonicWave_electricField 𝓕₁ κ_r hκ_r.ne' s_r E₀_r φ_r,
       harmonicWave_electricField 𝓕₂ κ_t hκ_t.ne' s_t E₀_t φ_t] at e1
     simp only [planeWave_eq, inner_zero_left, zero_sub, PiLp.smul_apply,
-      smul_eq_mul, Time.realCast_val, ← Finset.mul_sum] at e1
+      smul_eq_mul, Time.realCast_val, mul_left_comm, ← Finset.mul_sum] at e1
     unfold harmonicWaveEAmp at e1
     rw [show (-κ_i * -(𝓕₁.c.val * τ) + φ_i) = κ_i * 𝓕₁.c.val * τ + φ_i from by ring,
       show (-κ_r * -(𝓕₁.c.val * τ) + φ_r) = κ_r * 𝓕₁.c.val * τ + φ_r from by ring,
