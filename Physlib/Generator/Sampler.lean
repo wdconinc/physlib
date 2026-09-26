@@ -116,6 +116,34 @@ def weight (r : Region) (x q2v y : Float) : Float :=
   let l := (r.s * x).log - r.q2Min.log
   f2Toy x q2v * yFactor y * l / q2v
 
+/-- The largest `f2Toy` found on a grid of `n` points spaced logarithmically in `x` across
+the region, evaluated at `Q²_min`.
+
+A top-level definition rather than a `let rec` inside `weightBound`: Lean lifts a `let rec`
+to `weightBound.go`, and the repository's documentation linter requires a docstring on it,
+which there is no syntax to attach to a `let rec`.  Lifting it also makes the scan callable
+on its own, which is what a future analytic bound would be checked against.
+
+Its one precondition, a non-empty grid, is checkable from inside and is checked below, so
+the return type stays a plain `Float`.  Contrast `decExpDown`/`decExpUp` in
+`Physlib.HepMC3.Format`, lifted for the same linter reason in the same change: their
+precondition is "enough fuel to reach the answer", which cannot be checked from inside, so
+those return `Option Int` and report exhaustion as `none`. -/
+def f2ScanMax (r : Region) (lnLo : Float) (n : Nat) : Nat → Float → Float
+  | 0, acc => acc
+  | k + 1, acc =>
+    -- `n = 0` is an empty grid, so there is nothing to scan. `weightBound` always passes
+    -- fuel `= n`, which makes this branch unreachable there, but the signature lets the two
+    -- disagree and `(n - k).toFloat / n.toFloat` would then be `0.0 / 0.0`. The `NaN` that
+    -- produces would not escape — `v > acc` is false for `NaN`, so `acc` would survive — but
+    -- resting correctness on the comparison semantics of `NaN` is not a thing to rely on.
+    if n = 0 then acc
+    else
+      let u := (n - k).toFloat / n.toFloat
+      let x := (lnLo * (1.0 - u)).exp
+      let v := f2Toy x r.q2Min
+      f2ScanMax r lnLo n k (if v > acc then v else acc)
+
 /-- An overestimate of `weight` on the region: `F₂^max · L^max / Q²_min`.
 
 Three factors, of which two are bounded exactly and one is not.  `Y(y) ≤ 1` on `y ∈ [0,1]`
@@ -125,14 +153,7 @@ module docstring.  `safety` defaults to 1.3. -/
 def weightBound (r : Region) (n : Nat := 512) (safety : Float := 1.3) : Float :=
   let lnLo := r.xMin.log
   let lMax := r.s.log - r.q2Min.log
-  let rec go : Nat → Float → Float
-    | 0, acc => acc
-    | k + 1, acc =>
-      let u := (n - k).toFloat / n.toFloat
-      let x := (lnLo * (1.0 - u)).exp
-      let v := f2Toy x r.q2Min
-      go k (if v > acc then v else acc)
-  safety * go n 0.0 * lMax / r.q2Min
+  safety * f2ScanMax r lnLo n n 0.0 * lMax / r.q2Min
 
 /-- One acceptance–rejection trial chain, on explicit fuel.
 
