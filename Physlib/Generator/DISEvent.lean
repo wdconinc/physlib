@@ -199,7 +199,7 @@ def showeredEventOfPoint (c : RunConfig) (n : Nat) (pt : HardPoint) (phi : Float
         value := toString (jetMultiplicity products pt.q2 0.01) },
       { target := 0, name := "y23",
         value := formatScientific 16 (let ms := mergeScales products pt.q2
-                                      if h : ms.size ≥ 1 then ms[ms.size - 1]! else 0.0) } ]
+                                      if ms.size ≥ 1 then ms[ms.size - 1]! else 0.0) } ]
   GenEvent.ofGraph? (n : Int) (fixed ++ gluons) verts (weights := [1.0]) (attributes := attrs)
 
 /-- Sample one showered event: the leading-order point, then the final-state shower off the
