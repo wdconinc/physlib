@@ -30,19 +30,17 @@ direction, becomes an identity between finitely many real-frequency cosines hold
 real parameter, and this file's machinery is what forces the frequencies appearing in that
 identity to coincide.
 
-## ii. Key results
-
-- `Real.eq_of_forall_exp_I_mul_eq` : if `exp (I * ω₁ * τ) = exp (I * ω₂ * τ)` for every `τ : ℝ`,
-  then `ω₁ = ω₂`.
-- `Real.eq_zero_of_forall_sum_exp_I_mul_eq_zero` : if `∑ i, c i * exp (I * ω i * τ) = 0` for
-  every `τ : ℝ`, with the `ω i` pairwise distinct, then every `c i = 0`.
-
 Section C derives, from this, the "distinct sinusoids can't sum to a third" fact used to
 recover `Electromagnetism.Interface.PhaseMatchedAtInterface` from literal field continuity:
 if `A cos (ω₁τ+φ₁) + B cos (ω₂τ+φ₂) = C cos (ω₃τ+φ₃)` for every real `τ`, with `A, B, C ≠ 0`
 and `ω₁, ω₂, ω₃ > 0`, then `ω₁ = ω₂ = ω₃`.
 
 ## ii. Key results
+
+- `Real.eq_of_forall_exp_I_mul_eq` : if `exp (I * ω₁ * τ) = exp (I * ω₂ * τ)` for every `τ : ℝ`,
+  then `ω₁ = ω₂`.
+- `Real.eq_zero_of_forall_sum_exp_I_mul_eq_zero` : if `∑ i, c i * exp (I * ω i * τ) = 0` for
+  every `τ : ℝ`, with the `ω i` pairwise distinct, then every `c i = 0`.
 - `Real.eq_of_forall_cos_add_cos_eq_cos` : distinct positive-frequency sinusoids can't sum to a
   third.
 
@@ -218,7 +216,7 @@ theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ�
           Complex.exp (Complex.I * (![ω₁, -ω₁, ω₃, -ω₃] : Fin 4 → ℝ) i * τ) = 0 := by
         intro τ
         simp only [Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
-          Matrix.cons_val_succ, Fin.val_succ, add_zero]
+          Matrix.cons_val_succ, add_zero]
         push_cast
         linear_combination hsum τ
       have hz := eq_zero_of_forall_sum_exp_I_mul_eq_zero
@@ -241,7 +239,7 @@ theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ�
             Complex.exp (Complex.I * (![ω₁, -ω₁, ω₂, -ω₂] : Fin 4 → ℝ) i * τ) = 0 := by
           intro τ
           simp only [Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
-          Matrix.cons_val_succ, Fin.val_succ, add_zero]
+          Matrix.cons_val_succ, add_zero]
           push_cast
           linear_combination hsum τ
         have hz := eq_zero_of_forall_sum_exp_I_mul_eq_zero
@@ -262,7 +260,7 @@ theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ�
             Complex.exp (Complex.I * (![ω₂, -ω₂, ω₁, -ω₁] : Fin 4 → ℝ) i * τ) = 0 := by
           intro τ
           simp only [Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
-          Matrix.cons_val_succ, Fin.val_succ, add_zero]
+          Matrix.cons_val_succ, add_zero]
           push_cast
           linear_combination hsum τ
         have hz := eq_zero_of_forall_sum_exp_I_mul_eq_zero
@@ -283,7 +281,7 @@ theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ�
             Complex.exp (Complex.I * (![ω₁, -ω₁, ω₂, -ω₂, ω₃, -ω₃] : Fin 6 → ℝ) i * τ) = 0 := by
           intro τ
           simp only [Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
-          Matrix.cons_val_succ, Fin.val_succ, add_zero]
+          Matrix.cons_val_succ, add_zero]
           push_cast
           linear_combination hsum τ
         have hz := eq_zero_of_forall_sum_exp_I_mul_eq_zero
