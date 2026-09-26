@@ -150,22 +150,30 @@ private lemma two_mul_cos_eq_exp_add_exp (D ω φ τ : ℝ) :
       Complex.exp (-Complex.I * φ) * Complex.exp (Complex.I * (-ω) * τ) := by
     rw [show ((-((ω * τ + φ : ℝ) : ℂ)) * Complex.I) =
       (-Complex.I * (φ : ℂ)) + (Complex.I * (-ω) * τ) from by push_cast; ring, Complex.exp_add]
-  rw [← Complex.ofReal_cos, ← Complex.two_cos, e1, e2]
-  ring
+  have hcos : (2 : ℂ) * Complex.cos ((ω * τ + φ : ℝ) : ℂ) =
+      Complex.exp (((ω * τ + φ : ℝ) : ℂ) * Complex.I) +
+      Complex.exp ((-((ω * τ + φ : ℝ) : ℂ)) * Complex.I) := Complex.two_cos _
+  rw [e1, e2] at hcos
+  rw [Complex.ofReal_cos]
+  linear_combination (D : ℂ) * hcos
 
 /-- Two positive, distinct frequencies `v₀ ≠ v₁` give four pairwise distinct signed frequencies
   `v₀, -v₀, v₁, -v₁`: a positive value never equals the negative of another positive value. -/
 private lemma injective_two_signed {v₀ v₁ : ℝ} (h₀ : 0 < v₀) (h₁ : 0 < v₁) (hne : v₀ ≠ v₁) :
     Function.Injective (![v₀, -v₀, v₁, -v₁] : Fin 4 → ℝ) := by
   intro i j hij
-  fin_cases i <;> fin_cases j <;> simp_all <;> nlinarith [h₀, h₁]
+  fin_cases i <;> fin_cases j <;>
+    simp only [Matrix.cons_val_zero, Matrix.cons_val_succ] at hij ⊢ <;>
+    first | rfl | (exfalso; nlinarith [h₀, h₁])
 
 /-- Three pairwise distinct positive frequencies give six pairwise distinct signed frequencies. -/
 private lemma injective_three_signed {v₀ v₁ v₂ : ℝ} (h₀ : 0 < v₀) (h₁ : 0 < v₁) (h₂ : 0 < v₂)
     (h01 : v₀ ≠ v₁) (h02 : v₀ ≠ v₂) (h12 : v₁ ≠ v₂) :
     Function.Injective (![v₀, -v₀, v₁, -v₁, v₂, -v₂] : Fin 6 → ℝ) := by
   intro i j hij
-  fin_cases i <;> fin_cases j <;> simp_all <;> nlinarith [h₀, h₁, h₂]
+  fin_cases i <;> fin_cases j <;>
+    simp only [Matrix.cons_val_zero, Matrix.cons_val_succ] at hij ⊢ <;>
+    first | rfl | (exfalso; nlinarith [h₀, h₁, h₂])
 
 /-- If `A cos (ω₁τ+φ₁) + B cos (ω₂τ+φ₂) = C cos (ω₃τ+φ₃)` for every real `τ`, with `A, B, C ≠ 0`
   and `ω₁, ω₂, ω₃ > 0`, then `ω₁ = ω₃` and `ω₂ = ω₃`. Two positive-frequency sinusoids can only
@@ -193,8 +201,8 @@ theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ�
     intro τ
     have hreal : A * Real.cos (ω₁ * τ + φ₁) + B * Real.cos (ω₂ * τ + φ₂) -
         C * Real.cos (ω₃ * τ + φ₃) = 0 := by linarith [h τ]
-    have hcplx := congrArg (Complex.ofReal) hreal
-    push_cast at hcplx
+    have hcplx : (A : ℂ) * (Real.cos (ω₁ * τ + φ₁) : ℂ) + (B : ℂ) * (Real.cos (ω₂ * τ + φ₂) : ℂ) -
+        (C : ℂ) * (Real.cos (ω₃ * τ + φ₃) : ℂ) = 0 := by exact_mod_cast hreal
     linear_combination two_mul_cos_eq_exp_add_exp A ω₁ φ₁ τ +
       two_mul_cos_eq_exp_add_exp B ω₂ φ₂ τ - two_mul_cos_eq_exp_add_exp C ω₃ φ₃ τ + 2 * hcplx
   by_cases h12 : ω₁ = ω₂
@@ -211,6 +219,7 @@ theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ�
         intro τ
         simp only [Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
           Matrix.cons_val_succ, Fin.val_succ, add_zero]
+        push_cast
         linear_combination hsum τ
       have hz := eq_zero_of_forall_sum_exp_I_mul_eq_zero
         (injective_two_signed hω₁ hω₃ h13) hsum4 2
@@ -233,6 +242,7 @@ theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ�
           intro τ
           simp only [Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
           Matrix.cons_val_succ, Fin.val_succ, add_zero]
+          push_cast
           linear_combination hsum τ
         have hz := eq_zero_of_forall_sum_exp_I_mul_eq_zero
           (injective_two_signed hω₁ hω₂ h12) hsum4 2
@@ -253,6 +263,7 @@ theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ�
           intro τ
           simp only [Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
           Matrix.cons_val_succ, Fin.val_succ, add_zero]
+          push_cast
           linear_combination hsum τ
         have hz := eq_zero_of_forall_sum_exp_I_mul_eq_zero
           (injective_two_signed hω₂ hω₁ (Ne.symm h12)) hsum4 2
@@ -273,6 +284,7 @@ theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ�
           intro τ
           simp only [Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
           Matrix.cons_val_succ, Fin.val_succ, add_zero]
+          push_cast
           linear_combination hsum τ
         have hz := eq_zero_of_forall_sum_exp_I_mul_eq_zero
           (injective_three_signed hω₁ hω₂ hω₃ h12 h13 h23) hsum6 4
