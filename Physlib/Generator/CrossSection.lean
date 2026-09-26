@@ -61,7 +61,9 @@ def f2Toy (x : Float) (_q2 : Float) : Float :=
   let eu2 := 4.0 / 9.0
   let ed2 := 1.0 / 9.0
   let sea := seaDensity x
-  -- u + ū = u_v + sea, d + d̄ = d_v + sea, s + s̄ = 2 sea
+  -- u + ū = u_v + 2·sea and d + d̄ = d_v + 2·sea: the valence density counts only the
+  -- excess, so the quark carries u_v plus one sea unit and the antiquark one sea unit.
+  -- s + s̄ = 2·sea likewise, with no valence part.
   x * (eu2 * (uValence x + 2.0 * sea) + ed2 * (dValence x + 2.0 * sea) + ed2 * (2.0 * sea))
 
 /-- The inelasticity factor `1 - y + y²/2`, transcribing `DIS.yFactor`.
