@@ -77,6 +77,13 @@ def pt2 (a : FourMom) : Float := a.px * a.px + a.py * a.py
 /-- Transverse momentum. -/
 def pt (a : FourMom) : Float := a.pt2.sqrt
 
+/-- Euclidean length of the three-momentum, `|p⃗|`.
+
+For a massless particle this equals the energy, which is what the shower's splitting
+kinematics and the Durham jet measure both rely on. -/
+def p3 (a : FourMom) : Float :=
+  (a.px * a.px + a.py * a.py + a.pz * a.pz).sqrt
+
 /-- A massless four-momentum built from its three components, with `E = |p|`. -/
 def ofMassless (px py pz : Float) : FourMom :=
   { px := px, py := py, pz := pz, e := (px * px + py * py + pz * pz).sqrt }

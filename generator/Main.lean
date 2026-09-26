@@ -80,6 +80,7 @@ def parseArgs (args : List String) (c : RunConfig) : Except String RunConfig :=
     | some q => parseArgs rest { c with q2Min := q }
     | none => .error s!"--q2min expects a decimal number in GeV^2, got '{v}'"
   | "--trivial" :: rest => parseArgs rest c
+  | "--shower" :: rest => parseArgs rest c
   | a :: [] =>
     if a == "--events" || a == "--seed" || a == "--output" || a == "--ebeam"
        || a == "--pbeam" || a == "--q2min" then
@@ -104,11 +105,24 @@ def main (args : List String) : IO UInt32 := do
       IO.println s!"  wrote {events.length} events to {cfg.output}"
       pure (if events.length == cfg.nEvents then 0 else 1)
     else
-      IO.println s!"  mode: leading-order neutral current, Q2 > {cfg.q2Min} GeV^2"
-      let (events, st) ← loRun cfg
+      let showering := args.contains "--shower"
+      IO.println s!"  mode: leading-order neutral current, Q2 > {cfg.q2Min} GeV^2\
+                   {if showering then ", + final-state shower off the struck quark" else ""}"
+      let (events, st, emissions, exhausted) ←
+        if showering then showerRun cfg
+        else do let (e, s) ← loRun cfg; pure (e, s, 0, 0)
       let eff := if st.trials == 0 then 0.0
                  else st.accepted.toFloat / st.trials.toFloat
       IO.println s!"  accepted {st.accepted} of {st.trials} trials (efficiency {eff})"
+      if showering then
+        let nEv := if events.length == 0 then 1 else events.length
+        IO.println s!"  shower: {emissions} emissions over {events.length} events \
+                     ({emissions.toFloat / nEv.toFloat} per event)"
+        if exhausted != 0 then
+          -- not a performance note: an exhausted shower is an event that never reached the
+          -- cutoff, so it is incompletely evolved and its jet content is wrong
+          IO.eprintln s!"physlib_gen: {exhausted} shower(s) ran out of fuel -- those events \
+                         are incompletely evolved and must not be used"
       if st.exhausted != 0 then
         IO.eprintln s!"physlib_gen: {st.exhausted} event(s) abandoned on rejection fuel"
       if st.violations != 0 then
