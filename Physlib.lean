@@ -118,6 +118,8 @@ public import Physlib.Generator.DISEvent
 public import Physlib.Generator.Event
 public import Physlib.Generator.Kinematics
 public import Physlib.Generator.Sampler
+public import Physlib.Generator.Shower
+public import Physlib.Generator.Splitting
 public import Physlib.HepMC3.Ascii
 public import Physlib.HepMC3.Basic
 public import Physlib.HepMC3.Format
