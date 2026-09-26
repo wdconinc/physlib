@@ -68,7 +68,7 @@ theorem eq_of_forall_exp_I_mul_eq {ω₁ ω₂ : ℝ}
   obtain ⟨n, hn⟩ := Complex.exp_eq_exp_iff_exists_int.mp (h (Real.pi / (ω₁ - ω₂)))
   have hcancel : ((ω₁ : ℂ) - ω₂) * (Real.pi / (ω₁ - ω₂) : ℝ) = (n : ℂ) * (2 * Real.pi) := by
     apply mul_left_cancel₀ Complex.I_ne_zero
-    push_cast
+    push_cast at hn ⊢
     linear_combination hn
   rw [show ((Real.pi / (ω₁ - ω₂) : ℝ) : ℂ) = (Real.pi : ℂ) / ((ω₁ : ℂ) - ω₂) by push_cast; ring,
     mul_div_cancel₀ (Real.pi : ℂ) (by exact_mod_cast hsub)] at hcancel
@@ -84,7 +84,7 @@ theorem eq_of_forall_exp_I_mul_eq {ω₁ ω₂ : ℝ}
     intro hcontra
     have : (2 * m : ℤ) = 1 := by exact_mod_cast hcontra
     omega
-  exact hn2 this
+  exact hn2 this.symm
 
 /-!
 
