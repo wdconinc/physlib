@@ -122,14 +122,24 @@ the region, evaluated at `Q²_min`.
 A top-level definition rather than a `let rec` inside `weightBound`: Lean lifts a `let rec`
 to `weightBound.go`, and the repository's documentation linter requires a docstring on it,
 which there is no syntax to attach to a `let rec`.  Lifting it also makes the scan callable
-on its own, which is what a future analytic bound would be checked against. -/
+on its own, which is what a future analytic bound would be checked against — which is why
+this one is public where `decExpDown`/`decExpUp` in `Physlib.HepMC3.Format` are private:
+its only precondition, a non-empty grid, is checkable and is checked, whereas theirs is
+"enough fuel", which can only be satisfied, not guarded. -/
 def f2ScanMax (r : Region) (lnLo : Float) (n : Nat) : Nat → Float → Float
   | 0, acc => acc
   | k + 1, acc =>
-    let u := (n - k).toFloat / n.toFloat
-    let x := (lnLo * (1.0 - u)).exp
-    let v := f2Toy x r.q2Min
-    f2ScanMax r lnLo n k (if v > acc then v else acc)
+    -- `n = 0` is an empty grid, so there is nothing to scan. `weightBound` always passes
+    -- fuel `= n`, which makes this branch unreachable there, but the signature lets the two
+    -- disagree and `(n - k).toFloat / n.toFloat` would then be `0.0 / 0.0`. The `NaN` that
+    -- produces would not escape — `v > acc` is false for `NaN`, so `acc` would survive — but
+    -- resting correctness on the comparison semantics of `NaN` is not a thing to rely on.
+    if n = 0 then acc
+    else
+      let u := (n - k).toFloat / n.toFloat
+      let x := (lnLo * (1.0 - u)).exp
+      let v := f2Toy x r.q2Min
+      f2ScanMax r lnLo n k (if v > acc then v else acc)
 
 /-- An overestimate of `weight` on the region: `F₂^max · L^max / Q²_min`.
 

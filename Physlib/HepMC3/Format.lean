@@ -84,14 +84,19 @@ def divRoundHalfEven (num den : Nat) : Nat :=
 
 A top-level definition rather than a `let rec` inside `decExp`: Lean lifts a `let rec` to
 `decExp.down`, and the repository's documentation linter requires a docstring on it, which
-there is no syntax to attach to a `let rec`. -/
-def decExpDown (m : Nat) (e : Int) (E : Int) : Nat → Int
+there is no syntax to attach to a `let rec`.
+
+`private` because the only correct way to call it is with fuel large enough to reach the
+answer, and that precondition cannot be checked from inside: with too little fuel it
+returns an `E` that quietly fails the postcondition in its first line.  `decExp` supplies
+ample fuel; nothing outside this module should be choosing that number. -/
+private def decExpDown (m : Nat) (e : Int) (E : Int) : Nat → Int
   | 0 => E
   | n + 1 => if geTenPow m e E then E else decExpDown m e (E - 1) n
 
-/-- Walk `E` upward while `10^(E+1) ≤ m·2^e`, fuel-bounded.  Lifted for the same reason as
-`decExpDown`. -/
-def decExpUp (m : Nat) (e : Int) (E : Int) : Nat → Int
+/-- Walk `E` upward while `10^(E+1) ≤ m·2^e`, fuel-bounded.  Lifted, and `private`, for the
+same reasons as `decExpDown`. -/
+private def decExpUp (m : Nat) (e : Int) (E : Int) : Nat → Int
   | 0 => E
   | n + 1 => if geTenPow m e (E + 1) then decExpUp m e (E + 1) n else E
 
