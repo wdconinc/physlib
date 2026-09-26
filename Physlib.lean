@@ -112,9 +112,16 @@ public import Physlib.FluidDynamics.FluidFlow.Newtonian
 public import Physlib.FluidDynamics.ThermodynamicCauchyFlow.Basic
 public import Physlib.FluidDynamics.ThermodynamicCauchyFlow.Bernoulli
 public import Physlib.FluidDynamics.ThermodynamicCauchyFlow.Isentropic
+public import Physlib.Generator.Config
+public import Physlib.Generator.CrossSection
+public import Physlib.Generator.DISEvent
+public import Physlib.Generator.Event
+public import Physlib.Generator.Kinematics
+public import Physlib.Generator.Sampler
 public import Physlib.HepMC3.Ascii
 public import Physlib.HepMC3.Basic
 public import Physlib.HepMC3.Format
+public import Physlib.HepMC3.Graph
 public import Physlib.LatticeQFT.Basic
 public import Physlib.Mathematics.Calculus.AdjFDeriv
 public import Physlib.Mathematics.Calculus.Divergence
@@ -188,6 +195,8 @@ public import Physlib.Meta.Sorry
 public import Physlib.Meta.TODO.Basic
 public import Physlib.Meta.TODO.Global
 public import Physlib.Meta.TransverseTactics
+public import Physlib.Numerics.FourMom
+public import Physlib.Numerics.Random
 public import Physlib.Optics.Basic
 public import Physlib.Optics.Polarization.Basic
 public import Physlib.Particles.BeyondTheStandardModel.GeorgiGlashow.Basic
@@ -394,6 +403,7 @@ public import Physlib.QFT.QED.AnomalyCancellation.Sorts
 public import Physlib.QFT.QED.AnomalyCancellation.VectorLike
 public import Physlib.QFT.Scattering.DIS.Basic
 public import Physlib.QFT.Scattering.DIS.Corrections.Basic
+public import Physlib.QFT.Scattering.DIS.CrossSection
 public import Physlib.QFT.Scattering.DIS.Examples.Basic
 public import Physlib.QFT.Scattering.DIS.Exclusive.Amplitudes.Basic
 public import Physlib.QFT.Scattering.DIS.Exclusive.Convolution.Basic
