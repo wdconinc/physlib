@@ -7,6 +7,7 @@ module
 
 public import Physlib.Generator.Config
 public import Physlib.Generator.Sampler
+public import Physlib.HepMC3.Format
 public import Physlib.HepMC3.Graph
 
 /-!
@@ -114,9 +115,13 @@ def loEventOfPoint (c : RunConfig) (n : Nat) (pt : HardPoint) (phi : Float) :
     [ { target := 6, name := "flow1", value := "101" },
       { target := 4, name := "flow2", value := "101" },
       { target := 3, name := "flow1", value := "101" },
-      { target := 0, name := "xBj", value := toString pt.x },
-      { target := 0, name := "Q2", value := toString pt.q2 },
-      { target := 0, name := "yInel", value := toString pt.y } ]
+      -- `toString` on a `Float` emits only 6 decimal places, which for `x ~ 3e-4` leaves
+      -- three significant figures. The momenta in the same file carry 16, so a reader
+      -- recomputing `x` from them would disagree with this attribute in the 4th digit.
+      -- Use the writer's own exact formatter, at the same 16 digits.
+      { target := 0, name := "xBj", value := formatScientific 16 pt.x },
+      { target := 0, name := "Q2", value := formatScientific 16 pt.q2 },
+      { target := 0, name := "yInel", value := formatScientific 16 pt.y } ]
   GenEvent.ofGraph? (n : Int) parts verts (weights := [1.0]) (attributes := attrs)
 
 /-- Sample one leading-order event.  Returns the event, the trials it cost, and the number of
