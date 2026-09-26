@@ -8,6 +8,7 @@ module
 public import Mathlib.LinearAlgebra.LinearIndependent.Basic
 public import Mathlib.Algebra.Group.AddChar
 public import Mathlib.Analysis.SpecialFunctions.Complex.Log
+public import Mathlib.Analysis.Complex.Trigonometric
 /-!
 
 # Linear independence of real-frequency exponentials
@@ -36,10 +37,20 @@ identity to coincide.
 - `Real.eq_zero_of_forall_sum_exp_I_mul_eq_zero` : if `∑ i, c i * exp (I * ω i * τ) = 0` for
   every `τ : ℝ`, with the `ω i` pairwise distinct, then every `c i = 0`.
 
+Section C derives, from this, the "distinct sinusoids can't sum to a third" fact used to
+recover `Electromagnetism.Interface.PhaseMatchedAtInterface` from literal field continuity:
+if `A cos (ω₁τ+φ₁) + B cos (ω₂τ+φ₂) = C cos (ω₃τ+φ₃)` for every real `τ`, with `A, B, C ≠ 0`
+and `ω₁, ω₂, ω₃ > 0`, then `ω₁ = ω₂ = ω₃`.
+
+## ii. Key results
+- `Real.eq_of_forall_cos_add_cos_eq_cos` : distinct positive-frequency sinusoids can't sum to a
+  third.
+
 ## iii. Table of contents
 
 - A. Real frequencies are determined by their exponential
 - B. Linear independence of finitely many real-frequency exponentials
+- C. Distinct sinusoids can't sum to a third
 
 ## iv. References
 
@@ -118,5 +129,157 @@ theorem eq_zero_of_forall_sum_exp_I_mul_eq_zero {ι : Type*} [Fintype ι]
   simp only [Finset.sum_apply, Pi.smul_apply, smul_eq_mul, AddChar.toMonoidHom_apply,
     Pi.zero_apply]
   simpa [χ] using h a.toAdd
+
+/-!
+
+## C. Distinct sinusoids can't sum to a third
+
+-/
+
+/-- Twice `D * cos (ω*τ+φ)`, as a complex number, splits into a sum of two exponentials at
+  frequencies `ω` and `-ω` (Euler's formula). -/
+private lemma two_mul_cos_eq_exp_add_exp (D ω φ τ : ℝ) :
+    (2 : ℂ) * (D : ℂ) * (Real.cos (ω * τ + φ) : ℂ) =
+    (D : ℂ) * Complex.exp (Complex.I * φ) * Complex.exp (Complex.I * ω * τ) +
+    (D : ℂ) * Complex.exp (-Complex.I * φ) * Complex.exp (Complex.I * (-ω) * τ) := by
+  have e1 : Complex.exp (((ω * τ + φ : ℝ) : ℂ) * Complex.I) =
+      Complex.exp (Complex.I * φ) * Complex.exp (Complex.I * ω * τ) := by
+    rw [show (((ω * τ + φ : ℝ) : ℂ) * Complex.I) = (Complex.I * (φ : ℂ)) + (Complex.I * ω * τ)
+      from by push_cast; ring, Complex.exp_add]
+  have e2 : Complex.exp ((-((ω * τ + φ : ℝ) : ℂ)) * Complex.I) =
+      Complex.exp (-Complex.I * φ) * Complex.exp (Complex.I * (-ω) * τ) := by
+    rw [show ((-((ω * τ + φ : ℝ) : ℂ)) * Complex.I) =
+      (-Complex.I * (φ : ℂ)) + (Complex.I * (-ω) * τ) from by push_cast; ring, Complex.exp_add]
+  rw [← Complex.ofReal_cos, ← Complex.two_cos, e1, e2]
+  ring
+
+/-- Two positive, distinct frequencies `v₀ ≠ v₁` give four pairwise distinct signed frequencies
+  `v₀, -v₀, v₁, -v₁`: a positive value never equals the negative of another positive value. -/
+private lemma injective_two_signed {v₀ v₁ : ℝ} (h₀ : 0 < v₀) (h₁ : 0 < v₁) (hne : v₀ ≠ v₁) :
+    Function.Injective (![v₀, -v₀, v₁, -v₁] : Fin 4 → ℝ) := by
+  intro i j hij
+  fin_cases i <;> fin_cases j <;> simp_all <;> nlinarith [h₀, h₁]
+
+/-- Three pairwise distinct positive frequencies give six pairwise distinct signed frequencies. -/
+private lemma injective_three_signed {v₀ v₁ v₂ : ℝ} (h₀ : 0 < v₀) (h₁ : 0 < v₁) (h₂ : 0 < v₂)
+    (h01 : v₀ ≠ v₁) (h02 : v₀ ≠ v₂) (h12 : v₁ ≠ v₂) :
+    Function.Injective (![v₀, -v₀, v₁, -v₁, v₂, -v₂] : Fin 6 → ℝ) := by
+  intro i j hij
+  fin_cases i <;> fin_cases j <;> simp_all <;> nlinarith [h₀, h₁, h₂]
+
+/-- If `A cos (ω₁τ+φ₁) + B cos (ω₂τ+φ₂) = C cos (ω₃τ+φ₃)` for every real `τ`, with `A, B, C ≠ 0`
+  and `ω₁, ω₂, ω₃ > 0`, then `ω₁ = ω₃` and `ω₂ = ω₃`. Two positive-frequency sinusoids can only
+  sum to a third if all three frequencies coincide: expanded via Euler's formula, the identity
+  becomes a vanishing `ℂ`-linear combination of exponentials at frequencies `±ω₁, ±ω₂, ±ω₃`; since
+  `A, B, C ≠ 0` every one of the six exponential coefficients is nonzero, so
+  `eq_zero_of_forall_sum_exp_I_mul_eq_zero` forces at least two of these six frequencies to
+  coincide, and positivity rules out any sign-crossed coincidence. Each of the three ways exactly
+  two of `ω₁, ω₂, ω₃` could coincide is then ruled out in turn: the frequency not involved in the
+  coincidence is isolated from every other frequency in the (regrouped) exponential sum, so its
+  own nonzero coefficient would be forced to vanish — a contradiction. -/
+theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ₃ : ℝ}
+    (hA : A ≠ 0) (hB : B ≠ 0) (hC : C ≠ 0)
+    (hω₁ : 0 < ω₁) (hω₂ : 0 < ω₂) (hω₃ : 0 < ω₃)
+    (h : ∀ τ : ℝ, A * Real.cos (ω₁ * τ + φ₁) + B * Real.cos (ω₂ * τ + φ₂) =
+      C * Real.cos (ω₃ * τ + φ₃)) :
+    ω₁ = ω₃ ∧ ω₂ = ω₃ := by
+  have hsum : ∀ τ : ℝ,
+      (A : ℂ) * Complex.exp (Complex.I * φ₁) * Complex.exp (Complex.I * ω₁ * τ) +
+      (A : ℂ) * Complex.exp (-Complex.I * φ₁) * Complex.exp (Complex.I * (-ω₁) * τ) +
+      ((B : ℂ) * Complex.exp (Complex.I * φ₂) * Complex.exp (Complex.I * ω₂ * τ) +
+      (B : ℂ) * Complex.exp (-Complex.I * φ₂) * Complex.exp (Complex.I * (-ω₂) * τ)) -
+      ((C : ℂ) * Complex.exp (Complex.I * φ₃) * Complex.exp (Complex.I * ω₃ * τ) +
+      (C : ℂ) * Complex.exp (-Complex.I * φ₃) * Complex.exp (Complex.I * (-ω₃) * τ)) = 0 := by
+    intro τ
+    have hreal : A * Real.cos (ω₁ * τ + φ₁) + B * Real.cos (ω₂ * τ + φ₂) -
+        C * Real.cos (ω₃ * τ + φ₃) = 0 := by linarith [h τ]
+    have hcplx := congrArg (Complex.ofReal) hreal
+    push_cast at hcplx
+    linear_combination two_mul_cos_eq_exp_add_exp A ω₁ φ₁ τ +
+      two_mul_cos_eq_exp_add_exp B ω₂ φ₂ τ - two_mul_cos_eq_exp_add_exp C ω₃ φ₃ τ + 2 * hcplx
+  by_cases h12 : ω₁ = ω₂
+  · by_cases h13 : ω₁ = ω₃
+    · exact ⟨h13, h12.symm.trans h13⟩
+    · exfalso
+      subst h12
+      have hsum4 : ∀ τ : ℝ, ∑ i : Fin 4,
+          (![(A : ℂ) * Complex.exp (Complex.I * φ₁) + (B : ℂ) * Complex.exp (Complex.I * φ₂),
+             (A : ℂ) * Complex.exp (-Complex.I * φ₁) + (B : ℂ) * Complex.exp (-Complex.I * φ₂),
+             -(C : ℂ) * Complex.exp (Complex.I * φ₃),
+             -(C : ℂ) * Complex.exp (-Complex.I * φ₃)] : Fin 4 → ℂ) i *
+          Complex.exp (Complex.I * (![ω₁, -ω₁, ω₃, -ω₃] : Fin 4 → ℝ) i * τ) = 0 := by
+        intro τ
+        simp only [Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
+          Matrix.cons_val_succ, Fin.val_succ, add_zero]
+        linear_combination hsum τ
+      have hz := eq_zero_of_forall_sum_exp_I_mul_eq_zero
+        (injective_two_signed hω₁ hω₃ h13) hsum4 2
+      simp only [Matrix.cons_val_two, Matrix.tail_cons, Matrix.head_cons] at hz
+      rw [mul_eq_zero] at hz
+      rcases hz with hz | hz
+      · exact hC (by exact_mod_cast neg_eq_zero.mp hz)
+      · exact absurd hz (Complex.exp_ne_zero _)
+  · by_cases h13 : ω₁ = ω₃
+    · by_cases h23 : ω₂ = ω₃
+      · exact ⟨h13, h23⟩
+      · exfalso
+        subst h13
+        have hsum4 : ∀ τ : ℝ, ∑ i : Fin 4,
+            (![(A : ℂ) * Complex.exp (Complex.I * φ₁) + (C : ℂ) * Complex.exp (Complex.I * φ₃),
+               (A : ℂ) * Complex.exp (-Complex.I * φ₁) + (C : ℂ) * Complex.exp (-Complex.I * φ₃),
+               (B : ℂ) * Complex.exp (Complex.I * φ₂),
+               (B : ℂ) * Complex.exp (-Complex.I * φ₂)] : Fin 4 → ℂ) i *
+            Complex.exp (Complex.I * (![ω₁, -ω₁, ω₂, -ω₂] : Fin 4 → ℝ) i * τ) = 0 := by
+          intro τ
+          simp only [Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
+          Matrix.cons_val_succ, Fin.val_succ, add_zero]
+          linear_combination hsum τ
+        have hz := eq_zero_of_forall_sum_exp_I_mul_eq_zero
+          (injective_two_signed hω₁ hω₂ h12) hsum4 2
+        simp only [Matrix.cons_val_two, Matrix.tail_cons, Matrix.head_cons] at hz
+        rw [mul_eq_zero] at hz
+        rcases hz with hz | hz
+        · exact hB (by exact_mod_cast hz)
+        · exact absurd hz (Complex.exp_ne_zero _)
+    · by_cases h23 : ω₂ = ω₃
+      · exfalso
+        subst h23
+        have hsum4 : ∀ τ : ℝ, ∑ i : Fin 4,
+            (![(B : ℂ) * Complex.exp (Complex.I * φ₂) + (C : ℂ) * Complex.exp (Complex.I * φ₃),
+               (B : ℂ) * Complex.exp (-Complex.I * φ₂) + (C : ℂ) * Complex.exp (-Complex.I * φ₃),
+               (A : ℂ) * Complex.exp (Complex.I * φ₁),
+               (A : ℂ) * Complex.exp (-Complex.I * φ₁)] : Fin 4 → ℂ) i *
+            Complex.exp (Complex.I * (![ω₂, -ω₂, ω₁, -ω₁] : Fin 4 → ℝ) i * τ) = 0 := by
+          intro τ
+          simp only [Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
+          Matrix.cons_val_succ, Fin.val_succ, add_zero]
+          linear_combination hsum τ
+        have hz := eq_zero_of_forall_sum_exp_I_mul_eq_zero
+          (injective_two_signed hω₂ hω₁ (Ne.symm h12)) hsum4 2
+        simp only [Matrix.cons_val_two, Matrix.tail_cons, Matrix.head_cons] at hz
+        rw [mul_eq_zero] at hz
+        rcases hz with hz | hz
+        · exact hA (by exact_mod_cast hz)
+        · exact absurd hz (Complex.exp_ne_zero _)
+      · exfalso
+        have hsum6 : ∀ τ : ℝ, ∑ i : Fin 6,
+            (![(A : ℂ) * Complex.exp (Complex.I * φ₁),
+               (A : ℂ) * Complex.exp (-Complex.I * φ₁),
+               (B : ℂ) * Complex.exp (Complex.I * φ₂),
+               (B : ℂ) * Complex.exp (-Complex.I * φ₂),
+               -(C : ℂ) * Complex.exp (Complex.I * φ₃),
+               -(C : ℂ) * Complex.exp (-Complex.I * φ₃)] : Fin 6 → ℂ) i *
+            Complex.exp (Complex.I * (![ω₁, -ω₁, ω₂, -ω₂, ω₃, -ω₃] : Fin 6 → ℝ) i * τ) = 0 := by
+          intro τ
+          simp only [Fin.sum_univ_succ, Fin.sum_univ_zero, Matrix.cons_val_zero,
+          Matrix.cons_val_succ, Fin.val_succ, add_zero]
+          linear_combination hsum τ
+        have hz := eq_zero_of_forall_sum_exp_I_mul_eq_zero
+          (injective_three_signed hω₁ hω₂ hω₃ h12 h13 h23) hsum6 4
+        simp only [Matrix.cons_val_four, Matrix.tail_cons, Matrix.head_cons] at hz
+        rw [mul_eq_zero] at hz
+        rcases hz with hz | hz
+        · exact hC (by exact_mod_cast neg_eq_zero.mp hz)
+        · exact absurd hz (Complex.exp_ne_zero _)
 
 end Real
