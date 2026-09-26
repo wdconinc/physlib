@@ -79,8 +79,9 @@ structure ShowerConfig where
   /-- Evolution stops below this virtuality, in GeV².  Stands in for the hadronization
   scale; the shower has no meaning below it. -/
   tCut : Float := 1.0
-  /-- `z` is sampled on `[z0, 1 - z0]`.  A crude stand-in for the `k_T`-derived limits: the
-  physical bound depends on the scale, this does not. -/
+  /-- The overestimate samples `z` on `[z0, 1 - z0]`.  A floor that keeps the overestimate's
+  integral finite, **not** the physical limit: that is the transverse-momentum cutoff in
+  `resolvable`, which depends on the scale and is what regulates the shower. -/
   z0 : Float := 0.01
   /-- Maximum veto-loop iterations for the whole cascade, rejections included.  Shared
   across every parton in the event, so one runaway line cannot be hidden by short ones.
@@ -156,6 +157,30 @@ def splitOnce (p : FourMom) (z t phi : Float) : FourMom × FourMom :=
       else { px := e2 * d2.1 / n2, py := e2 * d2.2.1 / n2, pz := e2 * d2.2.2 / n2, e := e2 }
     (a, b)
 
+/-- Whether a splitting at momentum fraction `z` and virtuality `t` is resolvable, i.e. whether
+its transverse momentum `k_T² = z(1-z)t` clears the cutoff.
+
+**This is the shower's actual regulator; the `z₀` window is only a floor.**  A fixed `z` cut
+does not regulate the soft divergence.  With `z ∈ [0.01, 0.99]` held fixed at every scale, a
+gluon's integrated branching probability stays large all the way down to the cutoff: the mean
+number of branchings per gluon is 5 to 8 over the range this generator uses, so the cascade is
+a *supercritical* branching process and does not terminate.  That was measured, not predicted —
+the first cascade implementation consumed its entire fuel budget on every event and the run
+produced no events at all.
+
+Requiring `z(1-z)t > t_cut` shrinks the `z` window as `t` falls and closes it completely below
+`t = 4 t_cut`, where `z(1-z) ≤ 1/4` can no longer clear the cutoff.  That is what makes the
+process terminate: a daughter produced near the cutoff has a vanishing branching probability
+rather than a finite one.  The reproduction ratio drops to 0.4 at `t = 10 t_cut`, and although
+it exceeds one again at large `t`, each generation starts lower than its parent, so the
+multiplicity is finite.
+
+Implemented as a veto rather than by sampling the shrunken window.  The overestimate still
+covers all of `[z₀, 1-z₀]` and the true kernel is zero outside the resolvable region, so the
+overestimate still dominates and the veto identity still applies — the same argument as for
+the two ratio factors, with an indicator as a third factor. -/
+def resolvable (cfg : ShowerConfig) (z t : Float) : Bool := z * (1.0 - z) * t > cfg.tCut
+
 /-- Draw the next virtuality from the overestimate's Sudakov factor.
 
 With the coupling frozen at its overestimate `α̂` and the `z` integral `Î` in closed form,
@@ -214,7 +239,7 @@ def cascade {g : Type} [RandomGen g] [Monad m] (cfg : ShowerConfig) :
           let z := if toGG then pGGOverSample cfg.z0 rz (rb < 0.5)
                    else cfg.z0 + rz * (1.0 - 2.0 * cfg.z0)
           let w := (if toGG then pGGAccept z else pQGAccept z) * coupling
-          if ra < w then do
+          if resolvable cfg z tNew && ra < w then do
             let rp ← uniform01
             -- a fresh variate for the flavour: reusing the `z` draw would tie which quark
             -- pair is made to how the momentum was shared between them
@@ -228,7 +253,7 @@ def cascade {g : Type} [RandomGen g] [Monad m] (cfg : ShowerConfig) :
             cascade cfg k ({ p with tStart := tNew } :: rest) acc (used + 1)
         else do
           let z := pQQOverSample cfg.z0 rz
-          if ra < pQQAccept z * coupling then do
+          if resolvable cfg z tNew && ra < pQQAccept z * coupling then do
             let rp ← uniform01
             let (dq, dg) := splitOnce p.mom z tNew (6.283185307179586 * rp)
             cascade cfg k
