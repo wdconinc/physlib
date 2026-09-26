@@ -163,7 +163,8 @@ private lemma injective_two_signed {v₀ v₁ : ℝ} (h₀ : 0 < v₀) (h₁ : 0
     Function.Injective (![v₀, -v₀, v₁, -v₁] : Fin 4 → ℝ) := by
   intro i j hij
   fin_cases i <;> fin_cases j <;> simp at hij ⊢ <;>
-    first | rfl | (exfalso; nlinarith [h₀, h₁])
+    first | rfl | exact absurd hij (by assumption) | exact absurd hij.symm (by assumption) |
+      (exfalso; nlinarith [h₀, h₁])
 
 /-- Three pairwise distinct positive frequencies give six pairwise distinct signed frequencies. -/
 private lemma injective_three_signed {v₀ v₁ v₂ : ℝ} (h₀ : 0 < v₀) (h₁ : 0 < v₁) (h₂ : 0 < v₂)
@@ -171,7 +172,8 @@ private lemma injective_three_signed {v₀ v₁ v₂ : ℝ} (h₀ : 0 < v₀) (h
     Function.Injective (![v₀, -v₀, v₁, -v₁, v₂, -v₂] : Fin 6 → ℝ) := by
   intro i j hij
   fin_cases i <;> fin_cases j <;> simp at hij ⊢ <;>
-    first | rfl | (exfalso; nlinarith [h₀, h₁, h₂])
+    first | rfl | exact absurd hij (by assumption) | exact absurd hij.symm (by assumption) |
+      (exfalso; nlinarith [h₀, h₁, h₂])
 
 /-- If `A cos (ω₁τ+φ₁) + B cos (ω₂τ+φ₂) = C cos (ω₃τ+φ₃)` for every real `τ`, with `A, B, C ≠ 0`
   and `ω₁, ω₂, ω₃ > 0`, then `ω₁ = ω₃` and `ω₂ = ω₃`. Two positive-frequency sinusoids can only
