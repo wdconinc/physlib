@@ -122,10 +122,13 @@ the region, evaluated at `Q²_min`.
 A top-level definition rather than a `let rec` inside `weightBound`: Lean lifts a `let rec`
 to `weightBound.go`, and the repository's documentation linter requires a docstring on it,
 which there is no syntax to attach to a `let rec`.  Lifting it also makes the scan callable
-on its own, which is what a future analytic bound would be checked against — which is why
-this one is public where `decExpDown`/`decExpUp` in `Physlib.HepMC3.Format` are private:
-its only precondition, a non-empty grid, is checkable and is checked, whereas theirs is
-"enough fuel", which can only be satisfied, not guarded. -/
+on its own, which is what a future analytic bound would be checked against.
+
+Its one precondition, a non-empty grid, is checkable from inside and is checked below, so
+the return type stays a plain `Float`.  Contrast `decExpDown`/`decExpUp` in
+`Physlib.HepMC3.Format`, lifted for the same linter reason in the same change: their
+precondition is "enough fuel to reach the answer", which cannot be checked from inside, so
+those return `Option Int` and report exhaustion as `none`. -/
 def f2ScanMax (r : Region) (lnLo : Float) (n : Nat) : Nat → Float → Float
   | 0, acc => acc
   | k + 1, acc =>
