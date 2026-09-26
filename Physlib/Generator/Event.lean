@@ -54,13 +54,18 @@ topology cannot happen — the `Option` is the honest signature of `ofGraph?`, n
 failure mode here. -/
 def trivialEvent {g : Type} [RandomGen g] [Monad m] (c : RunConfig) (n : Nat) :
     RandGT g m (Option GenEvent) := do
+  -- Three independent draws. An earlier version reused `u` for both the transverse kick and
+  -- the longitudinal fraction, which silently correlated them: every event with a large `pt`
+  -- also had a large `|pz|`. The docstrings described them as separate choices, so the code
+  -- and the stated intent disagreed.
   let u ← uniform01
   let v ← uniform01
+  let w ← uniform01
   let pIn := addFV c.leptonP c.hadronP
   -- scattered lepton: uniform azimuth, transverse kick, massless shell
   let pt := 2.0 * u
   let phi := 6.283185307179586 * v
-  let pz := -c.lepton.energy * (0.2 + 0.6 * u)
+  let pz := -c.lepton.energy * (0.2 + 0.6 * w)
   let px := pt * phi.cos
   let py := pt * phi.sin
   let e := (px * px + py * py + pz * pz).sqrt

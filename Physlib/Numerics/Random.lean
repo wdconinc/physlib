@@ -60,20 +60,25 @@ open Rand
 /-- Number of bits taken from each accepted draw. -/
 def blockBits : Nat := 30
 
-/-- `2 ^ blockBits`, the rejection bound for a single draw. -/
-def blockBound : Nat := 1073741824
+/-- `2 ^ blockBits`, the rejection bound for a single draw.
+
+Derived from `blockBits` rather than written out, so the two cannot drift apart. -/
+def blockBound : Nat := 2 ^ blockBits
 
 /-- Number of bits in a `Float` significand, including the implicit leading bit. -/
 def significandBits : Nat := 53
 
-/-- `2 ^ significandBits`, the denominator of the returned fraction. -/
-def significandBound : Nat := 9007199254740992
+/-- `2 ^ significandBits`, the denominator of the returned fraction.
+
+Derived from `significandBits` for the same reason as `blockBound`. -/
+def significandBound : Nat := 2 ^ significandBits
 
 /-- Draw a uniform `blockBits`-bit block by rejecting values at or above `blockBound`.
 
-Fuel bounds the number of rejections; on exhaustion the last draw is reduced modulo
-`blockBound`, which is slightly biased.  With the default fuel that happens with probability
-below `2 ^ (-64)`. -/
+Fuel bounds the number of rejections.  On exhaustion a **final fresh draw** is reduced modulo
+`blockBound`, which is slightly biased; the rejected value that exhausted the fuel is not
+reused.  With the default fuel this branch is reached with probability below `2 ^ (-64)`,
+since each rejection has probability below `1/2`. -/
 def randBits30 {g : Type} [RandomGen g] [Monad m] : Nat → RandGT g m Nat
   | 0 => do
     let (lo, _) ← range

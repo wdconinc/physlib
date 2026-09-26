@@ -33,10 +33,28 @@ under test independently of the physics.
 
 open Physlib Physlib.Generator
 
+/-- Parse a decimal number for the physical quantities.
+
+`toNat?` was used here originally, which silently made `--ebeam 18.5` an error reported as
+"expects a number" — accurate about the intent and misleading about the behaviour, since
+only naturals were accepted. Beam energies and `Q²` cuts are genuinely real-valued. -/
+def parseFloat? (s : String) : Option Float :=
+  match s.splitOn "." with
+  | [w] => w.toNat?.map Nat.toFloat
+  | [w, f] => do
+    let wn ← w.toNat?
+    let fn ← f.toNat?
+    let scale := (10 : Nat) ^ f.length
+    pure (wn.toFloat + fn.toFloat / scale.toFloat)
+  | _ => none
+
 /-- Parse the command line into a `RunConfig`, starting from the defaults.
 
 Unrecognized arguments are reported rather than ignored, so a mistyped flag fails loudly
-instead of silently generating a differently-configured run. -/
+instead of silently generating a differently-configured run.  Flags that take a value
+report a *missing value* distinctly from an unrecognized flag: `--seed` at the end of the
+line is a different mistake from `--sed 7`, and conflating them made the first one hard to
+read. -/
 def parseArgs (args : List String) (c : RunConfig) : Except String RunConfig :=
   match args with
   | [] => .ok c
@@ -50,18 +68,23 @@ def parseArgs (args : List String) (c : RunConfig) : Except String RunConfig :=
     | none => .error s!"--seed expects a natural number, got '{v}'"
   | "--output" :: v :: rest => parseArgs rest { c with output := v }
   | "--ebeam" :: v :: rest =>
-    match v.toNat? with
-    | some n => parseArgs rest { c with lepton := electronBeam n.toFloat }
-    | none => .error s!"--ebeam expects a number, got '{v}'"
+    match parseFloat? v with
+    | some e => parseArgs rest { c with lepton := electronBeam e }
+    | none => .error s!"--ebeam expects a decimal number in GeV, got '{v}'"
   | "--pbeam" :: v :: rest =>
-    match v.toNat? with
-    | some n => parseArgs rest { c with hadron := protonBeam n.toFloat }
-    | none => .error s!"--pbeam expects a number, got '{v}'"
+    match parseFloat? v with
+    | some e => parseArgs rest { c with hadron := protonBeam e }
+    | none => .error s!"--pbeam expects a decimal number in GeV, got '{v}'"
   | "--q2min" :: v :: rest =>
-    match v.toNat? with
-    | some n => parseArgs rest { c with q2Min := n.toFloat }
-    | none => .error s!"--q2min expects a number, got '{v}'"
+    match parseFloat? v with
+    | some q => parseArgs rest { c with q2Min := q }
+    | none => .error s!"--q2min expects a decimal number in GeV^2, got '{v}'"
   | "--trivial" :: rest => parseArgs rest c
+  | a :: [] =>
+    if a == "--events" || a == "--seed" || a == "--output" || a == "--ebeam"
+       || a == "--pbeam" || a == "--q2min" then
+      .error s!"{a} expects a value, but the command line ends here"
+    else .error s!"unrecognized argument '{a}'"
   | a :: _ => .error s!"unrecognized argument '{a}'"
 
 def main (args : List String) : IO UInt32 := do

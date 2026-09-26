@@ -119,7 +119,12 @@ def step (parts : List GraphParticle) (emitted : List Nat)
       | none => none
       | some ps =>
         let precs : List EventRecord := ps.map fun p => .particle (toGenParticle p parent)
-        some (emitted ++ v.outgoing, rest, acc ++ vrecs ++ precs)
+        -- `acc` is accumulated REVERSED and flipped once in `bodyOfGraph?`. Appending to
+        -- its end here would walk the whole accumulated body at every vertex, making the
+        -- conversion quadratic in the particle count. Invisible for a 6-particle
+        -- leading-order event; a parton shower produces hundreds, and that is the next
+        -- thing due to run through this code.
+        some (v.outgoing.reverseAux emitted, rest, (vrecs ++ precs).reverseAux acc)
 
 /-- Drive `step` to exhaustion with explicit fuel. -/
 def loop : Nat → List GraphParticle → List Nat → List GraphVertex → List EventRecord →
@@ -143,9 +148,10 @@ def bodyOfGraph? (parts : List GraphParticle) (verts : List GraphVertex) :
     Option (List EventRecord) :=
   let produced : List Nat := verts.flatMap (·.outgoing)
   let beams := parts.filter fun p => !produced.contains p.id
+  -- Seed the accumulator reversed, to match `Graph.step`, and flip once at the end.
   let beamRecs : List EventRecord :=
-    beams.map fun p => .particle (Graph.toGenParticle p 0)
-  Graph.loop verts.length parts (beams.map (·.id)) verts beamRecs
+    (beams.map fun p => .particle (Graph.toGenParticle p 0)).reverse
+  (Graph.loop verts.length parts (beams.map (·.id)) verts beamRecs).map List.reverse
 
 /-- Build a `GenEvent` from a graph, keeping every other field at its default.
 
