@@ -58,7 +58,7 @@ work. Left as a documented gap for a future extension.
 namespace Electromagnetism
 namespace Interface
 
-open Space ElectromagneticPotential
+open Space ElectromagneticPotential InnerProductSpace
 
 /-!
 
