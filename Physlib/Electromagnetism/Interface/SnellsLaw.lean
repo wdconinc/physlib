@@ -65,7 +65,7 @@ open Space
 
 /-- The hypothesis that an incident wave (wavenumber `κ_i`, direction `s_i`, medium `𝓕₁`), a
   reflected wave (`κ_r`, `s_r`, same medium `𝓕₁`) and a transmitted wave (`κ_t`, `s_t`, medium
-  `𝓕₂`) are phase-matched at the interface with normal `n̂`: they share a common angular
+  `𝓕₂`) are phase-matched at the interface with normal `n`: they share a common angular
   frequency, and their wavevectors have a common projection onto the interface.
 
   Physically, this is what continuity of the tangential electric and magnetic fields at the
@@ -96,13 +96,13 @@ open Space
   distinctness in each branch, plus the same `Space d`/`EuclideanSpace ℝ (Fin d)` type
   bridging already handled once in `Vacuum.HarmonicWaveDirection` for the amplitude
   nondegeneracy hypothesis. -/
-def PhaseMatchedAtInterface {d : ℕ} (n̂ : Direction d) (𝓕₁ : FreeSpace) (κ_i : ℝ)
+def PhaseMatchedAtInterface {d : ℕ} (n : Direction d) (𝓕₁ : FreeSpace) (κ_i : ℝ)
     (s_i : Direction d) (κ_r : ℝ) (s_r : Direction d) (𝓕₂ : FreeSpace) (κ_t : ℝ)
     (s_t : Direction d) : Prop :=
   κ_i * (𝓕₁.c : ℝ) = κ_r * (𝓕₁.c : ℝ) ∧
   κ_r * (𝓕₁.c : ℝ) = κ_t * (𝓕₂.c : ℝ) ∧
-  tangentialPart n̂ (κ_i • s_i.unit) = tangentialPart n̂ (κ_r • s_r.unit) ∧
-  tangentialPart n̂ (κ_i • s_i.unit) = tangentialPart n̂ (κ_t • s_t.unit)
+  tangentialPart n (κ_i • s_i.unit) = tangentialPart n (κ_r • s_r.unit) ∧
+  tangentialPart n (κ_i • s_i.unit) = tangentialPart n (κ_t • s_t.unit)
 
 /-!
 
@@ -112,16 +112,16 @@ def PhaseMatchedAtInterface {d : ℕ} (n̂ : Direction d) (𝓕₁ : FreeSpace) 
 
 /-- The angle of incidence and the angle of reflection have equal sine.
 
-  This does not by itself rule out `angleFromNormal n̂ s_r = π - angleFromNormal n̂ s_i`, the
+  This does not by itself rule out `angleFromNormal n s_r = π - angleFromNormal n s_i`, the
   other root of `sin θ_r = sin θ_i` on `[0, π]`: distinguishing it from the physical
-  `angleFromNormal n̂ s_r = angleFromNormal n̂ s_i` requires a sign convention for which side of
+  `angleFromNormal n s_r = angleFromNormal n s_i` requires a sign convention for which side of
   the interface the reflected wave travels into, which is not fixed by phase matching alone
   (phase matching only constrains the tangential wavevector, not the sign of its normal
   component). Left as a documented gap for a follow-up. -/
-theorem lawOfReflection {d : ℕ} (n̂ : Direction d) (𝓕 𝓕₂ : FreeSpace) (κ_i : ℝ) (hκ_i : κ_i ≠ 0)
+theorem lawOfReflection {d : ℕ} (n : Direction d) (𝓕 𝓕₂ : FreeSpace) (κ_i : ℝ) (hκ_i : κ_i ≠ 0)
     (s_i : Direction d) (κ_r : ℝ) (s_r : Direction d) (κ_t : ℝ) (s_t : Direction d)
-    (h : PhaseMatchedAtInterface n̂ 𝓕 κ_i s_i κ_r s_r 𝓕₂ κ_t s_t) :
-    Real.sin (angleFromNormal n̂ s_i) = Real.sin (angleFromNormal n̂ s_r) := by
+    (h : PhaseMatchedAtInterface n 𝓕 κ_i s_i κ_r s_r 𝓕₂ κ_t s_t) :
+    Real.sin (angleFromNormal n s_i) = Real.sin (angleFromNormal n s_r) := by
   obtain ⟨hfreq, -, htan, -⟩ := h
   have hκr : κ_i = κ_r := mul_right_cancel₀ 𝓕.c.val_ne_zero hfreq
   have hnorm := congrArg norm htan
@@ -137,10 +137,10 @@ theorem lawOfReflection {d : ℕ} (n̂ : Direction d) (𝓕 𝓕₂ : FreeSpace)
 /-- Snell's law in wavenumber form: `|κ_i| * sin θ_i = |κ_t| * sin θ_t`. Unlike
   `lawOfReflection`, no sign convention is needed here — the statement is purely about norms
   of tangential wavevectors, which phase matching determines directly. -/
-theorem snellsLaw {d : ℕ} (n̂ : Direction d) (𝓕₁ 𝓕₂ : FreeSpace) (κ_i : ℝ) (s_i : Direction d)
+theorem snellsLaw {d : ℕ} (n : Direction d) (𝓕₁ 𝓕₂ : FreeSpace) (κ_i : ℝ) (s_i : Direction d)
     (κ_r : ℝ) (s_r : Direction d) (κ_t : ℝ) (s_t : Direction d)
-    (h : PhaseMatchedAtInterface n̂ 𝓕₁ κ_i s_i κ_r s_r 𝓕₂ κ_t s_t) :
-    |κ_i| * Real.sin (angleFromNormal n̂ s_i) = |κ_t| * Real.sin (angleFromNormal n̂ s_t) := by
+    (h : PhaseMatchedAtInterface n 𝓕₁ κ_i s_i κ_r s_r 𝓕₂ κ_t s_t) :
+    |κ_i| * Real.sin (angleFromNormal n s_i) = |κ_t| * Real.sin (angleFromNormal n s_t) := by
   have hnorm := congrArg norm h.2.2.2
   rwa [norm_tangentialPart_smul_unit, norm_tangentialPart_smul_unit] at hnorm
 
@@ -150,11 +150,11 @@ noncomputable def refractiveIndex (𝓕₀ 𝓕 : FreeSpace) : ℝ := (𝓕₀.c
 /-- Snell's law in the textbook form `n₁ * sin θ_i = n₂ * sin θ_t`, where `n₁, n₂` are the
   refractive indices of the incidence and transmission media relative to any common reference
   medium `𝓕₀` (e.g. vacuum). -/
-theorem snellsLaw_refractiveIndex {d : ℕ} (n̂ : Direction d) (𝓕₀ 𝓕₁ 𝓕₂ : FreeSpace) (κ_i : ℝ)
+theorem snellsLaw_refractiveIndex {d : ℕ} (n : Direction d) (𝓕₀ 𝓕₁ 𝓕₂ : FreeSpace) (κ_i : ℝ)
     (hκ_i : 0 < κ_i) (s_i : Direction d) (κ_r : ℝ) (s_r : Direction d) (κ_t : ℝ)
-    (s_t : Direction d) (h : PhaseMatchedAtInterface n̂ 𝓕₁ κ_i s_i κ_r s_r 𝓕₂ κ_t s_t) :
-    refractiveIndex 𝓕₀ 𝓕₁ * Real.sin (angleFromNormal n̂ s_i) =
-    refractiveIndex 𝓕₀ 𝓕₂ * Real.sin (angleFromNormal n̂ s_t) := by
+    (s_t : Direction d) (h : PhaseMatchedAtInterface n 𝓕₁ κ_i s_i κ_r s_r 𝓕₂ κ_t s_t) :
+    refractiveIndex 𝓕₀ 𝓕₁ * Real.sin (angleFromNormal n s_i) =
+    refractiveIndex 𝓕₀ 𝓕₂ * Real.sin (angleFromNormal n s_t) := by
   obtain ⟨hfreq_ir, hfreq_rt, -, htan_it⟩ := h
   have hfreq : κ_i * (𝓕₁.c : ℝ) = κ_t * (𝓕₂.c : ℝ) := hfreq_ir.trans hfreq_rt
   have hκt : 0 < κ_t := by
@@ -162,14 +162,14 @@ theorem snellsLaw_refractiveIndex {d : ℕ} (n̂ : Direction d) (𝓕₀ 𝓕₁
     push_neg at hle
     have hnn : 0 ≤ (-κ_t) * (𝓕₂.c : ℝ) := mul_nonneg (neg_nonneg.mpr hle) 𝓕₂.c.pos.le
     nlinarith [hfreq, mul_pos hκ_i 𝓕₁.c.pos, hnn]
-  have hsin : κ_i * Real.sin (angleFromNormal n̂ s_i) = κ_t * Real.sin (angleFromNormal n̂ s_t) := by
+  have hsin : κ_i * Real.sin (angleFromNormal n s_i) = κ_t * Real.sin (angleFromNormal n s_t) := by
     have hnorm := congrArg norm htan_it
     rwa [norm_tangentialPart_smul_unit, norm_tangentialPart_smul_unit, abs_of_pos hκ_i,
       abs_of_pos hκt] at hnorm
-  have key : Real.sin (angleFromNormal n̂ s_i) * (𝓕₂.c : ℝ) =
-      (𝓕₁.c : ℝ) * Real.sin (angleFromNormal n̂ s_t) := by
+  have key : Real.sin (angleFromNormal n s_i) * (𝓕₂.c : ℝ) =
+      (𝓕₁.c : ℝ) * Real.sin (angleFromNormal n s_t) := by
     apply mul_left_cancel₀ (ne_of_gt hκ_i)
-    linear_combination (𝓕₂.c : ℝ) * hsin - Real.sin (angleFromNormal n̂ s_t) * hfreq
+    linear_combination (𝓕₂.c : ℝ) * hsin - Real.sin (angleFromNormal n s_t) * hfreq
   unfold refractiveIndex
   rw [div_mul_eq_mul_div, div_mul_eq_mul_div,
     div_eq_div_iff 𝓕₁.c.val_ne_zero 𝓕₂.c.val_ne_zero]

@@ -86,7 +86,6 @@ lemma harmonicWaveAmp_fderiv (𝓕 : FreeSpace) (κ φ u : ℝ) (hκ : κ ≠ 0)
   simp only [FunLike.coe_smul, Pi.smul_apply, fderiv_id', ContinuousLinearMap.coe_id',
     id_eq, smul_eq_mul, mul_one]
   field_simp
-  ring
 
 /-- The vector-valued derivative of the vector-potential amplitude `harmonicWaveAmp 𝓕 κ φ`
   scaled by `E₀`, i.e. the (up to a factor of `𝓕.c`) electric-field amplitude. -/
@@ -161,7 +160,7 @@ lemma harmonicWave_contDiff (n : WithTop ℕ∞) (𝓕 : FreeSpace) (κ : ℝ) (
     unfold harmonicWaveAmp
     fun_prop
   · apply ContDiff.sub
-    · exact ContDiff.inner (by fun_prop) (by fun_prop)
+    · exact ContDiff.inner ℝ (by fun_prop) (by fun_prop)
     · fun_prop
 
 @[simp]
@@ -169,7 +168,7 @@ lemma harmonicWave_scalarPotential_eq_zero (𝓕 : FreeSpace) (κ : ℝ) (s : Di
     (E₀ : EuclideanSpace ℝ (Fin d)) (φ : ℝ) :
     (harmonicWave 𝓕 κ s E₀ φ).scalarPotential 𝓕.c = 0 := by
   ext t x
-  simp [harmonicWave, scalarPotential, ofVectorPotential, timeSlice]
+  simp [harmonicWave, scalarPotential, ofVectorPotential, SpaceTime.timeSlice]
 
 @[simp]
 lemma harmonicWave_vectorPotential (𝓕 : FreeSpace) (κ : ℝ) (s : Direction d)
@@ -194,8 +193,8 @@ lemma harmonicWave_electricField (𝓕 : FreeSpace) (κ : ℝ) (hκ : κ ≠ 0) 
   simp only [harmonicWave_scalarPotential_eq_zero, Pi.zero_apply, Space.grad_zero, zero_sub]
   rw [harmonicWave_vectorPotential,
     planeWave_time_deriv (harmonicWaveAmp_smul_differentiable 𝓕 κ φ E₀)]
-  simp only [Pi.neg_apply, neg_smul, neg_neg, planeWave_eq]
-  rw [harmonicWaveAmp_smul_fderiv 𝓕 κ φ _ hκ E₀, smul_smul]
+  simp only [Pi.neg_apply, neg_smul, neg_neg, planeWave_eq,
+    harmonicWaveAmp_smul_fderiv 𝓕 κ φ _ hκ E₀, smul_smul]
   congr 1
   unfold harmonicWaveEAmp
   field_simp

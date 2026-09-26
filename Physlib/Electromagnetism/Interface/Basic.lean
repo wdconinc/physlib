@@ -24,7 +24,7 @@ but it exists to support `Electromagnetism.Interface.SnellsLaw`, so it lives alo
 - `angleFromNormal` : the angle (in `[0, π]`) between a direction and the interface normal.
 - `tangentialPart` : the orthogonal projection of a vector onto the interface hyperplane.
 - `norm_tangentialPart_smul_unit` : the tangential part of a wavevector `κ • s.unit` has norm
-  `|κ| * sin (angleFromNormal n̂ s)` — the key geometric identity used to derive Snell's law.
+  `|κ| * sin (angleFromNormal n s)` — the key geometric identity used to derive Snell's law.
 
 ## iii. Table of contents
 
@@ -49,22 +49,22 @@ open Space InnerProductSpace
 
 -/
 
-/-- The angle, in `[0, π]`, between a direction `s` and the interface normal `n̂`. -/
-noncomputable def angleFromNormal {d : ℕ} (n̂ s : Direction d) : ℝ :=
-  Real.arccos ⟪s.unit, n̂.unit⟫_ℝ
+/-- The angle, in `[0, π]`, between a direction `s` and the interface normal `n`. -/
+noncomputable def angleFromNormal {d : ℕ} (n s : Direction d) : ℝ :=
+  Real.arccos ⟪s.unit, n.unit⟫_ℝ
 
 lemma abs_inner_direction_le_one {d : ℕ} (s t : Direction d) :
     |⟪s.unit, t.unit⟫_ℝ| ≤ 1 := by
   have h := abs_real_inner_le_norm s.unit t.unit
   rwa [s.norm, t.norm, mul_one] at h
 
-lemma cos_angleFromNormal {d : ℕ} (n̂ s : Direction d) :
-    Real.cos (angleFromNormal n̂ s) = ⟪s.unit, n̂.unit⟫_ℝ := by
-  rw [angleFromNormal, Real.cos_arccos (abs_le.mp (abs_inner_direction_le_one s n̂)).1
-    (abs_le.mp (abs_inner_direction_le_one s n̂)).2]
+lemma cos_angleFromNormal {d : ℕ} (n s : Direction d) :
+    Real.cos (angleFromNormal n s) = ⟪s.unit, n.unit⟫_ℝ := by
+  rw [angleFromNormal, Real.cos_arccos (abs_le.mp (abs_inner_direction_le_one s n)).1
+    (abs_le.mp (abs_inner_direction_le_one s n)).2]
 
-lemma sin_angleFromNormal {d : ℕ} (n̂ s : Direction d) :
-    Real.sin (angleFromNormal n̂ s) = Real.sqrt (1 - ⟪s.unit, n̂.unit⟫_ℝ ^ 2) := by
+lemma sin_angleFromNormal {d : ℕ} (n s : Direction d) :
+    Real.sin (angleFromNormal n s) = Real.sqrt (1 - ⟪s.unit, n.unit⟫_ℝ ^ 2) := by
   rw [angleFromNormal, Real.sin_arccos]
 
 /-!
@@ -74,31 +74,31 @@ lemma sin_angleFromNormal {d : ℕ} (n̂ s : Direction d) :
 -/
 
 /-- The orthogonal projection of a vector onto the interface hyperplane
-  `{x | ⟪x, n̂.unit⟫_ℝ = 0}`. -/
-noncomputable def tangentialPart {d : ℕ} (n̂ : Direction d) (k : Space d) : Space d :=
-  k - ⟪k, n̂.unit⟫_ℝ • n̂.unit
+  `{x | ⟪x, n.unit⟫_ℝ = 0}`. -/
+noncomputable def tangentialPart {d : ℕ} (n : Direction d) (k : Space d) : Space d :=
+  k - ⟪k, n.unit⟫_ℝ • n.unit
 
-lemma tangentialPart_smul {d : ℕ} (n̂ : Direction d) (κ : ℝ) (k : Space d) :
-    tangentialPart n̂ (κ • k) = κ • tangentialPart n̂ k := by
+lemma tangentialPart_smul {d : ℕ} (n : Direction d) (κ : ℝ) (k : Space d) :
+    tangentialPart n (κ • k) = κ • tangentialPart n k := by
   simp only [tangentialPart, real_inner_smul_left, smul_sub, smul_smul, mul_comm]
 
-lemma norm_sq_tangentialPart_unit {d : ℕ} (n̂ s : Direction d) :
-    ‖s.unit - ⟪s.unit, n̂.unit⟫_ℝ • n̂.unit‖ ^ 2 = 1 - ⟪s.unit, n̂.unit⟫_ℝ ^ 2 := by
-  rw [norm_sub_sq_real, real_inner_smul_right, norm_smul, n̂.norm, mul_one,
+lemma norm_sq_tangentialPart_unit {d : ℕ} (n s : Direction d) :
+    ‖s.unit - ⟪s.unit, n.unit⟫_ℝ • n.unit‖ ^ 2 = 1 - ⟪s.unit, n.unit⟫_ℝ ^ 2 := by
+  rw [norm_sub_sq_real, real_inner_smul_right, norm_smul, n.norm, mul_one,
     Real.norm_eq_abs, sq_abs, s.norm]
   ring
 
-lemma norm_tangentialPart_unit {d : ℕ} (n̂ s : Direction d) :
-    ‖tangentialPart n̂ s.unit‖ = Real.sin (angleFromNormal n̂ s) := by
+lemma norm_tangentialPart_unit {d : ℕ} (n s : Direction d) :
+    ‖tangentialPart n s.unit‖ = Real.sin (angleFromNormal n s) := by
   simp only [tangentialPart]
   rw [sin_angleFromNormal, ← norm_sq_tangentialPart_unit, Real.sqrt_sq (norm_nonneg _)]
 
 /-- The tangential part of a wavevector `κ • s.unit` has norm
-  `|κ| * sin (angleFromNormal n̂ s)`. This is the key geometric identity behind both the law
+  `|κ| * sin (angleFromNormal n s)`. This is the key geometric identity behind both the law
   of reflection and Snell's law: matching tangential wavevectors across an interface becomes,
   after taking norms, an equation purely in wavenumbers and angles. -/
-lemma norm_tangentialPart_smul_unit {d : ℕ} (n̂ s : Direction d) (κ : ℝ) :
-    ‖tangentialPart n̂ (κ • s.unit)‖ = |κ| * Real.sin (angleFromNormal n̂ s) := by
+lemma norm_tangentialPart_smul_unit {d : ℕ} (n s : Direction d) (κ : ℝ) :
+    ‖tangentialPart n (κ • s.unit)‖ = |κ| * Real.sin (angleFromNormal n s) := by
   rw [tangentialPart_smul, norm_smul, Real.norm_eq_abs, norm_tangentialPart_unit]
 
 end Interface
