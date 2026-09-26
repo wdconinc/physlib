@@ -163,7 +163,8 @@ private lemma injective_two_signed {v₀ v₁ : ℝ} (h₀ : 0 < v₀) (h₁ : 0
     Function.Injective (![v₀, -v₀, v₁, -v₁] : Fin 4 → ℝ) := by
   intro i j hij
   fin_cases i <;> fin_cases j <;>
-    simp only [Matrix.cons_val_zero, Matrix.cons_val_succ] at hij ⊢ <;>
+    simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_two,
+      Matrix.cons_val_three, Matrix.cons_val_succ, Matrix.head_cons, Matrix.tail_cons] at hij ⊢ <;>
     first | rfl | (exfalso; nlinarith [h₀, h₁])
 
 /-- Three pairwise distinct positive frequencies give six pairwise distinct signed frequencies. -/
@@ -172,7 +173,9 @@ private lemma injective_three_signed {v₀ v₁ v₂ : ℝ} (h₀ : 0 < v₀) (h
     Function.Injective (![v₀, -v₀, v₁, -v₁, v₂, -v₂] : Fin 6 → ℝ) := by
   intro i j hij
   fin_cases i <;> fin_cases j <;>
-    simp only [Matrix.cons_val_zero, Matrix.cons_val_succ] at hij ⊢ <;>
+    simp only [Matrix.cons_val_zero, Matrix.cons_val_one, Matrix.cons_val_two,
+      Matrix.cons_val_three, Matrix.cons_val_four, Matrix.cons_val_succ, Matrix.head_cons,
+      Matrix.tail_cons] at hij ⊢ <;>
     first | rfl | (exfalso; nlinarith [h₀, h₁, h₂])
 
 /-- If `A cos (ω₁τ+φ₁) + B cos (ω₂τ+φ₂) = C cos (ω₃τ+φ₃)` for every real `τ`, with `A, B, C ≠ 0`
@@ -203,8 +206,8 @@ theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ�
         C * Real.cos (ω₃ * τ + φ₃) = 0 := by linarith [h τ]
     have hcplx : (A : ℂ) * (Real.cos (ω₁ * τ + φ₁) : ℂ) + (B : ℂ) * (Real.cos (ω₂ * τ + φ₂) : ℂ) -
         (C : ℂ) * (Real.cos (ω₃ * τ + φ₃) : ℂ) = 0 := by exact_mod_cast hreal
-    linear_combination two_mul_cos_eq_exp_add_exp A ω₁ φ₁ τ +
-      two_mul_cos_eq_exp_add_exp B ω₂ φ₂ τ - two_mul_cos_eq_exp_add_exp C ω₃ φ₃ τ + 2 * hcplx
+    linear_combination - two_mul_cos_eq_exp_add_exp A ω₁ φ₁ τ -
+      two_mul_cos_eq_exp_add_exp B ω₂ φ₂ τ + two_mul_cos_eq_exp_add_exp C ω₃ φ₃ τ + 2 * hcplx
   by_cases h12 : ω₁ = ω₂
   · by_cases h13 : ω₁ = ω₃
     · exact ⟨h13, h12.symm.trans h13⟩
@@ -234,8 +237,8 @@ theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ�
       · exfalso
         subst h13
         have hsum4 : ∀ τ : ℝ, ∑ i : Fin 4,
-            (![(A : ℂ) * Complex.exp (Complex.I * φ₁) + (C : ℂ) * Complex.exp (Complex.I * φ₃),
-               (A : ℂ) * Complex.exp (-Complex.I * φ₁) + (C : ℂ) * Complex.exp (-Complex.I * φ₃),
+            (![(A : ℂ) * Complex.exp (Complex.I * φ₁) - (C : ℂ) * Complex.exp (Complex.I * φ₃),
+               (A : ℂ) * Complex.exp (-Complex.I * φ₁) - (C : ℂ) * Complex.exp (-Complex.I * φ₃),
                (B : ℂ) * Complex.exp (Complex.I * φ₂),
                (B : ℂ) * Complex.exp (-Complex.I * φ₂)] : Fin 4 → ℂ) i *
             Complex.exp (Complex.I * (![ω₁, -ω₁, ω₂, -ω₂] : Fin 4 → ℝ) i * τ) = 0 := by
@@ -255,8 +258,8 @@ theorem eq_of_forall_cos_add_cos_eq_cos {A B C ω₁ ω₂ ω₃ φ₁ φ₂ φ�
       · exfalso
         subst h23
         have hsum4 : ∀ τ : ℝ, ∑ i : Fin 4,
-            (![(B : ℂ) * Complex.exp (Complex.I * φ₂) + (C : ℂ) * Complex.exp (Complex.I * φ₃),
-               (B : ℂ) * Complex.exp (-Complex.I * φ₂) + (C : ℂ) * Complex.exp (-Complex.I * φ₃),
+            (![(B : ℂ) * Complex.exp (Complex.I * φ₂) - (C : ℂ) * Complex.exp (Complex.I * φ₃),
+               (B : ℂ) * Complex.exp (-Complex.I * φ₂) - (C : ℂ) * Complex.exp (-Complex.I * φ₃),
                (A : ℂ) * Complex.exp (Complex.I * φ₁),
                (A : ℂ) * Complex.exp (-Complex.I * φ₁)] : Fin 4 → ℂ) i *
             Complex.exp (Complex.I * (![ω₂, -ω₂, ω₁, -ω₁] : Fin 4 → ℝ) i * τ) = 0 := by
